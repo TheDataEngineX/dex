@@ -28,6 +28,7 @@ __all__ = [
     "JsonStorage",
     "ParquetStorage",
     "S3Storage",
+    "get_storage",
 ]
 
 # Try importing pyarrow — optional heavyweight dependency
@@ -102,6 +103,21 @@ class JsonStorage(StorageBackend):
         if isinstance(data, dict):
             return [data]
         return [{"value": data}]
+
+    def list_objects(self, prefix: str = "") -> list[str]:
+        """List JSON entries under *prefix*."""
+        target = self.base_path / prefix
+        if not target.exists():
+            return []
+        return [
+            str(p.relative_to(self.base_path).with_suffix(""))
+            for p in target.rglob("*.json")
+            if p.is_file()
+        ]
+
+    def exists(self, path: str) -> bool:
+        """Return ``True`` if *path* has a corresponding JSON file."""
+        return (self.base_path / f"{path}.json").exists()
 
 
 # ---------------------------------------------------------------------------
@@ -186,6 +202,25 @@ class ParquetStorage(StorageBackend):
         if isinstance(data, dict):
             return [data]
         return []
+
+    def list_objects(self, prefix: str = "") -> list[str]:
+        """List Parquet entries under *prefix*."""
+        if not _HAS_PYARROW:
+            return self._fallback.list_objects(prefix)
+        target = self.base_path / prefix
+        if not target.exists():
+            return []
+        return [
+            str(p.relative_to(self.base_path).with_suffix(""))
+            for p in target.rglob("*.parquet")
+            if p.is_file()
+        ]
+
+    def exists(self, path: str) -> bool:
+        """Return ``True`` if *path* has a corresponding Parquet file."""
+        if not _HAS_PYARROW:
+            return self._fallback.exists(path)
+        return (self.base_path / f"{path}.parquet").exists()
 
 
 # ---------------------------------------------------------------------------
@@ -283,6 +318,28 @@ class S3Storage(StorageBackend):
             return True
         except Exception as exc:
             logger.error("S3Storage delete failed: %s", exc)
+            return False
+
+    def list_objects(self, prefix: str = "") -> list[str]:
+        """List S3 objects under *prefix*."""
+        if self._client is None:
+            return []
+        try:
+            full_prefix = self._key(prefix)
+            resp = self._client.list_objects_v2(Bucket=self.bucket, Prefix=full_prefix)
+            return [obj["Key"] for obj in resp.get("Contents", [])]
+        except Exception as exc:
+            logger.error("S3Storage list_objects failed: %s", exc)
+            return []
+
+    def exists(self, path: str) -> bool:
+        """Return ``True`` if *path* exists in S3."""
+        if self._client is None:
+            return False
+        try:
+            self._client.head_object(Bucket=self.bucket, Key=self._key(f"{path}.json"))
+            return True
+        except Exception:
             return False
 
 
@@ -386,3 +443,67 @@ class GCSStorage(StorageBackend):
         except Exception as exc:
             logger.error("GCSStorage delete failed: %s", exc)
             return False
+
+    def list_objects(self, prefix: str = "") -> list[str]:
+        """List GCS objects under *prefix*."""
+        if self._bucket is None:
+            return []
+        try:
+            full_prefix = self._blob_name(prefix)
+            return [blob.name for blob in self._bucket.list_blobs(prefix=full_prefix)]
+        except Exception as exc:
+            logger.error("GCSStorage list_objects failed: %s", exc)
+            return []
+
+    def exists(self, path: str) -> bool:
+        """Return ``True`` if *path* exists in GCS."""
+        if self._bucket is None:
+            return False
+        try:
+            result: bool = self._bucket.blob(self._blob_name(f"{path}.json")).exists()
+            return result
+        except Exception:
+            return False
+
+
+# ---------------------------------------------------------------------------
+# Storage factory
+# ---------------------------------------------------------------------------
+
+
+def get_storage(uri: str, **kwargs: Any) -> StorageBackend:
+    """Create a :class:`StorageBackend` from a URI scheme.
+
+    Supported schemes:
+
+    * ``file://`` (or no scheme) → :class:`JsonStorage`
+    * ``s3://bucket/prefix``     → :class:`S3Storage`
+    * ``gs://bucket/prefix``     → :class:`GCSStorage`
+
+    Extra *kwargs* are forwarded to the backend constructor.
+
+    Raises
+    ------
+    ValueError
+        If the URI scheme is not supported.
+    """
+    from urllib.parse import urlparse
+
+    parsed = urlparse(uri)
+    if parsed.scheme in ("", "file"):
+        path = parsed.path or "data"
+        return JsonStorage(base_path=path, **kwargs)
+    if parsed.scheme == "s3":
+        return S3Storage(
+            bucket=parsed.netloc,
+            prefix=parsed.path.lstrip("/"),
+            **kwargs,
+        )
+    if parsed.scheme == "gs":
+        return GCSStorage(
+            bucket=parsed.netloc,
+            prefix=parsed.path.lstrip("/"),
+            **kwargs,
+        )
+    msg = f"Unsupported storage URI scheme: {parsed.scheme!r}"
+    raise ValueError(msg)
