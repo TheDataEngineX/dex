@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `py.typed` marker for PEP 561 compliance — downstream consumers get type checking support
+- Module-level `__all__` in all 30 `.py` source files — every public symbol is explicitly gated
+- Convenience re-exports in root `__init__.py` — `from dataenginex import MedallionArchitecture` etc.
+- `core/__init__.py` now exports: `BigQueryStorage`, `DataLineage`, `DualStorage`, `LocalParquetStorage`, `StorageBackend`, `ComponentStatus`, `EchoRequest`, `EchoResponse`, `ReadinessResponse`, `StartupResponse`
+- PyPI badge in README
+
 ## [0.4.11] - 2026-02-27
 
 ### Changed

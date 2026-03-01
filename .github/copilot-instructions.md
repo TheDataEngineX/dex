@@ -97,3 +97,7 @@ Domain-specific guidance lives in [instructions/](instructions/) — loaded auto
 4. Config: [pyproject.toml](../pyproject.toml) | [poe_tasks.toml](../poe_tasks.toml) | [.pre-commit-config.yaml](../.pre-commit-config.yaml)
 
 **When generating code:** include type hints, docstrings, error handling, and tests. Use structured logging (key-value pairs, not f-strings). Create/use images, design diagrams wherever required.
+
+**After generating code:** run `uv run poe lint`, `uv run poe typecheck`, and `uv run poe test` to validate. Fix any issues before submitting PRs.
+
+**Before submitting PRs:** Update/remove all the files in the entire project whether they are affeted or not. This is to ensure that the codebase is consistent and up to date with the latest changes. This includes code, tests, workflows, configs, documentation, all files in .github folder, comments, and any relevant files that may be impacted by the changes made in the PR.
