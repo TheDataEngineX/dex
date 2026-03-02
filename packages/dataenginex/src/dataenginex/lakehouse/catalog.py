@@ -57,6 +57,7 @@ class CatalogEntry:
     version: int = 1
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize the catalog entry to a plain dictionary."""
         d = asdict(self)
         d["created_at"] = self.created_at.isoformat()
         d["updated_at"] = self.updated_at.isoformat()

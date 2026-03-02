@@ -39,7 +39,7 @@ Core package structure is implemented with phased modules under `src/careerdex/p
 
 1. Read [DEVELOPMENT.md](../DEVELOPMENT.md) to set up local environment
 2. Review [CareerDEX Source Package](https://github.com/TheDataEngineX/DEX/tree/main/src/careerdex) for architecture
-3. Review package release setup in [packages/README.md](https://github.com/TheDataEngineX/DEX/blob/main/packages/README.md)
+3. Review package release setup in [packages/GUIDE.md](https://github.com/TheDataEngineX/DEX/blob/main/packages/GUIDE.md)
 
 ## Directory Structure
 

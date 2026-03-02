@@ -55,6 +55,7 @@ class TransformResult:
 
     @property
     def success_rate(self) -> float:
+        """Fraction of input records that made it to the output."""
         return self.output_count / self.input_count if self.input_count else 0.0
 
 
@@ -96,6 +97,7 @@ class RenameFieldsTransform(Transform):
         self.mapping = mapping
 
     def apply(self, record: dict[str, Any]) -> dict[str, Any]:
+        """Rename keys in *record* according to the configured mapping."""
         out = dict(record)
         for old_key, new_key in self.mapping.items():
             if old_key in out:
@@ -111,6 +113,7 @@ class DropNullsTransform(Transform):
         self.required_fields = required_fields
 
     def apply(self, record: dict[str, Any]) -> dict[str, Any] | None:
+        """Return ``None`` if any required field is null, else the record."""
         for f in self.required_fields:
             if record.get(f) is None:
                 return None
@@ -127,6 +130,7 @@ class CastTypesTransform(Transform):
         self.type_map = type_map
 
     def apply(self, record: dict[str, Any]) -> dict[str, Any]:
+        """Cast specified fields to their target types."""
         out = dict(record)
         for field_name, target in self.type_map.items():
             if field_name in out and out[field_name] is not None:
@@ -145,6 +149,7 @@ class AddTimestampTransform(Transform):
         self.field_name = field_name
 
     def apply(self, record: dict[str, Any]) -> dict[str, Any]:
+        """Add an ISO-8601 processing timestamp to *record*."""
         out = dict(record)
         out[self.field_name] = datetime.now(tz=UTC).isoformat()
         return out
@@ -161,6 +166,7 @@ class FilterTransform(Transform):
         self._predicate = predicate
 
     def apply(self, record: dict[str, Any]) -> dict[str, Any] | None:
+        """Keep *record* if the predicate returns ``True``, else drop it."""
         if self._predicate(record):
             return record
         return None
@@ -187,10 +193,12 @@ class TransformPipeline:
         self._steps: list[Transform] = []
 
     def add(self, transform: Transform) -> TransformPipeline:
+        """Append a transform step to the pipeline."""
         self._steps.append(transform)
         return self  # fluent API
 
     def run(self, records: list[dict[str, Any]]) -> TransformResult:
+        """Execute all steps in order and return the aggregated result."""
         start = time.perf_counter()
         current = list(records)
         step_metrics: list[dict[str, Any]] = []

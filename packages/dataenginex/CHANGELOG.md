@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-03-01
+
+### Added
+
+- **Storage abstraction** — `list_objects(prefix)` and `exists(path)` on `StorageBackend` ABC; concrete implementations in `LocalParquetStorage`, `BigQueryStorage`, `JsonStorage`, `ParquetStorage`, `S3Storage`, `GCSStorage`; `get_storage(uri)` factory function (#89)
+- **ML serving endpoints** — `POST /api/v1/predict`, `GET /api/v1/models`, `GET /api/v1/models/{name}` with `PredictRequestBody`/`PredictResponseBody` Pydantic models; ML-specific Prometheus metrics (`model_prediction_latency_seconds`, `model_prediction_total`, `model_predictions_in_flight`) (#92)
+- **Drift monitoring scheduler** — `DriftScheduler` with background thread for periodic drift checks; `DriftMonitorConfig`, `DriftCheckResult` dataclasses; publishes PSI scores to `model_drift_psi` gauge; increments `model_drift_alerts_total` counter on drift detection (#93)
+- Prometheus alert rules for drift monitoring — `ModelDriftModerate`, `ModelDriftSevere`, `DriftAlertSpike`, `DriftCheckStale` in `infra/monitoring/alerts/drift_alerts.yml`
+- `endpoint_url` parameter on `S3Storage` for LocalStack/emulator support
+- `api_endpoint` parameter on `GCSStorage` for fake-gcs-server/emulator support
+- Docker emulator stack (`docker-compose.test.yml`) — LocalStack 4.0 (S3) + fake-gcs-server 1.49 (GCS)
+- 25 integration tests with emulator auto-detection in `tests/integration/test_storage_real.py`
+- Terraform module for cloud test buckets (`infra/terraform/test-storage/`)
+- Google-style docstrings across 55+ methods and 9 Pydantic models (#88)
+- `py.typed` marker for PEP 561 compliance — downstream consumers get type checking support
+- Module-level `__all__` in all 30 `.py` source files — every public symbol is explicitly gated
+- Convenience re-exports in root `__init__.py` — `from dataenginex import MedallionArchitecture` etc.
+- `core/__init__.py` now exports: `BigQueryStorage`, `DataLineage`, `DualStorage`, `LocalParquetStorage`, `StorageBackend`, `ComponentStatus`, `EchoRequest`, `EchoResponse`, `ReadinessResponse`, `StartupResponse`
+- PyPI badge in README (#87)
+
+### Fixed
+
+- `docs-pages.yml` workflow: replaced `uv lock && uv sync` with `uv sync --frozen` to prevent lock drift in CI
+- `Dockerfile` runtime stage: added missing `COPY --from=builder /build/packages /app/packages` for `PYTHONPATH` resolution
+- mypy overrides for optional cloud SDKs (`boto3`, `google.auth`, `google.cloud`) — prevents `unused-ignore` vs `import-not-found` flip-flop depending on installed packages
+
 ## [0.4.11] - 2026-02-27
 
 ### Changed
@@ -24,7 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `02_api_quickstart.py` — FastAPI app with health, v1 router, metrics
 - `03_quality_gate.py` — QualityGate evaluations against layer thresholds
 - `04_ml_training.py` — SklearnTrainer, ModelRegistry, DriftDetector demo
-- `examples/README.md` with table of examples and run instructions
+- `examples/GUIDE.md` with table of examples and run instructions
 
 ## [0.4.8] - 2026-02-21
 
@@ -126,7 +152,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cursor-based pagination utilities
 - Versioned API router (`/api/v1/`)
 
-[Unreleased]: https://github.com/TheDataEngineX/DEX/compare/v0.4.11...HEAD
+[Unreleased]: https://github.com/TheDataEngineX/DEX/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/TheDataEngineX/DEX/compare/v0.4.11...v0.5.0
 [0.4.11]: https://github.com/TheDataEngineX/DEX/compare/v0.4.10...v0.4.11
 [0.4.10]: https://github.com/TheDataEngineX/DEX/compare/v0.4.8...v0.4.10
 [0.4.8]: https://github.com/TheDataEngineX/DEX/compare/v0.4.6...v0.4.8

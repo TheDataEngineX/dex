@@ -27,6 +27,8 @@ __all__ = [
 
 
 class RootResponse(BaseModel):
+    """Response body for the root ``/`` endpoint."""
+
     message: str
     version: str
 
@@ -36,18 +38,24 @@ class RootResponse(BaseModel):
 
 
 class HealthResponse(BaseModel):
+    """Response body for the ``/health`` liveness probe."""
+
     status: str
 
     model_config = {"json_schema_extra": {"examples": [{"status": "alive"}]}}
 
 
 class StartupResponse(BaseModel):
+    """Response body for the ``/startup`` probe."""
+
     status: str
 
     model_config = {"json_schema_extra": {"examples": [{"status": "started"}]}}
 
 
 class ComponentStatus(BaseModel):
+    """Health status of a single dependency component."""
+
     name: str
     status: str
     message: str | None = None
@@ -68,6 +76,8 @@ class ComponentStatus(BaseModel):
 
 
 class ReadinessResponse(BaseModel):
+    """Response body for the ``/ready`` readiness probe."""
+
     status: str
     components: list[ComponentStatus]
 
@@ -97,6 +107,8 @@ class ReadinessResponse(BaseModel):
 
 
 class ErrorDetail(BaseModel):
+    """Detail of a single validation or processing error."""
+
     field: str | None = None
     message: str
     type: str | None = None
@@ -115,6 +127,8 @@ class ErrorDetail(BaseModel):
 
 
 class ErrorResponse(BaseModel):
+    """Standard error response returned by all API error handlers."""
+
     error: str
     message: str
     request_id: str | None = None
@@ -141,6 +155,8 @@ class ErrorResponse(BaseModel):
 
 
 class EchoRequest(BaseModel):
+    """Request body for the ``/echo`` debug endpoint."""
+
     message: str = Field(min_length=1)
     count: int = Field(default=1, ge=1, le=10)
 
@@ -148,6 +164,8 @@ class EchoRequest(BaseModel):
 
 
 class EchoResponse(BaseModel):
+    """Response body for the ``/echo`` debug endpoint."""
+
     message: str
     count: int
     echo: list[str]

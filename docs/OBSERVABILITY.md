@@ -326,7 +326,7 @@ Total: 150ms
 
 ## Grafana Dashboards
 
-Prebuilt dashboards are available in [infra/grafana](https://github.com/TheDataEngineX/DEX/blob/main/infra/monitoring/grafana/README.md):
+Prebuilt dashboards are available in [infra/grafana](https://github.com/TheDataEngineX/DEX/blob/main/infra/monitoring/grafana/GUIDE.md):
 
 - **DEX Metrics**: request rate, latency, error rate, in-flight.
 - **DEX Logs**: log volume, error spikes, recent logs, and request IDs (Loki).

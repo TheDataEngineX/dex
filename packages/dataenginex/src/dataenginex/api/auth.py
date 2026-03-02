@@ -136,6 +136,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
     """
 
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+        """Validate the bearer token and attach ``auth_user`` to request state."""
         enabled = os.getenv("DEX_AUTH_ENABLED", "false").lower() == "true"
         if not enabled:
             return await call_next(request)

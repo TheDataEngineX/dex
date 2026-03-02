@@ -229,19 +229,19 @@ DEX uses **parallel, independent release workflows** for each package:
 
 **What it does**:
 1. Detects version bump in `packages/dataenginex/pyproject.toml`
-2. Extracts version (e.g., `0.4.11`)
-3. Creates git tag: `dataenginex-v0.4.11`
+2. Extracts version (e.g., `0.5.0`)
+3. Creates git tag: `dataenginex-v0.5.0`
 4. Creates GitHub release → **automatically triggers `pypi-publish.yml`**
 5. Publishes to TestPyPI/PyPI
 
 **How to release DataEngineX**:
 ```bash
 # Update version in packages/dataenginex/pyproject.toml
-version = "0.4.11"
+version = "0.5.0"
 
 # Commit and push
 git add packages/dataenginex/pyproject.toml
-git commit -m "chore: bump dataenginex to 0.4.11"
+git commit -m "chore: bump dataenginex to 0.5.0"
 git push origin main
 ```
 
@@ -297,7 +297,7 @@ DataEngineX version bump → release-dataenginex.yml → GitHub release → pypi
 
 **Manual trigger** (if needed):
 ```bash
-gh workflow run pypi-publish.yml -f tag=dataenginex-v0.4.11
+gh workflow run pypi-publish.yml -f tag=dataenginex-v0.5.0
 ```
 
 ## Deployment Flow

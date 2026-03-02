@@ -28,6 +28,7 @@ __all__ = [
     "JsonStorage",
     "ParquetStorage",
     "S3Storage",
+    "get_storage",
 ]
 
 # Try importing pyarrow — optional heavyweight dependency
@@ -62,6 +63,7 @@ class JsonStorage(StorageBackend):
         path: str,
         format: StorageFormat = StorageFormat.PARQUET,
     ) -> bool:
+        """Serialize *data* as JSON and write to *path*."""
         try:
             full = self.base_path / f"{path}.json"
             full.parent.mkdir(parents=True, exist_ok=True)
@@ -74,6 +76,7 @@ class JsonStorage(StorageBackend):
             return False
 
     def read(self, path: str, format: StorageFormat = StorageFormat.PARQUET) -> Any:
+        """Read and deserialize a JSON file at *path*."""
         try:
             full = self.base_path / f"{path}.json"
             if not full.exists():
@@ -85,6 +88,7 @@ class JsonStorage(StorageBackend):
             return None
 
     def delete(self, path: str) -> bool:
+        """Delete the JSON file at *path* if it exists."""
         try:
             full = self.base_path / f"{path}.json"
             if full.exists():
@@ -102,6 +106,21 @@ class JsonStorage(StorageBackend):
         if isinstance(data, dict):
             return [data]
         return [{"value": data}]
+
+    def list_objects(self, prefix: str = "") -> list[str]:
+        """List JSON entries under *prefix*."""
+        target = self.base_path / prefix
+        if not target.exists():
+            return []
+        return [
+            str(p.relative_to(self.base_path).with_suffix(""))
+            for p in target.rglob("*.json")
+            if p.is_file()
+        ]
+
+    def exists(self, path: str) -> bool:
+        """Return ``True`` if *path* has a corresponding JSON file."""
+        return (self.base_path / f"{path}.json").exists()
 
 
 # ---------------------------------------------------------------------------
@@ -132,6 +151,7 @@ class ParquetStorage(StorageBackend):
         path: str,
         format: StorageFormat = StorageFormat.PARQUET,
     ) -> bool:
+        """Write *data* as a Parquet file at *path*."""
         if not _HAS_PYARROW:
             return self._fallback.write(data, path, format)
 
@@ -151,6 +171,7 @@ class ParquetStorage(StorageBackend):
             return False
 
     def read(self, path: str, format: StorageFormat = StorageFormat.PARQUET) -> Any:
+        """Read a Parquet file at *path* and return records."""
         if not _HAS_PYARROW:
             return self._fallback.read(path, format)
 
@@ -166,6 +187,7 @@ class ParquetStorage(StorageBackend):
             return None
 
     def delete(self, path: str) -> bool:
+        """Delete the Parquet file at *path* if it exists."""
         if not _HAS_PYARROW:
             return self._fallback.delete(path)
 
@@ -187,13 +209,32 @@ class ParquetStorage(StorageBackend):
             return [data]
         return []
 
+    def list_objects(self, prefix: str = "") -> list[str]:
+        """List Parquet entries under *prefix*."""
+        if not _HAS_PYARROW:
+            return self._fallback.list_objects(prefix)
+        target = self.base_path / prefix
+        if not target.exists():
+            return []
+        return [
+            str(p.relative_to(self.base_path).with_suffix(""))
+            for p in target.rglob("*.parquet")
+            if p.is_file()
+        ]
+
+    def exists(self, path: str) -> bool:
+        """Return ``True`` if *path* has a corresponding Parquet file."""
+        if not _HAS_PYARROW:
+            return self._fallback.exists(path)
+        return (self.base_path / f"{path}.parquet").exists()
+
 
 # ---------------------------------------------------------------------------
 # S3 storage (requires boto3)
 # ---------------------------------------------------------------------------
 
 try:
-    import boto3  # type: ignore[import-not-found]
+    import boto3
 
     _HAS_BOTO3 = True
 except ImportError:
@@ -214,6 +255,9 @@ class S3Storage(StorageBackend):
         Key prefix for all objects (default ``""``).
     region:
         AWS region (default ``"us-east-1"``).
+    endpoint_url:
+        Custom endpoint for S3-compatible services (e.g. LocalStack).
+        When ``None``, the default AWS endpoint is used.
     """
 
     def __init__(
@@ -221,16 +265,21 @@ class S3Storage(StorageBackend):
         bucket: str,
         prefix: str = "",
         region: str = "us-east-1",
+        endpoint_url: str | None = None,
     ) -> None:
         self.bucket = bucket
         self.prefix = prefix.rstrip("/")
         self.region = region
+        self.endpoint_url = endpoint_url
 
         if not _HAS_BOTO3:
             logger.warning("boto3 not installed — S3Storage operations will fail")
             self._client = None
         else:
-            self._client = boto3.client("s3", region_name=region)
+            client_kwargs: dict[str, Any] = {"region_name": region}
+            if endpoint_url:
+                client_kwargs["endpoint_url"] = endpoint_url
+            self._client = boto3.client("s3", **client_kwargs)
             logger.info("S3Storage initialised: s3://%s/%s", bucket, prefix)
 
     def _key(self, path: str) -> str:
@@ -285,13 +334,35 @@ class S3Storage(StorageBackend):
             logger.error("S3Storage delete failed: %s", exc)
             return False
 
+    def list_objects(self, prefix: str = "") -> list[str]:
+        """List S3 objects under *prefix*."""
+        if self._client is None:
+            return []
+        try:
+            full_prefix = self._key(prefix)
+            resp = self._client.list_objects_v2(Bucket=self.bucket, Prefix=full_prefix)
+            return [obj["Key"] for obj in resp.get("Contents", [])]
+        except Exception as exc:
+            logger.error("S3Storage list_objects failed: %s", exc)
+            return []
+
+    def exists(self, path: str) -> bool:
+        """Return ``True`` if *path* exists in S3."""
+        if self._client is None:
+            return False
+        try:
+            self._client.head_object(Bucket=self.bucket, Key=self._key(f"{path}.json"))
+            return True
+        except Exception:
+            return False
+
 
 # ---------------------------------------------------------------------------
 # GCS storage (requires google-cloud-storage)
 # ---------------------------------------------------------------------------
 
 try:
-    from google.cloud import storage as gcs_storage  # type: ignore[import-untyped]
+    from google.cloud import storage as gcs_storage
 
     _HAS_GCS = True
 except ImportError:
@@ -312,6 +383,10 @@ class GCSStorage(StorageBackend):
         Key prefix for all objects (default ``""``).
     project:
         GCP project ID (optional, uses ADC default).
+    api_endpoint:
+        Custom API endpoint for GCS-compatible services (e.g.
+        ``fake-gcs-server``).  When ``None``, the default Google
+        endpoint is used.
     """
 
     def __init__(
@@ -319,6 +394,7 @@ class GCSStorage(StorageBackend):
         bucket: str,
         prefix: str = "",
         project: str | None = None,
+        api_endpoint: str | None = None,
     ) -> None:
         self.bucket_name = bucket
         self.prefix = prefix.rstrip("/")
@@ -327,7 +403,18 @@ class GCSStorage(StorageBackend):
             logger.warning("google-cloud-storage not installed — GCSStorage operations will fail")
             self._bucket = None
         else:
-            client = gcs_storage.Client(project=project)
+            from google.auth import credentials as ga_credentials
+
+            if api_endpoint:
+                # Use anonymous credentials for local emulators
+                anon = ga_credentials.AnonymousCredentials()  # type: ignore[no-untyped-call]
+                client = gcs_storage.Client(
+                    project=project or "test-project",
+                    credentials=anon,
+                )
+                client._connection.API_BASE_URL = api_endpoint
+            else:
+                client = gcs_storage.Client(project=project)
             self._bucket = client.bucket(bucket)
             logger.info("GCSStorage initialised: gs://%s/%s", bucket, prefix)
 
@@ -386,3 +473,67 @@ class GCSStorage(StorageBackend):
         except Exception as exc:
             logger.error("GCSStorage delete failed: %s", exc)
             return False
+
+    def list_objects(self, prefix: str = "") -> list[str]:
+        """List GCS objects under *prefix*."""
+        if self._bucket is None:
+            return []
+        try:
+            full_prefix = self._blob_name(prefix)
+            return [blob.name for blob in self._bucket.list_blobs(prefix=full_prefix)]
+        except Exception as exc:
+            logger.error("GCSStorage list_objects failed: %s", exc)
+            return []
+
+    def exists(self, path: str) -> bool:
+        """Return ``True`` if *path* exists in GCS."""
+        if self._bucket is None:
+            return False
+        try:
+            result: bool = self._bucket.blob(self._blob_name(f"{path}.json")).exists()
+            return result
+        except Exception:
+            return False
+
+
+# ---------------------------------------------------------------------------
+# Storage factory
+# ---------------------------------------------------------------------------
+
+
+def get_storage(uri: str, **kwargs: Any) -> StorageBackend:
+    """Create a :class:`StorageBackend` from a URI scheme.
+
+    Supported schemes:
+
+    * ``file://`` (or no scheme) → :class:`JsonStorage`
+    * ``s3://bucket/prefix``     → :class:`S3Storage`
+    * ``gs://bucket/prefix``     → :class:`GCSStorage`
+
+    Extra *kwargs* are forwarded to the backend constructor.
+
+    Raises
+    ------
+    ValueError
+        If the URI scheme is not supported.
+    """
+    from urllib.parse import urlparse
+
+    parsed = urlparse(uri)
+    if parsed.scheme in ("", "file"):
+        path = parsed.path or "data"
+        return JsonStorage(base_path=path, **kwargs)
+    if parsed.scheme == "s3":
+        return S3Storage(
+            bucket=parsed.netloc,
+            prefix=parsed.path.lstrip("/"),
+            **kwargs,
+        )
+    if parsed.scheme == "gs":
+        return GCSStorage(
+            bucket=parsed.netloc,
+            prefix=parsed.path.lstrip("/"),
+            **kwargs,
+        )
+    msg = f"Unsupported storage URI scheme: {parsed.scheme!r}"
+    raise ValueError(msg)

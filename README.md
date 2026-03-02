@@ -1,10 +1,10 @@
 # DataEngineX (DEX)
 
 [![CI/CD](https://github.com/TheDataEngineX/DEX/actions/workflows/ci.yml/badge.svg?branch=dev)](https://github.com/TheDataEngineX/DEX/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/dataenginex)](https://pypi.org/project/dataenginex/)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Coverage](https://img.shields.io/badge/coverage-94%25-brightgreen)](https://github.com/TheDataEngineX/DEX)
-[![Version](https://img.shields.io/badge/version-0.3.6-blue)](https://github.com/TheDataEngineX/DEX/releases)
 
 A production-focused data engineering framework with medallion architecture, Airflow orchestration patterns, and enterprise observability foundations. DEX is both a core framework and a mono-repo for sub-projects built on top of it.
 
@@ -13,10 +13,11 @@ A production-focused data engineering framework with medallion architecture, Air
 ## Quick Start
 
 ```bash
+bash scripts/setup-system.sh  # Install system deps (git, java, docker, uv) — first time only
 git clone https://github.com/TheDataEngineX/DEX && cd DEX
-uv run poe setup            # One-step setup (all deps + pre-commit hooks)
-uv run poe dev               # Run dev server → http://localhost:8000
-uv run poe test              # Run tests
+uv run poe setup              # Install Python deps + pre-commit hooks
+uv run poe dev                # Run dev server → http://localhost:8000
+uv run poe test               # Run tests
 ```
 
 ### Full Stack (API + Observability)

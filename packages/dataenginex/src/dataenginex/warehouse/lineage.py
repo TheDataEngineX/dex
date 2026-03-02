@@ -65,6 +65,7 @@ class LineageEvent:
     timestamp: datetime = field(default_factory=lambda: datetime.now(tz=UTC))
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize the lineage event to a plain dictionary."""
         d = asdict(self)
         d["timestamp"] = self.timestamp.isoformat()
         return d
@@ -152,6 +153,7 @@ class PersistentLineage:
 
     @property
     def all_events(self) -> list[LineageEvent]:
+        """Return a shallow copy of all stored lineage events."""
         return list(self._events)
 
     def summary(self) -> dict[str, Any]:
