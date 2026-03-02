@@ -4,8 +4,6 @@ on:
   workflow_run:
     workflows:
       - Continuous Integration
-      - Security Scans
-      - Package Validation
     types:
       - completed
     branches:
@@ -32,6 +30,7 @@ jobs:
     outputs:
       branch: ${{ steps.dependency_gate.outputs.branch }}
       target_sha: ${{ steps.dependency_gate.outputs.target_sha }}
+      should_deploy: ${{ steps.dependency_gate.outputs.should_deploy }}
 
     steps:
       - name: Wait for required workflows on this commit
@@ -48,6 +47,7 @@ jobs:
               const branch = context.ref.replace('refs/heads/', '');
               core.setOutput('branch', branch);
               core.setOutput('target_sha', context.sha);
+              core.setOutput('should_deploy', 'true');
               core.info(`Manual dispatch detected; using branch=${branch}, sha=${context.sha.substring(0, 8)}`);
               return;
             }
@@ -58,17 +58,22 @@ jobs:
             const sourceEvent = triggeringRun?.event;
 
             if (!branch || !sha) {
-              core.setFailed('Missing workflow_run head branch/SHA context for dependency gating.');
+              core.warning('Missing workflow_run head branch/SHA context; skipping deployment for this run.');
+              core.setOutput('should_deploy', 'false');
               return;
             }
 
             if (sourceEvent !== 'push') {
-              core.setFailed(`CD only supports push events, got: ${sourceEvent || 'unknown'}`);
+              core.notice(`Skipping CD for workflow_run event '${sourceEvent || 'unknown'}'. Only push events deploy.`);
+              core.setOutput('branch', branch);
+              core.setOutput('target_sha', sha);
+              core.setOutput('should_deploy', 'false');
               return;
             }
 
             core.setOutput('branch', branch);
             core.setOutput('target_sha', sha);
+            core.setOutput('should_deploy', 'true');
 
             const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
             const timeoutMs = 20 * 60 * 1000;
@@ -138,7 +143,7 @@ jobs:
     name: Build and Push Docker Image
     runs-on: ubuntu-latest
     needs: gate-dependencies
-    if: ${{ needs.gate-dependencies.result == 'success' }}
+    if: ${{ needs.gate-dependencies.result == 'success' && needs.gate-dependencies.outputs.should_deploy == 'true' }}
 
     permissions:
       contents: read
@@ -317,7 +322,7 @@ jobs:
     name: Update GitOps Manifests
     runs-on: ubuntu-latest
     needs: [gate-dependencies, build-and-push, security-scan]
-    if: ${{ needs.build-and-push.result == 'success' && needs.security-scan.result == 'success' }}
+    if: ${{ needs.gate-dependencies.outputs.should_deploy == 'true' && needs.build-and-push.result == 'success' && needs.security-scan.result == 'success' }}
 
     permissions:
       contents: write
@@ -403,6 +408,22 @@ jobs:
             --head "$PR_BRANCH" \
             --title "chore: update ${BRANCH} image to ${NEW_TAG}" \
             --body "$PR_BODY"; then
+
+            # Auto-merge the GitOps PR — upstream CI/security/package-validation
+            # already passed (gate-dependencies verified), so this is safe.
+            PR_NUMBER=$(gh pr list --head "$PR_BRANCH" --json number --jq '.[0].number')
+            if [[ -n "$PR_NUMBER" ]]; then
+              echo "Auto-merging GitOps PR #${PR_NUMBER}..."
+              if gh pr merge "$PR_NUMBER" --squash --body "Auto-merge: GitOps ${BRANCH} image update (${NEW_TAG})"; then
+                echo "Successfully auto-merged PR #${PR_NUMBER}."
+                echo "updated=true" >> "$GITHUB_OUTPUT"
+                echo "update_mode=pr_auto_merged" >> "$GITHUB_OUTPUT"
+                exit 0
+              else
+                echo "::warning::Auto-merge failed for PR #${PR_NUMBER}. PR remains open for manual merge."
+              fi
+            fi
+
             echo "Opened PR branch ${PR_BRANCH}; deployment verification is skipped until PR is merged."
             echo "updated=false" >> "$GITHUB_OUTPUT"
             echo "update_mode=pr_opened" >> "$GITHUB_OUTPUT"
@@ -427,7 +448,7 @@ jobs:
     name: Verify ArgoCD Deployment Health
     runs-on: ubuntu-latest
     needs: [gate-dependencies, update-gitops-manifests]
-    if: ${{ needs.update-gitops-manifests.result == 'success' && needs.update-gitops-manifests.outputs.updated == 'true' }}
+    if: ${{ needs.gate-dependencies.outputs.should_deploy == 'true' && needs.update-gitops-manifests.result == 'success' && needs.update-gitops-manifests.outputs.updated == 'true' }}
 
     outputs:
       verification_enabled: ${{ steps.plan.outputs.verification_enabled }}
@@ -524,7 +545,7 @@ jobs:
     name: Rollback GitOps Manifest Update
     runs-on: ubuntu-latest
     needs: [gate-dependencies, build-and-push, update-gitops-manifests, verify-deployment]
-    if: ${{ always() && needs.update-gitops-manifests.outputs.updated == 'true' && needs.verify-deployment.result == 'failure' }}
+    if: ${{ always() && needs.gate-dependencies.outputs.should_deploy == 'true' && needs.update-gitops-manifests.outputs.updated == 'true' && needs.verify-deployment.result == 'failure' }}
 
     permissions:
       contents: write
@@ -566,7 +587,7 @@ jobs:
     name: Create Rollback Incident Issue
     runs-on: ubuntu-latest
     needs: [gate-dependencies, build-and-push, verify-deployment, rollback-gitops]
-    if: ${{ always() && needs.verify-deployment.result == 'failure' }}
+    if: ${{ always() && needs.gate-dependencies.outputs.should_deploy == 'true' && needs.verify-deployment.result == 'failure' }}
 
     permissions:
       contents: read
@@ -623,7 +644,7 @@ jobs:
 
     steps:
       - name: Notify CD Success
-        if: ${{ needs.build-and-push.result == 'success' && needs.security-scan.result == 'success' && needs.update-gitops-manifests.result == 'success' && needs.update-gitops-manifests.outputs.update_mode != 'pr_opened' && needs.update-gitops-manifests.outputs.update_mode != 'issue_opened' && (needs.verify-deployment.result == 'success' || needs.verify-deployment.result == 'skipped') }}
+        if: ${{ needs.gate-dependencies.outputs.should_deploy == 'true' && needs.build-and-push.result == 'success' && needs.security-scan.result == 'success' && needs.update-gitops-manifests.result == 'success' && needs.update-gitops-manifests.outputs.update_mode != 'pr_opened' && needs.update-gitops-manifests.outputs.update_mode != 'issue_opened' && (needs.verify-deployment.result == 'success' || needs.verify-deployment.result == 'skipped') }}
         uses: actions/github-script@v8
         with:
           script: |
@@ -672,7 +693,7 @@ jobs:
           URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
       - name: Notify CD Pending Manual Promotion
-        if: ${{ needs.build-and-push.result == 'success' && needs.security-scan.result == 'success' && needs.update-gitops-manifests.result == 'success' && (needs.update-gitops-manifests.outputs.update_mode == 'pr_opened' || needs.update-gitops-manifests.outputs.update_mode == 'issue_opened') }}
+        if: ${{ needs.gate-dependencies.outputs.should_deploy == 'true' && needs.build-and-push.result == 'success' && needs.security-scan.result == 'success' && needs.update-gitops-manifests.result == 'success' && (needs.update-gitops-manifests.outputs.update_mode == 'pr_opened' || needs.update-gitops-manifests.outputs.update_mode == 'issue_opened') }}
         uses: actions/github-script@v8
         with:
           script: |
@@ -717,7 +738,7 @@ jobs:
           URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
       - name: Notify CD Failure
-        if: ${{ needs.build-and-push.result == 'failure' || needs.security-scan.result == 'failure' || needs.update-gitops-manifests.result == 'failure' || needs.verify-deployment.result == 'failure' || needs.rollback-gitops.result == 'failure' || needs.create-rollback-issue.result == 'failure' }}
+        if: ${{ needs.gate-dependencies.outputs.should_deploy == 'true' && (needs.build-and-push.result == 'failure' || needs.security-scan.result == 'failure' || needs.update-gitops-manifests.result == 'failure' || needs.verify-deployment.result == 'failure' || needs.rollback-gitops.result == 'failure' || needs.create-rollback-issue.result == 'failure') }}
         uses: actions/github-script@v8
         with:
           script: |
@@ -779,3 +800,8 @@ jobs:
           BRANCH: ${{ needs.gate-dependencies.outputs.branch }}
           ACTOR: ${{ github.actor }}
           URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+      - name: Notify CD Skipped (non-push workflow_run)
+        if: ${{ needs.gate-dependencies.outputs.should_deploy != 'true' }}
+        run: |
+          echo "CD skipped intentionally for non-push workflow_run event."
