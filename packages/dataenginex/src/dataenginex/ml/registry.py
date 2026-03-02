@@ -61,6 +61,7 @@ class ModelArtifact:
     tags: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize the model artifact metadata to a plain dictionary."""
         d = asdict(self)
         d["stage"] = self.stage.value
         d["created_at"] = self.created_at.isoformat()
@@ -106,9 +107,11 @@ class ModelRegistry:
     # -- queries -------------------------------------------------------------
 
     def get(self, name: str, version: str) -> ModelArtifact | None:
+        """Return the artifact for *name* at *version*, or ``None``."""
         return self._models.get(name, {}).get(version)
 
     def get_latest(self, name: str) -> ModelArtifact | None:
+        """Return the most recently registered version of *name*."""
         versions = self._models.get(name)
         if not versions:
             return None
@@ -122,9 +125,11 @@ class ModelRegistry:
         return None
 
     def list_models(self) -> list[str]:
+        """Return all registered model names."""
         return list(self._models.keys())
 
     def list_versions(self, name: str) -> list[str]:
+        """Return all version strings registered for *name*."""
         return list(self._models.get(name, {}).keys())
 
     # -- promotion -----------------------------------------------------------

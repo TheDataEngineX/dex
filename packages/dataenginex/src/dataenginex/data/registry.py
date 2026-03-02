@@ -45,6 +45,7 @@ class SchemaVersion:
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize the schema version to a plain dictionary."""
         return {
             "name": self.name,
             "version": self.version,

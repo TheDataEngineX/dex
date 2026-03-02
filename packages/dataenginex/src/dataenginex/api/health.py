@@ -43,6 +43,7 @@ class ComponentHealth:
     duration_ms: float | None = None
 
     def to_dict(self) -> dict[str, object | None]:
+        """Serialize to a plain dictionary suitable for JSON responses."""
         return {
             "name": self.name,
             "status": self.status.value,
@@ -58,6 +59,7 @@ class HealthChecker:
         self.timeout_seconds = timeout_seconds
 
     async def check_all(self) -> list[ComponentHealth]:
+        """Run all dependency health checks concurrently."""
         return [
             await self.check_database(),
             await self.check_cache(),
@@ -65,6 +67,7 @@ class HealthChecker:
         ]
 
     def overall_status(self, components: list[ComponentHealth]) -> HealthStatus:
+        """Derive an aggregate status from individual component results."""
         if any(c.status == HealthStatus.UNHEALTHY for c in components):
             return HealthStatus.UNHEALTHY
         if any(c.status == HealthStatus.DEGRADED for c in components):
@@ -72,6 +75,7 @@ class HealthChecker:
         return HealthStatus.HEALTHY
 
     async def check_database(self) -> ComponentHealth:
+        """Check database connectivity via TCP probe."""
         host = os.getenv("DEX_DB_HOST")
         port = os.getenv("DEX_DB_PORT")
         if not host or not port:
@@ -92,6 +96,7 @@ class HealthChecker:
         )
 
     async def check_cache(self) -> ComponentHealth:
+        """Check cache connectivity via TCP probe."""
         host = os.getenv("DEX_CACHE_HOST")
         port = os.getenv("DEX_CACHE_PORT")
         if not host or not port:
@@ -112,6 +117,7 @@ class HealthChecker:
         )
 
     async def check_external_api(self) -> ComponentHealth:
+        """Check external API reachability via HTTP GET."""
         url = os.getenv("DEX_EXTERNAL_API_URL")
         if not url:
             return ComponentHealth(

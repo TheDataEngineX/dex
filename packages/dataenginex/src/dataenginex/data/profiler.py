@@ -48,10 +48,12 @@ class ColumnProfile:
 
     @property
     def null_rate(self) -> float:
+        """Fraction of values that are ``None`` (0.0–1.0)."""
         return self.null_count / self.total_count if self.total_count else 0.0
 
     @property
     def uniqueness(self) -> float:
+        """Ratio of unique non-null values to total non-null values."""
         non_null = self.total_count - self.null_count
         return self.unique_count / non_null if non_null else 0.0
 
@@ -77,6 +79,7 @@ class ProfileReport:
     duration_ms: float = 0.0
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize the profile report to a plain dictionary."""
         return {
             "dataset_name": self.dataset_name,
             "record_count": self.record_count,
@@ -125,6 +128,7 @@ class DataProfiler:
         records: list[dict[str, Any]],
         dataset_name: str = "unnamed",
     ) -> ProfileReport:
+        """Profile a list of dict records and return column-level statistics."""
         import time
 
         start = time.perf_counter()

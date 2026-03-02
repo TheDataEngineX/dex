@@ -63,6 +63,7 @@ class JsonStorage(StorageBackend):
         path: str,
         format: StorageFormat = StorageFormat.PARQUET,
     ) -> bool:
+        """Serialize *data* as JSON and write to *path*."""
         try:
             full = self.base_path / f"{path}.json"
             full.parent.mkdir(parents=True, exist_ok=True)
@@ -75,6 +76,7 @@ class JsonStorage(StorageBackend):
             return False
 
     def read(self, path: str, format: StorageFormat = StorageFormat.PARQUET) -> Any:
+        """Read and deserialize a JSON file at *path*."""
         try:
             full = self.base_path / f"{path}.json"
             if not full.exists():
@@ -86,6 +88,7 @@ class JsonStorage(StorageBackend):
             return None
 
     def delete(self, path: str) -> bool:
+        """Delete the JSON file at *path* if it exists."""
         try:
             full = self.base_path / f"{path}.json"
             if full.exists():
@@ -148,6 +151,7 @@ class ParquetStorage(StorageBackend):
         path: str,
         format: StorageFormat = StorageFormat.PARQUET,
     ) -> bool:
+        """Write *data* as a Parquet file at *path*."""
         if not _HAS_PYARROW:
             return self._fallback.write(data, path, format)
 
@@ -167,6 +171,7 @@ class ParquetStorage(StorageBackend):
             return False
 
     def read(self, path: str, format: StorageFormat = StorageFormat.PARQUET) -> Any:
+        """Read a Parquet file at *path* and return records."""
         if not _HAS_PYARROW:
             return self._fallback.read(path, format)
 
@@ -182,6 +187,7 @@ class ParquetStorage(StorageBackend):
             return None
 
     def delete(self, path: str) -> bool:
+        """Delete the Parquet file at *path* if it exists."""
         if not _HAS_PYARROW:
             return self._fallback.delete(path)
 
