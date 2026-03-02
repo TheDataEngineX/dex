@@ -100,4 +100,4 @@ Domain-specific guidance lives in [instructions/](instructions/) — loaded auto
 
 **After generating code:** run `uv run poe lint`, `uv run poe typecheck`, and `uv run poe test` to validate. Fix any issues before submitting PRs.
 
-**Before submitting PRs:** Update/remove all the files in the entire project whether they are affeted or not. This is to ensure that the codebase is consistent and up to date with the latest changes. This includes code, tests, workflows, configs, documentation, all files in .github folder, comments, and any relevant files that may be impacted by the changes made in the PR.
+**Before submitting PRs:** Update/remove all the files in the entire project whether they are affeted or not. This is to ensure that the codebase is consistent and up to date with the latest changes. Bumping up versions.This includes code, tests, workflows, configs, documentation, all files in .github folder, comments, and any relevant files that may be impacted by the changes made in the PR.

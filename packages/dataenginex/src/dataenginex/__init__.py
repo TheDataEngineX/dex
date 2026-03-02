@@ -29,7 +29,7 @@ from importlib.metadata import PackageNotFoundError, version
 try:
     __version__ = version("dataenginex")
 except PackageNotFoundError:
-    __version__ = "0.4.11"
+    __version__ = "0.5.0"
 
 # Re-export key public symbols for convenience top-level imports
 from dataenginex.api import HealthChecker, HealthStatus

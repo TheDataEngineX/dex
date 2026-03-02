@@ -41,6 +41,9 @@ RUN groupadd --gid 1000 dex \
 # Copy virtual environment from builder stage
 COPY --from=builder /build/.venv /app/.venv
 
+# Copy dataenginex core package
+COPY --from=builder /build/packages /app/packages
+
 # Copy application source code
 COPY src/ /app/src/
 
