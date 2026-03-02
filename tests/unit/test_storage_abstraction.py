@@ -86,12 +86,12 @@ class TestGetStorage:
         """S3Storage is created (even without credentials)."""
         from dataenginex.lakehouse.storage import S3Storage
 
-        store = get_storage("s3://my-bucket/prefix")
+        store = get_storage("s3://my-bucket/prefix", endpoint_url="http://localhost:1")
         assert isinstance(store, S3Storage)
 
     def test_gs_scheme(self) -> None:
         """GCSStorage is created (even without credentials)."""
         from dataenginex.lakehouse.storage import GCSStorage
 
-        store = get_storage("gs://my-bucket/prefix")
+        store = get_storage("gs://my-bucket/prefix", api_endpoint="http://localhost:1")
         assert isinstance(store, GCSStorage)

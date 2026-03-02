@@ -249,6 +249,9 @@ class S3Storage(StorageBackend):
         Key prefix for all objects (default ``""``).
     region:
         AWS region (default ``"us-east-1"``).
+    endpoint_url:
+        Custom endpoint for S3-compatible services (e.g. LocalStack).
+        When ``None``, the default AWS endpoint is used.
     """
 
     def __init__(
@@ -256,16 +259,21 @@ class S3Storage(StorageBackend):
         bucket: str,
         prefix: str = "",
         region: str = "us-east-1",
+        endpoint_url: str | None = None,
     ) -> None:
         self.bucket = bucket
         self.prefix = prefix.rstrip("/")
         self.region = region
+        self.endpoint_url = endpoint_url
 
         if not _HAS_BOTO3:
             logger.warning("boto3 not installed — S3Storage operations will fail")
             self._client = None
         else:
-            self._client = boto3.client("s3", region_name=region)
+            client_kwargs: dict[str, Any] = {"region_name": region}
+            if endpoint_url:
+                client_kwargs["endpoint_url"] = endpoint_url
+            self._client = boto3.client("s3", **client_kwargs)
             logger.info("S3Storage initialised: s3://%s/%s", bucket, prefix)
 
     def _key(self, path: str) -> str:
@@ -369,6 +377,10 @@ class GCSStorage(StorageBackend):
         Key prefix for all objects (default ``""``).
     project:
         GCP project ID (optional, uses ADC default).
+    api_endpoint:
+        Custom API endpoint for GCS-compatible services (e.g.
+        ``fake-gcs-server``).  When ``None``, the default Google
+        endpoint is used.
     """
 
     def __init__(
@@ -376,6 +388,7 @@ class GCSStorage(StorageBackend):
         bucket: str,
         prefix: str = "",
         project: str | None = None,
+        api_endpoint: str | None = None,
     ) -> None:
         self.bucket_name = bucket
         self.prefix = prefix.rstrip("/")
@@ -384,7 +397,18 @@ class GCSStorage(StorageBackend):
             logger.warning("google-cloud-storage not installed — GCSStorage operations will fail")
             self._bucket = None
         else:
-            client = gcs_storage.Client(project=project)
+            from google.auth import credentials as ga_credentials
+
+            if api_endpoint:
+                # Use anonymous credentials for local emulators
+                anon = ga_credentials.AnonymousCredentials()  # type: ignore[no-untyped-call]
+                client = gcs_storage.Client(
+                    project=project or "test-project",
+                    credentials=anon,
+                )
+                client._connection.API_BASE_URL = api_endpoint
+            else:
+                client = gcs_storage.Client(project=project)
             self._bucket = client.bucket(bucket)
             logger.info("GCSStorage initialised: gs://%s/%s", bucket, prefix)
 
