@@ -21,14 +21,32 @@ resource "aws_s3_bucket_public_access_block" "test" {
   restrict_public_buckets = true
 }
 
-# Server-side encryption (AES-256)
+# KMS key for S3 bucket encryption
+resource "aws_kms_key" "s3_test" {
+  description             = "CMK for DEX test S3 bucket"
+  deletion_window_in_days = 7
+  enable_key_rotation     = true
+
+  tags = {
+    Name = "dex-test-s3-key"
+  }
+}
+
+resource "aws_kms_alias" "s3_test" {
+  name          = "alias/dex-test-s3"
+  target_key_id = aws_kms_key.s3_test.key_id
+}
+
+# Server-side encryption (SSE-KMS with customer managed key)
 resource "aws_s3_bucket_server_side_encryption_configuration" "test" {
   bucket = aws_s3_bucket.test.id
 
   rule {
     apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
+      sse_algorithm     = "aws:kms"
+      kms_master_key_id = aws_kms_key.s3_test.arn
     }
+    bucket_key_enabled = true
   }
 }
 

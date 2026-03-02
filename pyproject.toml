@@ -85,7 +85,10 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 module = ["boto3.*", "google.auth.*", "google.cloud.*"]
 ignore_missing_imports = true
-warn_unused_ignores = false
+
+[[tool.mypy.overrides]]
+module = ["dataenginex.lakehouse.storage"]
+warn_unused_ignores = false  # pre-commit installs google-cloud-storage (ignore used), CI does not (ignore unused)
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
