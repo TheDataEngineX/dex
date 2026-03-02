@@ -50,7 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `02_api_quickstart.py` — FastAPI app with health, v1 router, metrics
 - `03_quality_gate.py` — QualityGate evaluations against layer thresholds
 - `04_ml_training.py` — SklearnTrainer, ModelRegistry, DriftDetector demo
-- `examples/README.md` with table of examples and run instructions
+- `examples/GUIDE.md` with table of examples and run instructions
 
 ## [0.4.8] - 2026-02-21
 

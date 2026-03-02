@@ -12,7 +12,7 @@ Locust
 
 
 # Tasks
-
+JFrog
 Build a Language‑Learning Agent with OpenAI, LangGraph, Ollama & MCP
 Add Patreon
 Get Domain, Org account, email

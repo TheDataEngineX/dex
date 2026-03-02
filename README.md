@@ -13,10 +13,11 @@ A production-focused data engineering framework with medallion architecture, Air
 ## Quick Start
 
 ```bash
+bash scripts/setup-system.sh  # Install system deps (git, java, docker, uv) — first time only
 git clone https://github.com/TheDataEngineX/DEX && cd DEX
-uv run poe setup            # One-step setup (all deps + pre-commit hooks)
-uv run poe dev               # Run dev server → http://localhost:8000
-uv run poe test              # Run tests
+uv run poe setup              # Install Python deps + pre-commit hooks
+uv run poe dev                # Run dev server → http://localhost:8000
+uv run poe test               # Run tests
 ```
 
 ### Full Stack (API + Observability)

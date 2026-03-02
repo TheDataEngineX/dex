@@ -4,24 +4,50 @@
 
 ## Prerequisites
 
-- Python 3.11+
-- Git
-- uv (package manager)
-- Cloud credentials only if testing optional cloud adapters (staging/prod)
-- Docker (optional)
+### System Dependencies
+
+| Package | Required | Purpose |
+|---------|----------|---------|
+| Git | Yes | Version control |
+| curl | Yes | Downloading tools |
+| Python 3.11+ | Yes | Runtime (managed by uv) |
+| build-essential / gcc | Yes | Native extension compilation |
+| Java 17+ JRE | Yes* | PySpark tests (`openjdk-17-jre-headless`) |
+| uv | Yes | Python package & env manager |
+| Docker + Compose | Recommended | Full stack, integration tests, emulators |
+| Trivy | Optional | Local security scanning (`uv run poe security`) |
+| actionlint | Optional | GitHub Actions workflow linting |
+
+\* PySpark tests are auto-skipped when Java is unavailable.
+
+**One-command install** (Ubuntu/Debian, Fedora, Arch, macOS):
+
+```bash
+bash scripts/setup-system.sh        # or: uv run poe setup-system
+```
+
+This installs all system packages, uv, Docker, and optional tools, then verifies the setup.
+
+### Cloud Credentials (Optional)
+
+- AWS / GCP credentials only needed for cloud storage adapters (staging/prod)
+- Local development runs entirely on path-based storage
 
 ## Quick Start
 
 ```bash
-# 1. Clone repo and create feature branch
+# 1. Install system dependencies (first time only)
+bash scripts/setup-system.sh
+
+# 2. Clone repo and create feature branch
 git clone https://github.com/TheDataEngineX/DEX.git
 cd DEX
 git checkout -b feat/issue-XXX-description dev
 
-# 2. Install & setup
+# 3. Install Python deps & pre-commit hooks
 uv run poe setup
 
-# 3. Verify setup
+# 4. Verify setup
 uv run poe check-all
 ```
 
