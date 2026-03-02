@@ -17,7 +17,7 @@ replicas:
 images:
   - name: thedataenginex/dex
     newName: ghcr.io/thedataenginex/dex
-    newTag: sha-de539bec
+    newTag: sha-0b003e0e
 
 patches:
   - path: deployment.yaml   # Dev-specific env vars & resource limits
