@@ -18,7 +18,7 @@ replicas:
 images:
   - name: thedataenginex/dex
     newName: ghcr.io/thedataenginex/dex
-    newTag: sha-9b04d52a
+    newTag: sha-9b48a0a6
 
 patches:
   - path: deployment.yaml
