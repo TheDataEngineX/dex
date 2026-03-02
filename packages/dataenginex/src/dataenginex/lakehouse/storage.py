@@ -228,7 +228,7 @@ class ParquetStorage(StorageBackend):
 # ---------------------------------------------------------------------------
 
 try:
-    import boto3  # type: ignore[import-not-found]
+    import boto3
 
     _HAS_BOTO3 = True
 except ImportError:
@@ -356,7 +356,7 @@ class S3Storage(StorageBackend):
 # ---------------------------------------------------------------------------
 
 try:
-    from google.cloud import storage as gcs_storage  # type: ignore[import-untyped]
+    from google.cloud import storage as gcs_storage
 
     _HAS_GCS = True
 except ImportError:

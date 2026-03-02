@@ -82,6 +82,10 @@ no_implicit_optional = true
 module = ["structlog.*", "loguru.*", "prometheus_client.*", "opentelemetry.*"]
 ignore_missing_imports = true
 
+[[tool.mypy.overrides]]
+module = ["boto3.*", "google.auth.*", "google.cloud.*"]
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
