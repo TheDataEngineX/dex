@@ -22,6 +22,10 @@ from .metrics import (
     http_requests_total,
 )
 
+__all__ = [
+    "PrometheusMetricsMiddleware",
+]
+
 
 class PrometheusMetricsMiddleware(BaseHTTPMiddleware):
     """Middleware to collect Prometheus metrics for HTTP requests."""

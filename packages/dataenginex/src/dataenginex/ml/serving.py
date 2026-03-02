@@ -14,6 +14,12 @@ from typing import Any
 
 from loguru import logger
 
+__all__ = [
+    "ModelServer",
+    "PredictionRequest",
+    "PredictionResponse",
+]
+
 
 @dataclass
 class PredictionRequest:
@@ -53,6 +59,7 @@ class PredictionResponse:
     served_at: datetime = field(default_factory=lambda: datetime.now(tz=UTC))
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize the prediction response to a plain dictionary."""
         return {
             "model_name": self.model_name,
             "version": self.version,

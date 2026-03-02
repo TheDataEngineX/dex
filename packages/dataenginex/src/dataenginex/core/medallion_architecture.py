@@ -21,9 +21,22 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import StrEnum
+from pathlib import Path
 from typing import Any
 
 from loguru import logger
+
+__all__ = [
+    "BigQueryStorage",
+    "DataLayer",
+    "DataLineage",
+    "DualStorage",
+    "LayerConfiguration",
+    "LocalParquetStorage",
+    "MedallionArchitecture",
+    "StorageBackend",
+    "StorageFormat",
+]
 
 
 class StorageFormat(StrEnum):
@@ -129,8 +142,9 @@ class StorageBackend(ABC):
     """Abstract storage backend interface.
 
     All lakehouse storage implementations must subclass this and provide
-    concrete ``write``, ``read``, and ``delete`` methods.  The interface
-    accepts a ``StorageFormat`` hint so backends can choose serialisation.
+    concrete ``write``, ``read``, ``delete``, ``list_objects``, and
+    ``exists`` methods.  The interface accepts a ``StorageFormat`` hint
+    so backends can choose serialisation.
 
     Built-in implementations:
         - ``LocalParquetStorage`` — local Parquet files (this module)
@@ -157,6 +171,20 @@ class StorageBackend(ABC):
     @abstractmethod
     def delete(self, path: str) -> bool:
         """Delete the resource at *path*.  Returns ``True`` on success."""
+        ...
+
+    @abstractmethod
+    def list_objects(self, prefix: str = "") -> list[str]:
+        """List object paths under *prefix*.
+
+        Returns a list of relative paths.  Empty list on failure or when
+        no objects match.
+        """
+        ...
+
+    @abstractmethod
+    def exists(self, path: str) -> bool:
+        """Return ``True`` if *path* exists in the backend."""
         ...
 
 
@@ -229,6 +257,17 @@ class LocalParquetStorage(StorageBackend):
         except Exception as e:
             logger.error(f"Failed to delete {path}: {e}")
             return False
+
+    def list_objects(self, prefix: str = "") -> list[str]:
+        """List files under *prefix* relative to *base_path*."""
+        target = Path(self.base_path) / prefix
+        if not target.exists():
+            return []
+        return [str(p.relative_to(self.base_path)) for p in target.rglob("*") if p.is_file()]
+
+    def exists(self, path: str) -> bool:
+        """Return ``True`` if *path* exists on disk."""
+        return (Path(self.base_path) / path).exists()
 
 
 class BigQueryStorage(StorageBackend):
@@ -303,6 +342,16 @@ class BigQueryStorage(StorageBackend):
         except Exception as e:
             logger.error(f"Failed to delete from BigQuery {path}: {e}")
             return False
+
+    def list_objects(self, prefix: str = "") -> list[str]:
+        """List BigQuery tables matching *prefix* (stub)."""
+        logger.info("Listing BigQuery tables with prefix %s", prefix)
+        return []
+
+    def exists(self, path: str) -> bool:
+        """Check if BigQuery table exists (stub)."""
+        logger.info("Checking BigQuery table existence: %s", path)
+        return False
 
 
 class DualStorage:

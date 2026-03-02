@@ -25,6 +25,12 @@ from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExport
 
 from .logging_config import APP_NAME, APP_VERSION
 
+__all__ = [
+    "configure_tracing",
+    "get_tracer",
+    "instrument_fastapi",
+]
+
 
 def configure_tracing(
     service_name: str = APP_NAME,

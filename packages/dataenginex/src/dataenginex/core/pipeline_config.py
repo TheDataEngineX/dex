@@ -12,6 +12,11 @@ Classes:
 
 from __future__ import annotations
 
+__all__ = [
+    "PipelineConfig",
+    "PipelineMetrics",
+]
+
 
 class PipelineConfig:
     """Configuration for DEX data pipelines."""

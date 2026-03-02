@@ -27,6 +27,13 @@ from loguru import logger
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.responses import Response
 
+__all__ = [
+    "AuthMiddleware",
+    "AuthUser",
+    "create_token",
+    "decode_token",
+]
+
 # ---------------------------------------------------------------------------
 # Token helpers (pure-Python HS256 — no external ``pyjwt`` needed)
 # ---------------------------------------------------------------------------
@@ -129,6 +136,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
     """
 
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+        """Validate the bearer token and attach ``auth_user`` to request state."""
         enabled = os.getenv("DEX_AUTH_ENABLED", "false").lower() == "true"
         if not enabled:
             return await call_next(request)

@@ -1,0 +1,63 @@
+# ---------------------------------------------------------------
+# Drift Alert Rules
+# Fires alerts when model drift PSI scores exceed thresholds or
+# when drift alerts spike.  Uses model_drift_psi and
+# model_drift_alerts_total metrics from dataenginex ML serving.
+# ---------------------------------------------------------------
+groups:
+  - name: ml-drift-monitoring
+    rules:
+      # --- Moderate drift: PSI > 0.10 for 5 min → warning ---
+      - alert: ModelDriftModerate
+        expr: model_drift_psi > 0.10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Moderate data drift on {{ $labels.model }}/{{ $labels.feature }}"
+          description: >-
+            PSI score is {{ printf "%.4f" $value }} for model {{ $labels.model }},
+            feature {{ $labels.feature }}.  Investigate distribution shift.
+            Runbook: https://github.com/TheDataEngineX/DEX/blob/main/docs/DEPLOY_RUNBOOK.md
+
+      # --- Severe drift: PSI > 0.25 for 2 min → page ---
+      - alert: ModelDriftSevere
+        expr: model_drift_psi > 0.25
+        for: 2m
+        labels:
+          severity: page
+        annotations:
+          summary: "Severe data drift on {{ $labels.model }}/{{ $labels.feature }}"
+          description: >-
+            PSI score is {{ printf "%.4f" $value }} for model {{ $labels.model }},
+            feature {{ $labels.feature }}.  Immediate action required — model
+            predictions may be unreliable.
+            Runbook: https://github.com/TheDataEngineX/DEX/blob/main/docs/DEPLOY_RUNBOOK.md
+
+      # --- Drift alert spike: > 5 alerts in 15 min → page ---
+      - alert: DriftAlertSpike
+        expr: increase(model_drift_alerts_total[15m]) > 5
+        for: 1m
+        labels:
+          severity: page
+        annotations:
+          summary: "Drift alert spike for {{ $labels.model }}"
+          description: >-
+            {{ printf "%.0f" $value }} drift alerts fired in the last 15 minutes
+            for model {{ $labels.model }}.  Multiple features may be drifting
+            simultaneously.
+            Runbook: https://github.com/TheDataEngineX/DEX/blob/main/docs/DEPLOY_RUNBOOK.md
+
+      # --- No drift checks running: metric absent for 10 min → warning ---
+      - alert: DriftCheckStale
+        expr: time() - model_drift_psi > 600
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Drift checks stale for {{ $labels.model }}/{{ $labels.feature }}"
+          description: >-
+            No drift metrics have been updated for model {{ $labels.model }}
+            in over 10 minutes.  The DriftScheduler may be stopped or
+            failing.
+            Runbook: https://github.com/TheDataEngineX/DEX/blob/main/docs/DEPLOY_RUNBOOK.md

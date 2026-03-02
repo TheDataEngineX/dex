@@ -6,6 +6,13 @@ from fastapi import HTTPException, status
 
 from dataenginex.core.schemas import ErrorDetail
 
+__all__ = [
+    "APIHTTPException",
+    "BadRequestError",
+    "NotFoundError",
+    "ServiceUnavailableError",
+]
+
 
 class APIHTTPException(HTTPException):
     """Base HTTP exception with error code and details."""

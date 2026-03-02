@@ -24,6 +24,14 @@ from prometheus_client import (
     generate_latest,
 )
 
+__all__ = [
+    "get_metrics",
+    "http_exceptions_total",
+    "http_request_duration_seconds",
+    "http_requests_in_flight",
+    "http_requests_total",
+]
+
 # Request metrics
 http_requests_total = Counter(
     "http_requests_total",

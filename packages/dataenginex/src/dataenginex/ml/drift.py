@@ -13,6 +13,11 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
 
+__all__ = [
+    "DriftDetector",
+    "DriftReport",
+]
+
 
 @dataclass
 class DriftReport:
@@ -43,6 +48,7 @@ class DriftReport:
     checked_at: datetime = field(default_factory=lambda: datetime.now(tz=UTC))
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize the drift report to a plain dictionary."""
         return {
             "feature_name": self.feature_name,
             "psi": round(self.psi, 6),

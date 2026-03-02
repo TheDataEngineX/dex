@@ -21,6 +21,11 @@ from loguru import logger
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.responses import Response
 
+__all__ = [
+    "RateLimiter",
+    "RateLimitMiddleware",
+]
+
 
 @dataclass
 class _Bucket:
@@ -59,6 +64,7 @@ class RateLimiter:
         self._buckets: dict[str, _Bucket] = {}
 
     def allow(self, client_id: str) -> bool:
+        """Return ``True`` if *client_id* has remaining tokens; consume one token."""
         bucket = self._buckets.get(client_id)
         if bucket is None:
             bucket = _Bucket(
@@ -71,6 +77,7 @@ class RateLimiter:
         return bucket.consume()
 
     def get_stats(self) -> dict[str, Any]:
+        """Return current rate-limiter configuration and client count."""
         return {
             "rpm": self.rpm,
             "burst": self.burst,
@@ -101,6 +108,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         self._enabled = os.getenv("DEX_RATE_LIMIT_ENABLED", "false").lower() == "true"
 
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+        """Enforce per-IP rate limits; return 429 when tokens are exhausted."""
         if not self._enabled:
             return await call_next(request)
 

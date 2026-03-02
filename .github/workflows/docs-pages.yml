@@ -45,9 +45,7 @@ jobs:
         env:
           UV_PROJECT_ENVIRONMENT: .venv
           UV_PYTHON: "3.11"
-        run: |
-          uv lock
-          uv sync
+        run: uv sync --frozen
 
       - name: Build docs with Zensical
         run: uv run poe docs

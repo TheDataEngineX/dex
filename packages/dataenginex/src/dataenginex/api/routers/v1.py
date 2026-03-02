@@ -14,6 +14,12 @@ from fastapi import APIRouter
 from dataenginex.api.pagination import PaginatedResponse, paginate
 from dataenginex.core.quality import QualityStore
 
+__all__ = [
+    "get_quality_store",
+    "router",
+    "set_quality_store",
+]
+
 router = APIRouter(prefix="/api/v1", tags=["v1"])
 
 # Module-level quality store — shared across requests.

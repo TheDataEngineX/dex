@@ -17,6 +17,10 @@ from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 from structlog.contextvars import bind_contextvars, clear_contextvars
 
+__all__ = [
+    "RequestLoggingMiddleware",
+]
+
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
     """Middleware to log all HTTP requests with request ID tracking."""

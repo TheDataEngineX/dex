@@ -19,6 +19,12 @@ from typing import Any
 
 from loguru import logger
 
+__all__ = [
+    "BaseTrainer",
+    "SklearnTrainer",
+    "TrainingResult",
+]
+
 
 @dataclass
 class TrainingResult:
@@ -43,6 +49,7 @@ class TrainingResult:
     trained_at: datetime = field(default_factory=lambda: datetime.now(tz=UTC))
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize the training result to a plain dictionary."""
         return {
             "model_name": self.model_name,
             "version": self.version,
@@ -124,6 +131,7 @@ class SklearnTrainer(BaseTrainer):
         y_train: Any,
         **params: Any,  # noqa: N803
     ) -> TrainingResult:
+        """Fit the estimator on *X_train*/*y_train* and return metrics."""
         if self.estimator is None:
             raise RuntimeError("No estimator provided to SklearnTrainer")
 
@@ -157,6 +165,7 @@ class SklearnTrainer(BaseTrainer):
         )
 
     def evaluate(self, X_test: Any, y_test: Any) -> dict[str, float]:  # noqa: N803
+        """Score the fitted model on *X_test*/*y_test* and return metrics."""
         if not self._is_fitted:
             raise RuntimeError("Model not yet trained")
 
@@ -212,11 +221,13 @@ class SklearnTrainer(BaseTrainer):
         return metrics
 
     def predict(self, X: Any) -> Any:  # noqa: N803
+        """Generate predictions for *X* using the fitted estimator."""
         if not self._is_fitted:
             raise RuntimeError("Model not yet trained")
         return self.estimator.predict(X)
 
     def save(self, path: str) -> str:
+        """Pickle the fitted model and its metadata to *path*."""
         if not self._is_fitted:
             raise RuntimeError("Model not yet trained")
 
@@ -240,6 +251,7 @@ class SklearnTrainer(BaseTrainer):
         return str(out)
 
     def load(self, path: str) -> None:
+        """Load a pickled model from *path* and mark as fitted."""
         data = Path(path).read_bytes()
         self.estimator = pickle.loads(data)  # noqa: S301
         self._is_fitted = True

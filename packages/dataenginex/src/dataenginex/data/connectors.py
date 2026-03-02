@@ -22,6 +22,14 @@ from typing import Any
 import httpx
 from loguru import logger
 
+__all__ = [
+    "ConnectorStatus",
+    "DataConnector",
+    "FetchResult",
+    "FileConnector",
+    "RestConnector",
+]
+
 # ---------------------------------------------------------------------------
 # Connector metadata
 # ---------------------------------------------------------------------------
@@ -59,6 +67,7 @@ class FetchResult:
 
     @property
     def success(self) -> bool:
+        """Return ``True`` if the fetch completed without errors."""
         return len(self.errors) == 0
 
 
@@ -166,6 +175,7 @@ class RestConnector(DataConnector):
         self._client: httpx.AsyncClient | None = None
 
     async def connect(self) -> bool:
+        """Open an HTTP client session to the configured base URL."""
         try:
             self._client = httpx.AsyncClient(
                 base_url=self.base_url,
@@ -185,6 +195,7 @@ class RestConnector(DataConnector):
         offset: int = 0,
         filters: dict[str, Any] | None = None,
     ) -> FetchResult:
+        """Fetch records from the REST endpoint with optional pagination."""
         if self._client is None:
             return FetchResult(
                 records=[],
@@ -233,6 +244,7 @@ class RestConnector(DataConnector):
             )
 
     async def close(self) -> None:
+        """Close the HTTP client session and release resources."""
         if self._client:
             await self._client.aclose()
             self._client = None
@@ -280,6 +292,7 @@ class FileConnector(DataConnector):
         self._data: list[dict[str, Any]] | None = None
 
     async def connect(self) -> bool:
+        """Verify the configured file exists and is readable."""
         if not self.path.exists():
             self._mark_error(f"File not found: {self.path}")
             return False
@@ -293,6 +306,7 @@ class FileConnector(DataConnector):
         offset: int = 0,
         filters: dict[str, Any] | None = None,
     ) -> FetchResult:
+        """Read and parse records from the local file."""
         self.status = ConnectorStatus.FETCHING
         start = time.perf_counter()
 
@@ -327,6 +341,7 @@ class FileConnector(DataConnector):
             )
 
     async def close(self) -> None:
+        """Release cached file data."""
         self._data = None
         self.status = ConnectorStatus.CLOSED
 

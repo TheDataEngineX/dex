@@ -27,6 +27,14 @@ import structlog
 from loguru import logger as _loguru_logger
 from structlog.types import EventDict, Processor
 
+__all__ = [
+    "APP_NAME",
+    "APP_VERSION",
+    "add_app_context",
+    "configure_logging",
+    "get_logger",
+]
+
 try:
     from importlib.metadata import version as get_version
 

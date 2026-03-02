@@ -1,8 +1,26 @@
-# Promotion Scripts
+# Scripts
 
-Ubuntu-friendly workflow for managing GitOps image promotion using bash scripts.
+Utility scripts for DEX development and deployment.
 
 ## Scripts
+
+### `setup-system.sh`
+Installs all Linux/macOS system-level packages required to develop, test, and run the DEX project locally.
+
+**Usage:**
+```bash
+bash scripts/setup-system.sh     # direct
+uv run poe setup-system          # via poe task
+```
+
+**Installs:**
+- Core: git, curl, build-essential, Python 3.11+, Java 17 JRE, uv
+- Recommended: Docker + Docker Compose
+- Optional: Trivy (security scanning), actionlint (workflow linting)
+
+**Supports:** Ubuntu/Debian, Fedora/RHEL, Arch Linux, macOS (Homebrew)
+
+---
 
 ### `promote.sh`
 Promotes from dev to prod by creating a PR from `dev` → `main`, or by updating the prod overlay with a specific image tag.

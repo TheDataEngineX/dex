@@ -26,6 +26,14 @@ from .schemas import JobPosting, UserProfile
 # Configure loguru
 logger.enable("dataenginex")
 
+__all__ = [
+    "DataHash",
+    "DataQualityChecks",
+    "QualityScorer",
+    "SchemaValidator",
+    "ValidationReport",
+]
+
 
 class SchemaValidator:
     """Validates that data conforms to DEX schema specifications."""

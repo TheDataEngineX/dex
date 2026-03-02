@@ -12,6 +12,12 @@ from abc import ABC, abstractmethod
 from datetime import UTC, datetime
 from typing import Any
 
+__all__ = [
+    "DatePartitioner",
+    "HashPartitioner",
+    "PartitionStrategy",
+]
+
 
 class PartitionStrategy(ABC):
     """Base class for partitioning strategies."""
@@ -45,6 +51,7 @@ class DatePartitioner(PartitionStrategy):
         self.granularity = granularity
 
     def partition_key(self, record: dict[str, Any]) -> str:
+        """Return a ``year=.../month=.../day=...`` key for *record*."""
         dt = self._extract_date(record)
         parts = [f"year={dt.year}"]
         if self.granularity in ("month", "day"):
@@ -54,6 +61,7 @@ class DatePartitioner(PartitionStrategy):
         return "/".join(parts)
 
     def partition_path(self, record: dict[str, Any], base: str = "") -> str:
+        """Return *base* joined with the date partition key."""
         key = self.partition_key(record)
         return f"{base}/{key}" if base else key
 
@@ -89,11 +97,13 @@ class HashPartitioner(PartitionStrategy):
         self.n_buckets = max(1, n_buckets)
 
     def partition_key(self, record: dict[str, Any]) -> str:
+        """Return a ``bucket=NNNN`` key based on hashed field values."""
         content = "|".join(str(record.get(f, "")) for f in self.fields)
         digest = hashlib.md5(content.encode()).hexdigest()  # noqa: S324
         bucket = int(digest, 16) % self.n_buckets
         return f"bucket={bucket:04d}"
 
     def partition_path(self, record: dict[str, Any], base: str = "") -> str:
+        """Return *base* joined with the hash-bucket partition key."""
         key = self.partition_key(record)
         return f"{base}/{key}" if base else key

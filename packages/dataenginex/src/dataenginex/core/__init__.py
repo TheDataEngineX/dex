@@ -5,6 +5,7 @@ Public API::
     from dataenginex.core import (
         # Medallion
         MedallionArchitecture, DataLayer, StorageFormat, LayerConfiguration,
+        StorageBackend, LocalParquetStorage, BigQueryStorage, DualStorage, DataLineage,
         # Pipeline
         PipelineConfig, PipelineMetrics,
         # Quality
@@ -12,6 +13,8 @@ Public API::
         # Schemas
         JobPosting, JobSourceEnum, UserProfile,
         ErrorDetail, ErrorResponse, RootResponse, HealthResponse,
+        StartupResponse, ComponentStatus, ReadinessResponse,
+        EchoRequest, EchoResponse,
         DataQualityReport, PipelineExecutionMetadata,
         # Validators
         SchemaValidator, DataQualityChecks, DataHash,
@@ -22,22 +25,32 @@ Public API::
 from __future__ import annotations
 
 from .medallion_architecture import (
+    BigQueryStorage,
     DataLayer,
+    DataLineage,
+    DualStorage,
     LayerConfiguration,
+    LocalParquetStorage,
     MedallionArchitecture,
+    StorageBackend,
     StorageFormat,
 )
 from .pipeline_config import PipelineConfig, PipelineMetrics
 from .quality import QualityDimension, QualityGate, QualityResult, QualityStore
 from .schemas import (
+    ComponentStatus,
     DataQualityReport,
+    EchoRequest,
+    EchoResponse,
     ErrorDetail,
     ErrorResponse,
     HealthResponse,
     JobPosting,
     JobSourceEnum,
     PipelineExecutionMetadata,
+    ReadinessResponse,
     RootResponse,
+    StartupResponse,
     UserProfile,
 )
 from .validators import (
@@ -50,9 +63,14 @@ from .validators import (
 
 __all__ = [
     # Medallion architecture
+    "BigQueryStorage",
     "DataLayer",
+    "DataLineage",
+    "DualStorage",
     "LayerConfiguration",
+    "LocalParquetStorage",
     "MedallionArchitecture",
+    "StorageBackend",
     "StorageFormat",
     # Pipeline
     "PipelineConfig",
@@ -63,14 +81,19 @@ __all__ = [
     "QualityResult",
     "QualityStore",
     # Schemas
+    "ComponentStatus",
     "DataQualityReport",
+    "EchoRequest",
+    "EchoResponse",
     "ErrorDetail",
     "ErrorResponse",
     "HealthResponse",
     "JobPosting",
     "JobSourceEnum",
     "PipelineExecutionMetadata",
+    "ReadinessResponse",
     "RootResponse",
+    "StartupResponse",
     "UserProfile",
     # Validators
     "DataHash",
