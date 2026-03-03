@@ -23,6 +23,7 @@ dev = [
     "types-pyyaml>=6.0.12.20250822",
     "types-requests>=2.32.4.20260107",
     "poethepoet>=0.40.0",
+    "pre-commit>=4.2.0",
     "uv>=0.10.0",
     "zensical>=0.0.24",
     "mkdocs-material>=9.6.0",
