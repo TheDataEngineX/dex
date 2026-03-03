@@ -12,6 +12,7 @@ from dataenginex.api.auth import AuthMiddleware
 from dataenginex.api.errors import APIHTTPException, ServiceUnavailableError
 from dataenginex.api.health import HealthChecker, HealthStatus
 from dataenginex.api.rate_limit import RateLimitMiddleware
+from dataenginex.api.routers.ml import ml_router
 from dataenginex.api.routers.v1 import router as v1_router
 from dataenginex.core.schemas import (
     ComponentStatus,
@@ -73,6 +74,7 @@ app.add_middleware(AuthMiddleware)
 app.add_middleware(RateLimitMiddleware)
 
 app.include_router(v1_router)
+app.include_router(ml_router)
 
 health_checker = HealthChecker()
 
@@ -105,6 +107,8 @@ def custom_openapi() -> dict[str, object]:
     schema["tags"] = [
         {"name": "core", "description": "Core service endpoints."},
         {"name": "health", "description": "Health and readiness probes."},
+        {"name": "v1", "description": "Versioned data and warehouse API."},
+        {"name": "ml", "description": "ML model serving and registry."},
         {"name": "docs", "description": "OpenAPI export utilities."},
         {"name": "observability", "description": "Metrics and telemetry."},
     ]
