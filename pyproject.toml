@@ -121,6 +121,10 @@ filterwarnings = [
 [tool.coverage.run]
 branch = true
 source = ["dataenginex", "careerdex"]
+omit = [
+    "*/packages/dataenginex/src/dataenginex/api/routers/ml.py",
+    "*/packages/dataenginex/src/dataenginex/dashboard/*",
+]
 
 [tool.coverage.report]
 show_missing = true

@@ -51,8 +51,19 @@ configure_tracing(otlp_endpoint=otlp_endpoint, enable_console_export=enable_cons
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    from dataenginex.ml.registry import ModelRegistry
+    from dataenginex.ml.serving import ModelServer
+
+    from careerdex.api.routers.ml import set_model_server
+
     app.state.startup_complete = False
     logger.info("application_started", environment=os.getenv("ENVIRONMENT", "dev"))
+
+    # Initialize ML model server and registry
+    model_registry = ModelRegistry()
+    model_server = ModelServer(registry=model_registry)
+    set_model_server(model_server, model_registry)
+
     app.state.startup_complete = True
     yield
     app.state.startup_complete = False
