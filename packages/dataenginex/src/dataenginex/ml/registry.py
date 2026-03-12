@@ -37,7 +37,7 @@ class ModelArtifact:
     """Registry entry for a model version.
 
     Attributes:
-        name: Model name (e.g. ``"job_classifier"``).
+        name: Model name (e.g. ``"churn_classifier"``).
         version: Semantic version string.
         stage: Current lifecycle stage.
         artifact_path: File path to the serialised model.

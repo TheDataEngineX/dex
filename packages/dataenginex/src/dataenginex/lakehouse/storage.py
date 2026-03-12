@@ -24,6 +24,7 @@ from loguru import logger
 from dataenginex.core.medallion_architecture import StorageBackend, StorageFormat
 
 __all__ = [
+    "BigQueryStorage",
     "GCSStorage",
     "JsonStorage",
     "ParquetStorage",
@@ -353,8 +354,19 @@ class S3Storage(StorageBackend):
         try:
             self._client.head_object(Bucket=self.bucket, Key=self._key(f"{path}.json"))
             return True
-        except Exception:
+        except self._client.exceptions.NoSuchKey:
             return False
+        except Exception as exc:
+            # Surface auth/permission errors instead of silently returning False
+            error_code = getattr(
+                getattr(exc, "response", None),
+                "Error",
+                {},
+            ).get("Code", "")
+            if error_code in ("404", "NoSuchKey"):
+                return False
+            logger.error("S3Storage.exists() failed: %s", exc)
+            raise
 
 
 # ---------------------------------------------------------------------------
@@ -362,11 +374,165 @@ class S3Storage(StorageBackend):
 # ---------------------------------------------------------------------------
 
 try:
-    from google.cloud import storage as gcs_storage
+    from google.cloud import storage as gcs_storage  # type: ignore[attr-defined]
 
     _HAS_GCS = True
 except ImportError:
     _HAS_GCS = False
+
+
+# ---------------------------------------------------------------------------
+# BigQuery storage (requires google-cloud-bigquery)
+# ---------------------------------------------------------------------------
+
+try:
+    from google.cloud import bigquery as bq_client
+
+    _HAS_BIGQUERY = True
+except ImportError:
+    bq_client = None  # type: ignore[assignment]
+    _HAS_BIGQUERY = False
+
+
+class BigQueryStorage(StorageBackend):
+    """Google BigQuery storage backend.
+
+    Reads/writes JSON rows to BigQuery tables.  Requires
+    ``google-cloud-bigquery`` at runtime.
+
+    Path convention: ``dataset.table`` — the *path* argument is split on
+    the first ``"."`` to derive the dataset and table identifiers.
+
+    Parameters
+    ----------
+    project_id:
+        GCP project ID.
+    dataset:
+        Default BigQuery dataset for operations when *path* does not
+        contain a ``"."`` separator.  Defaults to ``"dex"``.
+    location:
+        BigQuery dataset location (default ``"US"``).
+    client:
+        Optional pre-configured ``bigquery.Client`` (useful for tests).
+    """
+
+    def __init__(
+        self,
+        project_id: str,
+        dataset: str = "dex",
+        location: str = "US",
+        client: Any = None,
+    ) -> None:
+        self.project_id = project_id
+        self.dataset = dataset
+        self.location = location
+
+        if not _HAS_BIGQUERY:
+            logger.warning(
+                "google-cloud-bigquery not installed — BigQueryStorage operations will fail"
+            )
+            self._client = None
+        elif client is not None:
+            self._client = client
+            logger.info("BigQueryStorage initialised with injected client for %s", project_id)
+        else:
+            self._client = bq_client.Client(project=project_id, location=location)
+            logger.info("BigQueryStorage initialised for project %s", project_id)
+
+    def _table_ref(self, path: str) -> str:
+        """Resolve *path* to ``project.dataset.table``."""
+        if "." in path:
+            ds, table = path.split(".", 1)
+        else:
+            ds, table = self.dataset, path
+        return f"{self.project_id}.{ds}.{table}"
+
+    def write(
+        self,
+        data: Any,
+        path: str,
+        format: StorageFormat = StorageFormat.BIGQUERY,
+    ) -> bool:
+        """Load *data* (list of dicts) into a BigQuery table."""
+        if self._client is None:
+            logger.error("BigQueryStorage: google-cloud-bigquery not available")
+            return False
+        try:
+            records = data if isinstance(data, list) else [data]
+            table_ref = self._table_ref(path)
+            job_config = bq_client.LoadJobConfig(
+                source_format=bq_client.SourceFormat.NEWLINE_DELIMITED_JSON,
+                autodetect=True,
+                write_disposition=bq_client.WriteDisposition.WRITE_APPEND,
+            )
+            job = self._client.load_table_from_json(
+                records,
+                table_ref,
+                job_config=job_config,
+            )
+            job.result()  # block until complete
+            logger.info("Wrote %d records to %s", len(records), table_ref)
+            return True
+        except Exception as exc:
+            logger.error("BigQueryStorage write failed: %s", exc)
+            return False
+
+    def read(self, path: str, format: StorageFormat = StorageFormat.BIGQUERY) -> Any:
+        """Query all rows from a BigQuery table."""
+        if self._client is None:
+            logger.error("BigQueryStorage: google-cloud-bigquery not available")
+            return None
+        try:
+            table_ref = self._table_ref(path)
+            rows = self._client.list_rows(table_ref)
+            return [dict(row) for row in rows]
+        except Exception as exc:
+            logger.error("BigQueryStorage read failed: %s", exc)
+            return None
+
+    def delete(self, path: str) -> bool:
+        """Delete a BigQuery table."""
+        if self._client is None:
+            logger.error("BigQueryStorage: google-cloud-bigquery not available")
+            return False
+        try:
+            table_ref = self._table_ref(path)
+            self._client.delete_table(table_ref, not_found_ok=True)
+            logger.info("Deleted %s", table_ref)
+            return True
+        except Exception as exc:
+            logger.error("BigQueryStorage delete failed: %s", exc)
+            return False
+
+    def list_objects(self, prefix: str = "") -> list[str]:
+        """List tables in the dataset, optionally filtered by *prefix*."""
+        if self._client is None:
+            return []
+        try:
+            dataset_ref = f"{self.project_id}.{self.dataset}"
+            tables = self._client.list_tables(dataset_ref)
+            names = [t.table_id for t in tables]
+            if prefix:
+                names = [n for n in names if n.startswith(prefix)]
+            return names
+        except Exception as exc:
+            logger.error("BigQueryStorage list_objects failed: %s", exc)
+            return []
+
+    def exists(self, path: str) -> bool:
+        """Return ``True`` if the BigQuery table exists."""
+        if self._client is None:
+            return False
+        try:
+            table_ref = self._table_ref(path)
+            self._client.get_table(table_ref)
+            return True
+        except Exception as exc:
+            error_type = type(exc).__name__
+            if error_type == "NotFound":
+                return False
+            logger.error("BigQueryStorage.exists() failed: %s", exc)
+            raise
 
 
 class GCSStorage(StorageBackend):
@@ -492,8 +658,12 @@ class GCSStorage(StorageBackend):
         try:
             result: bool = self._bucket.blob(self._blob_name(f"{path}.json")).exists()
             return result
-        except Exception:
+        except (AttributeError, TypeError):
             return False
+        except Exception as exc:
+            # Surface auth/permission errors instead of silently returning False
+            logger.error("GCSStorage.exists() failed: %s", exc)
+            raise
 
 
 # ---------------------------------------------------------------------------
@@ -533,6 +703,12 @@ def get_storage(uri: str, **kwargs: Any) -> StorageBackend:
         return GCSStorage(
             bucket=parsed.netloc,
             prefix=parsed.path.lstrip("/"),
+            **kwargs,
+        )
+    if parsed.scheme == "bq":
+        return BigQueryStorage(
+            project_id=parsed.netloc,
+            dataset=parsed.path.lstrip("/") or "dex",
             **kwargs,
         )
     msg = f"Unsupported storage URI scheme: {parsed.scheme!r}"

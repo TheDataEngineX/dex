@@ -1,4 +1,4 @@
-"""Reusable API components — auth, health, errors, pagination, rate limiting, quality.
+"""Reusable API components — auth, health, errors, pagination, rate limiting.
 
 Public API::
 
@@ -8,23 +8,34 @@ Public API::
         PaginatedResponse, paginate,
         AuthMiddleware, AuthUser, create_token, decode_token,
         RateLimiter, RateLimitMiddleware,
-        get_quality_store, set_quality_store,
     )
+
+Routers (``v1_router``, ``ml_router``) have been moved to application
+packages (e.g. ``careerdex.api.routers``).
+
+Requires the ``[api]`` extra::
+
+    pip install dataenginex[api]
 """
 
 from __future__ import annotations
 
-from .auth import AuthMiddleware, AuthUser, create_token, decode_token
-from .errors import (
-    APIHTTPException,
-    BadRequestError,
-    NotFoundError,
-    ServiceUnavailableError,
-)
-from .health import ComponentHealth, HealthChecker, HealthStatus
-from .pagination import PaginatedResponse, PaginationMeta, paginate
-from .rate_limit import RateLimiter, RateLimitMiddleware
-from .routers.v1 import get_quality_store, set_quality_store
+try:
+    from .auth import AuthMiddleware, AuthUser, create_token, decode_token
+    from .errors import (
+        APIHTTPException,
+        BadRequestError,
+        NotFoundError,
+        ServiceUnavailableError,
+    )
+    from .health import ComponentHealth, HealthChecker, HealthStatus
+    from .pagination import PaginatedResponse, PaginationMeta, paginate
+    from .rate_limit import RateLimiter, RateLimitMiddleware
+except ImportError as _exc:
+    _MISSING_MSG = (
+        "dataenginex.api requires the [api] extra. Install it with: pip install dataenginex[api]"
+    )
+    raise ImportError(_MISSING_MSG) from _exc
 
 __all__ = [
     # Auth
@@ -45,9 +56,6 @@ __all__ = [
     "PaginatedResponse",
     "PaginationMeta",
     "paginate",
-    # Quality store
-    "get_quality_store",
-    "set_quality_store",
     # Rate limiting
     "RateLimiter",
     "RateLimitMiddleware",

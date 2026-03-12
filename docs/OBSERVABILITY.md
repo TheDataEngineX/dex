@@ -4,7 +4,7 @@
 
 > **Quick Links:** [Metrics](#prometheus-metrics) · [Tracing](#opentelemetry-tracing) · [Grafana](#grafana-dashboards) · [Local Testing](#local-testing) · [Troubleshooting](#troubleshooting)
 
----
+______________________________________________________________________
 
 ## 📋 Table of Contents
 
@@ -18,7 +18,7 @@
 - [Troubleshooting](#troubleshooting)
 - [Related Documentation](#related-documentation)
 
----
+______________________________________________________________________
 
 ## Overview
 
@@ -104,7 +104,7 @@ sequenceDiagram
     FastAPI-->>-Client: HTTP 200 OK<br/>X-Request-ID: uuid
 ```
 
----
+______________________________________________________________________
 
 ## Prometheus Metrics
 
@@ -120,11 +120,13 @@ sequenceDiagram
 ### Metrics Endpoint
 
 Access Prometheus metrics at:
+
 ```
 GET /metrics
 ```
 
 **Example output:**
+
 ```
 # HELP http_requests_total Total HTTP requests
 # TYPE http_requests_total counter
@@ -158,21 +160,25 @@ If you run the API outside Docker, use `localhost:8000` as the target.
 **Key Queries:**
 
 1. **Request Rate (RPS)**:
+
    ```promql
    rate(http_requests_total[5m])
    ```
 
-2. **P95 Latency**:
+1. **P95 Latency**:
+
    ```promql
    histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))
    ```
 
-3. **Error Rate**:
+1. **Error Rate**:
+
    ```promql
    rate(http_requests_total{status=~"5.."}[5m])
    ```
 
-4. **In-Flight Requests**:
+1. **In-Flight Requests**:
+
    ```promql
    http_requests_in_flight
    ```
@@ -219,7 +225,7 @@ flowchart TB
     style prometheus fill:#d1ecf1
 ```
 
----
+______________________________________________________________________
 
 ## OpenTelemetry Tracing
 
@@ -271,6 +277,7 @@ flowchart LR
 ### Automatic Instrumentation
 
 FastAPI is automatically instrumented with OpenTelemetry. Every request creates:
+
 - **Span** with request details (method, path, status)
 - **Trace ID** for distributed tracing
 - **Timing** information
@@ -322,7 +329,7 @@ Trace ID: 7f8a3b2c1d4e5f6a
 Total: 150ms
 ```
 
----
+______________________________________________________________________
 
 ## Grafana Dashboards
 
@@ -335,14 +342,14 @@ Prebuilt dashboards are available in [infra/grafana](https://github.com/TheDataE
 ### Import Steps
 
 1. Open Grafana → **Dashboards** → **New** → **Import**.
-2. Upload the JSON from infra/grafana/dashboards.
-3. Select Prometheus/Loki/Tempo data sources when prompted.
+1. Upload the JSON from infra/grafana/dashboards.
+1. Select Prometheus/Loki/Tempo data sources when prompted.
 
 ### Notes
 
 Dashboards assume default labels (e.g., `app=dataenginex`). If your labels differ, edit the dashboard variables and panel queries.
 
----
+______________________________________________________________________
 
 ## Local Testing
 
@@ -350,34 +357,42 @@ Dashboards assume default labels (e.g., `app=dataenginex`). If your labels diffe
 
 1. **Run the application**:
    ```bash
-  uv lock
-  uv sync
-  uv run poe api
    ```
+
+uv lock
+uv sync
+uv run poe api
+
+````
 
 2. **Test metrics endpoint**:
-   ```bash
-   curl http://localhost:8000/metrics
-   ```
+```bash
+curl http://localhost:8000/metrics
+````
 
-   **Expected output:**
-   ```
-   # HELP http_requests_total Total HTTP requests
-   # TYPE http_requests_total counter
-   http_requests_total{endpoint="/",method="GET",status="200"} 1.0
-   ...
-   ```
+**Expected output:**
+
+```
+# HELP http_requests_total Total HTTP requests
+# TYPE http_requests_total counter
+http_requests_total{endpoint="/",method="GET",status="200"} 1.0
+...
+```
 
 3. **Generate traffic to see metrics**:
    ```bash
    # Make some requests
    curl http://localhost:8000/
    curl http://localhost:8000/health
-  curl http://localhost:8000/ready
-
-   # Check updated metrics
-   curl http://localhost:8000/metrics
    ```
+
+curl http://localhost:8000/ready
+
+# Check updated metrics
+
+curl http://localhost:8000/metrics
+
+````
 
 ### Local Observability Stack (Prometheus + Grafana + Jaeger)
 
@@ -385,9 +400,10 @@ Use the bundled compose file for one-command local testing:
 
 ```bash
 docker compose -f docker-compose.yml up -d
-```
+````
 
 Then open:
+
 - Prometheus: http://localhost:9090
 - Grafana: http://localhost:3000 (admin / admin)
 - Jaeger: http://localhost:16686
@@ -395,6 +411,7 @@ Then open:
 ### Test with Jaeger (Optional)
 
 1. **Start Jaeger locally**:
+
    ```bash
    docker run -d --name jaeger \
      -e COLLECTOR_OTLP_ENABLED=true \
@@ -406,17 +423,21 @@ Then open:
      jaegertracing/all-in-one:1.60
    ```
 
-2. **Run application with tracing**:
+1. **Run application with tracing**:
+
    ```bash
    export OTLP_ENDPOINT="http://localhost:4317"
-  uv run poe api
    ```
 
+uv run poe api
+
+````
+
 3. **Generate traces**:
-   ```bash
-   # Make several requests
-   for i in {1..10}; do curl http://localhost:8000/; done
-   ```
+```bash
+# Make several requests
+for i in {1..10}; do curl http://localhost:8000/; done
+````
 
 4. **View traces in Jaeger UI**:
    - Open: http://localhost:16686
@@ -433,11 +454,13 @@ uv run poe api
 ```
 
 Make a request and check console output:
+
 ```bash
 curl http://localhost:8000/
 ```
 
 **Console output:**
+
 ```json
 {
   "name": "GET /",
@@ -473,10 +496,11 @@ uv run poe test-cov
 ```
 
 **Expected:**
+
 - 23 tests passing
 - Coverage >90%
 
----
+______________________________________________________________________
 
 ## Integration Examples
 
@@ -551,7 +575,7 @@ spec:
       interval: 15s
 ```
 
----
+______________________________________________________________________
 
 ## Alerts
 
@@ -562,14 +586,14 @@ The actual rule definitions live in `infra/monitoring/alerts/dataenginex-alerts.
 | Alert | Environment | Threshold | Severity | Receiver |
 |-------|-------------|-----------|----------|----------|
 | `DataEngineXLatencyHigh` | prod | P95 latency > 0.75s (5m window) | `page` | critical slack (#dex-alerts) |
-|                         | stage | P95 latency > 1.0s | `page` | same |
-|                         | dev | P95 latency > 1.5s | `warning` | email (ops alias) |
+| | stage | P95 latency > 1.0s | `page` | same |
+| | dev | P95 latency > 1.5s | `warning` | email (ops alias) |
 | `DataEngineXErrorRateHigh` | prod | 5xx fraction > 1% | `page` | critical slack |
-|                         | stage | 5xx fraction > 3% | `page` | critical slack |
-|                         | dev | 5xx fraction > 5% | `warning` | email |
+| | stage | 5xx fraction > 3% | `page` | critical slack |
+| | dev | 5xx fraction > 5% | `warning` | email |
 | `DataEngineXSaturationHigh` | prod | In-flight > 25 | `page` | critical slack |
-|                             | stage | In-flight > 15 | `warning` | email |
-|                             | dev | In-flight > 10 | `warning` | email |
+| | stage | In-flight > 15 | `warning` | email |
+| | dev | In-flight > 10 | `warning` | email |
 
 The production `alertmanager` configuration in `infra/monitoring/alertmanager.yml` routes all `severity=page` alerts to a Slack webhook (`#dex-alerts`) while `severity=warning` alerts go to the ops email alias. Alerts sharing the same `alertname` and `environment` are deduplicated via inhibit rules so warnings do not trigger when a page is active.
 
@@ -578,15 +602,19 @@ The production `alertmanager` configuration in `infra/monitoring/alertmanager.ym
 Whenever the alert rules or Alertmanager config changes, reapply the manifests so Prometheus and Alertmanager scrape the latest thresholds. Reload the rules in the following order to avoid gaps:
 
 1. Reapply the Prometheus rule set managed in GitOps:
+
 ```bash
 kubectl apply -f infra/monitoring/alerts/dataenginex-alerts.yml
 kubectl rollout restart deployment/prometheus
 ```
+
 2. Reconfigure Alertmanager so receivers and runbooks stay up to date:
+
 ```bash
 kubectl apply -f infra/monitoring/alertmanager.yml
 kubectl rollout restart deployment/alertmanager
 ```
+
 3. Verify the alerts appear in Alertmanager UI and reference the release runbook described in [`docs/DEPLOY_RUNBOOK.md`](https://github.com/TheDataEngineX/DEX/blob/main/docs/DEPLOY_RUNBOOK.md).
 
 If you manage the stack via ArgoCD, push the changes to the kustomize overlay and let ArgoCD sync the deployments automatically rather than running the commands above manually.
@@ -596,33 +624,34 @@ If you manage the stack via ArgoCD, push the changes to the kustomize overlay an
 These endpoints surface the modules under `src/pyconcepts` so that you can explore how the application mixes external data and streaming insights.
 
 1. **External data** — `GET /api/external-data?currency=USD`
+
    - Uses `pyconcepts.external_data.fetch_external_data` to call the Coindesk API and return the latest BTC rate for the requested currency.
    - Returns a JSON object with `symbol`, `currency`, `value`, `timestamp`, and `source` fields.
    - Example: `curl "http://localhost:8000/api/external-data?currency=eur"`
 
-2. **Streaming insights** — `GET /api/insights?count=5&interval=0.75`
+1. **Streaming insights** — `GET /api/insights?count=5&interval=0.75`
+
    - Streams conservative synthetic metrics via Server-Sent Events (`text/event-stream`).
    - Honors `count` (1–20) and `interval` seconds per event to throttle data for demos.
    - Consume it with `curl -N http://localhost:8000/api/insights` and parse each `data: {...}` chunk as JSON.
 
-
----
+______________________________________________________________________
 
 ## Best Practices
 
 ### Metrics
 
 1. **Use labels wisely**: Keep cardinality low (< 1000 unique label combinations)
-2. **Histogram buckets**: Adjust buckets based on your latency distribution
-3. **Counter vs Gauge**: Use counters for totals, gauges for current values
-4. **Naming**: Follow Prometheus naming conventions (`_total`, `_seconds`)
+1. **Histogram buckets**: Adjust buckets based on your latency distribution
+1. **Counter vs Gauge**: Use counters for totals, gauges for current values
+1. **Naming**: Follow Prometheus naming conventions (`_total`, `_seconds`)
 
 ### Tracing
 
 1. **Sampling**: In high-traffic scenarios, sample traces (e.g., 1% of requests)
-2. **Span attributes**: Add relevant context but avoid PII
-3. **Error tracking**: Mark spans with errors using `span.set_status()`
-4. **Span naming**: Use consistent, hierarchical names
+1. **Span attributes**: Add relevant context but avoid PII
+1. **Error tracking**: Mark spans with errors using `span.set_status()`
+1. **Span naming**: Use consistent, hierarchical names
 
 ### Performance
 
@@ -630,7 +659,7 @@ These endpoints surface the modules under `src/pyconcepts` so that you can explo
 - Tracing overhead: ~1-2ms per request (depends on sampling)
 - `/metrics` endpoint: Excluded from metrics to avoid recursion
 
----
+______________________________________________________________________
 
 ## Health Checks
 
@@ -656,66 +685,76 @@ export DEX_EXTERNAL_API_URL="https://api.example.com/health"
 
 If a component is not configured, it will show **skipped** in the response.
 
----
+______________________________________________________________________
 
 ## Troubleshooting
 
 ### Metrics not appearing
 
 1. Check `/metrics` endpoint is accessible
-2. Verify Prometheus can scrape the endpoint
-3. Check Prometheus targets: http://localhost:9090/targets
+1. Verify Prometheus can scrape the endpoint
+1. Check Prometheus targets: http://localhost:9090/targets
 
 ### Service not appearing in Jaeger UI
 
 **Troubleshooting steps:**
 
 1. **Verify Jaeger is running**:
+
    ```bash
    docker ps | grep jaeger
    ```
 
-2. **Check OTLP_ENDPOINT is set**:
-  ```bash
-  echo $OTLP_ENDPOINT
-  ```
-   Should output: `http://localhost:4317`
+1. **Check OTLP_ENDPOINT is set**:
+
+```bash
+echo $OTLP_ENDPOINT
+```
+
+Should output: `http://localhost:4317`
 
 3. **Generate traffic** - Jaeger only shows services that have sent traces:
    ```bash
    # Make several requests
    curl http://localhost:8000/
    curl http://localhost:8000/health
-  curl http://localhost:8000/ready
    ```
+
+curl http://localhost:8000/ready
+
+````
 
 4. **Verify service name** - Check application logs on startup:
-   ```json
-   {
-     "event": "application_started",
-     "service.name": "dataenginex"
-   }
-   ```
+```json
+{
+  "event": "application_started",
+  "service.name": "dataenginex"
+}
+````
 
 5. **Check Jaeger received traces**:
+
    - Open Jaeger UI: http://localhost:16686
    - Click the "Service" dropdown
    - Look for "dataenginex" (matches APP_NAME env var)
    - If not visible, select time range "Last Hour" and click "Find Traces"
 
-6. **Check for export errors** in application output:
+1. **Check for export errors** in application output:
+
    ```
    StatusCode.UNAVAILABLE - Jaeger not reachable
    StatusCode.INVALID_ARGUMENT - Configuration error
    ```
 
-7. **Enable console traces for debugging**:
+1. **Enable console traces for debugging**:
+
    ```bash
    export ENABLE_CONSOLE_TRACES="true"
    # Restart app - you'll see spans printed to console
    ```
 
-8. **Verify port 4317 is accessible**:
+1. **Verify port 4317 is accessible**:
+
    ```bash
    # Check if Jaeger is listening on OTLP port
    netstat -an | grep 4317
@@ -726,10 +765,10 @@ If a component is not configured, it will show **skipped** in the response.
 ### High memory usage
 
 1. Reduce trace sampling rate
-2. Check for metric label cardinality explosion
-3. Monitor `/metrics` response size
+1. Check for metric label cardinality explosion
+1. Monitor `/metrics` response size
 
----
+______________________________________________________________________
 
 ## Testing
 
@@ -739,19 +778,21 @@ Run observability tests:
 uv run poe test
 ```
 
----
+______________________________________________________________________
 
 ## Related Documentation
 
 **Deployment & Operations:**
+
 - **[CI/CD Pipeline](CI_CD.md)** - Automated deployments
 - **[Deployment Runbook](DEPLOY_RUNBOOK.md)** - Deploy procedures
 - **[Local K8s Setup](LOCAL_K8S_SETUP.md)** - Kubernetes setup
 
 **Development:**
+
 - **[SDLC](SDLC.md)** - Development workflow
 - **[Contributing](CONTRIBUTING.md)** - Contribution guide
 
----
+______________________________________________________________________
 
 **[← Back to Documentation Hub](docs-hub.md)**

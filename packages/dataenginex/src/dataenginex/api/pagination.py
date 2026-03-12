@@ -53,12 +53,17 @@ def encode_cursor(offset: int) -> str:
 
 
 def decode_cursor(cursor: str) -> int:
-    """Decode a cursor back to an integer offset.  Returns 0 on failure."""
+    """Decode a cursor back to an integer offset.
+
+    Raises:
+        ValueError: If the cursor is malformed or cannot be decoded.
+    """
     try:
         data = json.loads(base64.urlsafe_b64decode(cursor))
-        return int(data.get("o", 0))
-    except Exception:
-        return 0
+        return int(data["o"])
+    except (json.JSONDecodeError, KeyError, ValueError, UnicodeDecodeError) as exc:
+        msg = f"Invalid pagination cursor: {cursor!r}"
+        raise ValueError(msg) from exc
 
 
 def paginate(
@@ -82,7 +87,14 @@ def paginate(
         Hard ceiling on *limit* to prevent abuse.
     """
     limit = min(max(1, limit), max_limit)
-    offset = decode_cursor(cursor) if cursor else 0
+
+    if cursor:
+        try:
+            offset = decode_cursor(cursor)
+        except ValueError:
+            offset = 0  # Reset to first page on invalid cursor
+    else:
+        offset = 0
     total = len(items)
 
     page = items[offset : offset + limit]

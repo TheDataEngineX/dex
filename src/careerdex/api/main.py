@@ -12,7 +12,6 @@ from dataenginex.api.auth import AuthMiddleware
 from dataenginex.api.errors import APIHTTPException, ServiceUnavailableError
 from dataenginex.api.health import HealthChecker, HealthStatus
 from dataenginex.api.rate_limit import RateLimitMiddleware
-from dataenginex.api.routers.v1 import router as v1_router
 from dataenginex.core.schemas import (
     ComponentStatus,
     EchoRequest,
@@ -35,6 +34,10 @@ from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse, PlainTextResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from careerdex.api.routers.ml import ml_router
+from careerdex.api.routers.v1 import v1_router
+from careerdex.phases.phase5_api_services import careerdex_router
+
 log_level = os.getenv("LOG_LEVEL", "INFO")
 json_logs = os.getenv("LOG_FORMAT", "json") == "json"
 configure_logging(log_level=log_level, json_logs=json_logs)
@@ -48,8 +51,19 @@ configure_tracing(otlp_endpoint=otlp_endpoint, enable_console_export=enable_cons
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    from dataenginex.ml.registry import ModelRegistry
+    from dataenginex.ml.serving import ModelServer
+
+    from careerdex.api.routers.ml import set_model_server
+
     app.state.startup_complete = False
     logger.info("application_started", environment=os.getenv("ENVIRONMENT", "dev"))
+
+    # Initialize ML model server and registry
+    model_registry = ModelRegistry()
+    model_server = ModelServer(registry=model_registry)
+    set_model_server(model_server, model_registry)
+
     app.state.startup_complete = True
     yield
     app.state.startup_complete = False
@@ -73,6 +87,8 @@ app.add_middleware(AuthMiddleware)
 app.add_middleware(RateLimitMiddleware)
 
 app.include_router(v1_router)
+app.include_router(ml_router)
+app.include_router(careerdex_router)
 
 health_checker = HealthChecker()
 
@@ -105,6 +121,8 @@ def custom_openapi() -> dict[str, object]:
     schema["tags"] = [
         {"name": "core", "description": "Core service endpoints."},
         {"name": "health", "description": "Health and readiness probes."},
+        {"name": "v1", "description": "Versioned data and warehouse API."},
+        {"name": "ml", "description": "ML model serving and registry."},
         {"name": "docs", "description": "OpenAPI export utilities."},
         {"name": "observability", "description": "Metrics and telemetry."},
     ]
@@ -181,6 +199,17 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
     return JSONResponse(status_code=500, content=payload.model_dump())
 
 
+@app.exception_handler(NotImplementedError)
+async def not_implemented_handler(request: Request, exc: NotImplementedError) -> JSONResponse:
+    logger.warning("not_implemented", error=str(exc), path=str(request.url.path))
+    payload = ErrorResponse(
+        error="not_implemented",
+        message=str(exc) or "This feature is not implemented yet",
+        request_id=_request_id(request),
+    )
+    return JSONResponse(status_code=501, content=payload.model_dump())
+
+
 @app.get("/metrics", tags=["observability"])
 async def metrics() -> Response:
     data, content_type = get_metrics()
@@ -237,4 +266,6 @@ def openapi_yaml() -> PlainTextResponse:
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    host = os.getenv("CAREERDEX_HOST", "0.0.0.0")
+    port = int(os.getenv("CAREERDEX_PORT", "8000"))
+    uvicorn.run(app, host=host, port=port)

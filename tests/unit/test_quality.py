@@ -12,6 +12,24 @@ from dataenginex.core.quality import (
     QualityStore,
 )
 
+from careerdex.core.validators import QualityScorer
+
+# Default CareerDEX required fields — used to replicate old hardcoded defaults
+_JOB_REQUIRED_FIELDS = {"job_id", "source", "company_name", "job_title"}
+
+
+def _careerdex_gate(
+    store: QualityStore | None = None,
+) -> QualityGate:
+    """Return a QualityGate configured for CareerDEX job records."""
+    return QualityGate(
+        store=store,
+        scorer=QualityScorer.score_job_posting,
+        required_fields=_JOB_REQUIRED_FIELDS,
+        uniqueness_key="job_id",
+    )
+
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -174,14 +192,14 @@ class TestQualityGate:
 
     def test_evaluate_bronze_always_passes(self) -> None:
         """Bronze has threshold 0.0 — any data passes."""
-        gate = QualityGate()
+        gate = _careerdex_gate()
         records = [{"job_id": "1", "source": "x", "company_name": "A", "job_title": "B"}]
         result = gate.evaluate(records, layer=DataLayer.BRONZE)
         assert result.passed is True
         assert result.threshold == 0.0
 
     def test_evaluate_silver_with_good_data(self) -> None:
-        gate = QualityGate()
+        gate = _careerdex_gate()
         records = _batch(10)
         result = gate.evaluate(records, layer=DataLayer.SILVER)
         assert result.record_count == 10
@@ -190,7 +208,7 @@ class TestQualityGate:
 
     def test_evaluate_gold_with_sparse_data(self) -> None:
         """Gold requires ≥ 0.9 — sparse records should fail."""
-        gate = QualityGate()
+        gate = _careerdex_gate()
         records = [{"job_id": str(i)} for i in range(5)]
         result = gate.evaluate(records, layer=DataLayer.GOLD)
         assert result.passed is False
@@ -198,7 +216,7 @@ class TestQualityGate:
 
     def test_evaluate_stores_result(self) -> None:
         store = QualityStore()
-        gate = QualityGate(store=store)
+        gate = _careerdex_gate(store=store)
         gate.evaluate(_batch(3), layer=DataLayer.SILVER)
         assert store.latest("silver") is not None
 
@@ -213,7 +231,7 @@ class TestQualityGate:
         assert result.dimensions["completeness"] == 1.0
 
     def test_evaluate_uniqueness_with_duplicates(self) -> None:
-        gate = QualityGate()
+        gate = _careerdex_gate()
         records = [
             _job_record(job_id="dup"),
             _job_record(job_id="dup"),
@@ -224,24 +242,24 @@ class TestQualityGate:
         assert result.dimensions["uniqueness"] < 1.0
 
     def test_quality_dimensions_present(self) -> None:
-        gate = QualityGate()
+        gate = _careerdex_gate()
         result = gate.evaluate(_batch(2), layer=DataLayer.BRONZE)
         for dim in QualityDimension:
             assert dim.value in result.dimensions
 
     def test_profile_attached(self) -> None:
-        gate = QualityGate()
+        gate = _careerdex_gate()
         result = gate.evaluate(_batch(5), layer=DataLayer.SILVER)
         assert result.profile is not None
         assert result.profile.record_count == 5
 
     def test_store_property(self) -> None:
         store = QualityStore()
-        gate = QualityGate(store=store)
+        gate = _careerdex_gate(store=store)
         assert gate.store is store
 
     def test_gate_without_store(self) -> None:
-        gate = QualityGate()
+        gate = _careerdex_gate()
         assert gate.store is None
         # Should not raise even without a store
         result = gate.evaluate(_batch(1), layer=DataLayer.BRONZE)

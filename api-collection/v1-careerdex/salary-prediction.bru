@@ -1,0 +1,24 @@
+meta {
+  name: Salary Prediction
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/api/v1/careerdex/salary/prediction
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "title": "data_engineer",
+    "location": "San Francisco",
+    "experience_years": 5,
+    "skills": ["python", "sql", "spark"]
+  }
+}

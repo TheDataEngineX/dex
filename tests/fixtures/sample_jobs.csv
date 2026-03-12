@@ -1,0 +1,6 @@
+id,company,title,description,city,country,employment_type
+csv-001,TechStart,Junior Python Developer,Entry-level Python development role. Build web applications with Django and Flask.,Austin,US,full_time
+csv-002,BigData Corp,Data Scientist,Apply statistical models to business problems. R and Python experience required.,Chicago,US,full_time
+csv-003,WebDev Agency,Frontend Engineer,Build React applications with TypeScript. 3+ years of frontend experience needed.,Toronto,CA,contract
+csv-004,HealthTech,Platform Engineer,Design and scale microservices architecture. Go and gRPC experience preferred.,Boston,US,full_time
+csv-005,EduTech,QA Engineer,Automated testing with Selenium and Pytest. CI/CD pipeline experience a plus.,Remote,US,full_time

@@ -79,3 +79,6 @@ pip-wheel-metadata/
 
 # Generated site (Zensical / MkDocs)
 site/
+
+# Notes
+Notes.txt

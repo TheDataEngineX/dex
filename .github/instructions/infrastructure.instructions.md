@@ -5,7 +5,7 @@ applyTo: "infra/**/*,Dockerfile,docker-compose.yml"
 # Infrastructure — Project Specifics
 
 ## Docker
-- Multi-stage build: `python:3.11-slim` base, non-root `dex` user
+- Multi-stage build: `python:3.12-slim` base, non-root `dex` user
 - No dev deps in production image — maintain `.dockerignore`
 - Docker Compose includes Jaeger + OTLP for local observability
 

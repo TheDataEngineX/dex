@@ -1,24 +1,23 @@
-"""Core framework — schemas, validators, medallion architecture, pipeline config, quality.
+"""Core framework — schemas, validators, medallion architecture, quality.
+
+Domain-specific symbols should live in the application package
+(e.g. ``myapp.core``).
 
 Public API::
 
     from dataenginex.core import (
         # Medallion
         MedallionArchitecture, DataLayer, StorageFormat, LayerConfiguration,
-        StorageBackend, LocalParquetStorage, BigQueryStorage, DualStorage, DataLineage,
-        # Pipeline
-        PipelineConfig, PipelineMetrics,
+        StorageBackend, LocalParquetStorage, BigQueryStorage, DualStorage,
+        DataLineage,
         # Quality
         QualityGate, QualityStore, QualityResult, QualityDimension,
-        # Schemas
-        JobPosting, JobSourceEnum, UserProfile,
+        # Schemas (generic API)
         ErrorDetail, ErrorResponse, RootResponse, HealthResponse,
         StartupResponse, ComponentStatus, ReadinessResponse,
         EchoRequest, EchoResponse,
-        DataQualityReport, PipelineExecutionMetadata,
-        # Validators
-        SchemaValidator, DataQualityChecks, DataHash,
-        QualityScorer, ValidationReport,
+        # Validators (generic)
+        DataQualityChecks, ValidationReport,
     )
 """
 
@@ -35,29 +34,20 @@ from .medallion_architecture import (
     StorageBackend,
     StorageFormat,
 )
-from .pipeline_config import PipelineConfig, PipelineMetrics
 from .quality import QualityDimension, QualityGate, QualityResult, QualityStore
 from .schemas import (
     ComponentStatus,
-    DataQualityReport,
     EchoRequest,
     EchoResponse,
     ErrorDetail,
     ErrorResponse,
     HealthResponse,
-    JobPosting,
-    JobSourceEnum,
-    PipelineExecutionMetadata,
     ReadinessResponse,
     RootResponse,
     StartupResponse,
-    UserProfile,
 )
 from .validators import (
-    DataHash,
     DataQualityChecks,
-    QualityScorer,
-    SchemaValidator,
     ValidationReport,
 )
 
@@ -72,33 +62,22 @@ __all__ = [
     "MedallionArchitecture",
     "StorageBackend",
     "StorageFormat",
-    # Pipeline
-    "PipelineConfig",
-    "PipelineMetrics",
     # Quality gate
     "QualityDimension",
     "QualityGate",
     "QualityResult",
     "QualityStore",
-    # Schemas
+    # Schemas (generic API only)
     "ComponentStatus",
-    "DataQualityReport",
     "EchoRequest",
     "EchoResponse",
     "ErrorDetail",
     "ErrorResponse",
     "HealthResponse",
-    "JobPosting",
-    "JobSourceEnum",
-    "PipelineExecutionMetadata",
     "ReadinessResponse",
     "RootResponse",
     "StartupResponse",
-    "UserProfile",
-    # Validators
-    "DataHash",
+    # Validators (generic only)
     "DataQualityChecks",
-    "QualityScorer",
-    "SchemaValidator",
     "ValidationReport",
 ]

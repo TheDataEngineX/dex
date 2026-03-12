@@ -7,11 +7,12 @@ from datetime import UTC, datetime
 from unittest.mock import MagicMock
 
 import pytest
-from dataenginex.api.routers.ml import ml_router, set_model_server
 from dataenginex.ml.registry import ModelArtifact, ModelRegistry, ModelStage
 from dataenginex.ml.serving import ModelServer
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+
+from careerdex.api.routers.ml import ml_router, set_model_server
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -57,7 +58,7 @@ def client(model_server: ModelServer, registry: ModelRegistry) -> TestClient:
 @pytest.fixture()
 def unconfigured_client() -> Generator[TestClient, None, None]:
     """Create a client without a configured model server."""
-    from dataenginex.api.routers import ml as ml_module
+    from careerdex.api.routers import ml as ml_module
 
     # Temporarily clear the server
     original_server = ml_module._model_server

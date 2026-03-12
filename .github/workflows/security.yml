@@ -77,14 +77,20 @@ jobs:
 
   codeql:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ python, actions ]
     steps:
       - uses: actions/checkout@v6
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
         with:
-          languages: python
+          languages: ${{ matrix.language }}
       - name: Perform CodeQL Scan
         uses: github/codeql-action/analyze@v4
+        with:
+          category: /language:${{ matrix.language }}
 
   notify-security:
     name: Notify Security Status

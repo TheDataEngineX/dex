@@ -22,13 +22,15 @@ Implement the **Medallion Architecture** (Bronze → Silver → Gold layers) as 
 ### Architecture Layers
 
 1. **Bronze Layer (Raw Data)**
+
    - Stores raw data as-is from sources
    - No transformation applied
    - Schema validation only
    - High volume, immutable records
    - Storage: Parquet (local) + BigQuery (`*_bronze` datasets)
 
-2. **Silver Layer (Processed & Normalized)**
+1. **Silver Layer (Processed & Normalized)**
+
    - Data parsed and normalized
    - Quality validated
    - Deduplication applied
@@ -36,7 +38,8 @@ Implement the **Medallion Architecture** (Bronze → Silver → Gold layers) as 
    - Sensitive data masked/redacted
    - Storage: BigQuery (`*_silver` datasets) + embeddings cache (Redis)
 
-3. **Gold Layer (Aggregated & Analytics)**
+1. **Gold Layer (Aggregated & Analytics)**
+
    - Business-ready features
    - Pre-computed aggregations
    - ML model predictions
@@ -46,6 +49,7 @@ Implement the **Medallion Architecture** (Bronze → Silver → Gold layers) as 
 ### Implementation
 
 For each project (CareerDEX, Weather, etc.):
+
 ```
 <project>_bronze   → Raw data from APIs/sources
 <project>_silver   → Parsed, validated data
@@ -53,6 +57,7 @@ For each project (CareerDEX, Weather, etc.):
 ```
 
 Local development:
+
 ```
 ~/data/<project>/bronze/
 ~/data/<project>/silver/
@@ -62,20 +67,24 @@ Local development:
 ## Considered Alternatives
 
 ### 1. Single Large Table
+
 - Pros: Simpler schema
 - Cons: Difficult to scale, hard to debug data quality issues
 
 ### 2. Flat File Structure
+
 - Pros: Works for small projects
 - Cons: No schema governance, difficult to track lineage
 
 ### 3. Data Vault 2.0
+
 - Pros: Highly normalized, strong audit trail
 - Cons: Over-engineered for current needs, complex
 
 ## Consequences
 
 ### Positive
+
 - **Scalability**: Easy to add new projects following same pattern
 - **Debugging**: Issues isolated to specific layer
 - **Quality**: Explicit data quality checks at Silver layer
@@ -84,33 +93,39 @@ Local development:
 - **Performance**: Gold layer optimized for queries
 
 ### Negative
+
 - **Storage**: Triple storage for each dataset (3x costs)
 - **Complexity**: More orchestration needed
 - **Late binding**: Features computed in Gold, not in source
 
 ### Neutral
+
 - Requires discipline to not skip layers
 - Needs monitoring to catch quality issues
 
 ## Implementation Notes
 
 ### Phase 1 (v0.2.0)
+
 - Define schemas for each layer
 - Implement validation framework
 - Create local Parquet directories
 - Set up BigQuery datasets
 
-### Phase 2 (CareerDEX v0.3.0)
+### Phase 2 (CareerDEX v0.5.0)
+
 - Implement Bronze ingest (Airflow orchestration)
 - Implement Silver transformation (parsing, validation)
 - Populate Gold with features/predictions
 
 ### Migration Path
+
 If moving from existing flat structure:
+
 1. Map existing tables to layers
-2. Create Parquet exports at each layer
-3. Validate data transformations
-4. Gradually migrate pipelines
+1. Create Parquet exports at each layer
+1. Validate data transformations
+1. Gradually migrate pipelines
 
 ## Tooling
 
@@ -135,13 +150,15 @@ If moving from existing flat structure:
 ## Monitoring & Governance
 
 **Golden Rules**:
+
 1. ✅ Never skip a layer
-2. ✅ Always validate schema at layer boundaries
-3. ✅ Document transformations between layers
-4. ✅ Track data lineage
-5. ✅ Monitor quality metrics
+1. ✅ Always validate schema at layer boundaries
+1. ✅ Document transformations between layers
+1. ✅ Track data lineage
+1. ✅ Monitor quality metrics
 
 **Metrics to Track**:
+
 - Row counts at each layer
 - Quality validation pass rate
 - Transformation latency

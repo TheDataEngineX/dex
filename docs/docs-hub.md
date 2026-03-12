@@ -2,15 +2,16 @@
 
 **All documentation organized by topic and project.**
 
----
+______________________________________________________________________
 
 ## Getting Started
 
 **New to DEX? Start here:**
+
 1. **[Main README](https://github.com/TheDataEngineX/DEX/blob/main/README.md)** - Project overview
-2. **[Development Setup](./DEVELOPMENT.md)** - Local environment setup
-3. **[CI/CD Pipeline](./CI_CD.md)** - Build, release, and publish workflow
-4. **[Contributing](./CONTRIBUTING.md)** - How to contribute
+1. **[Development Setup](./DEVELOPMENT.md)** - Local environment setup
+1. **[CI/CD Pipeline](./CI_CD.md)** - Build, release, and publish workflow
+1. **[Contributing](./CONTRIBUTING.md)** - How to contribute
 
 ### One-step Setup
 
@@ -21,7 +22,7 @@ uv run poe check-all
 
 Use this to install dependencies, set up pre-commit hooks, and verify the workspace in one quick flow.
 
----
+______________________________________________________________________
 
 ## 📂 Documentation Structure
 
@@ -47,10 +48,12 @@ Core documentation for all DEX developers:
 Project-specific documentation:
 
 **CareerDEX**
+
 - **[CareerDEX Docs](./careerdex/index.md)** - Project overview and implementation status
 - **[Source Package](https://github.com/TheDataEngineX/DEX/tree/main/src/careerdex)** - Package-level structure and architecture
 
 **Weather** (Reference Implementation)
+
 - **[Weather Docs](./weather/index.md)** - Reference implementation guide
 - **[Source Package](./weather/index.md)** - Source package summary
 
@@ -60,7 +63,7 @@ Project-specific documentation:
 - **[Project Roadmap (Derived JSON)](./roadmap/project-roadmap.json)** - Machine-readable export generated from CSV
 - **[GitHub Issues](https://github.com/TheDataEngineX/DEX/issues)** - Task tracking
 
----
+______________________________________________________________________
 
 ## 🔍 Find What You Need
 
@@ -77,7 +80,7 @@ Project-specific documentation:
 | Work on CareerDEX | [CareerDEX Docs](./careerdex/index.md) |
 | Learn from reference | [Weather Docs](./weather/index.md) |
 
----
+______________________________________________________________________
 
 ## Documentation Structure
 
@@ -107,6 +110,6 @@ docs/
 └── (other docs organized by topic)
 ```
 
----
+______________________________________________________________________
 
-**Version**: v0.3.6 | **Updated**: Feb 27, 2026
+**Version**: v0.5.0 | **Updated**: March 12, 2026

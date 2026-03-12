@@ -76,7 +76,7 @@ class TestSklearnTrainer:
         trainer.save(path)
 
         trainer2 = SklearnTrainer("dummy", "1.0.0")
-        trainer2.load(path)
+        trainer2.load(path, extra_modules=frozenset({"tests"}))
         preds = trainer2.predict([[1]])
         assert preds == [7]
 

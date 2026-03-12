@@ -1,0 +1,11 @@
+meta {
+  name: Skill Gaps
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/api/v1/careerdex/insights/skill-gaps?target_role=data_engineer&current_skills=python,sql
+  body: none
+  auth: none
+}

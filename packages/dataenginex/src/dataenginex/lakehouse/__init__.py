@@ -20,11 +20,19 @@ from dataenginex.core.medallion_architecture import StorageBackend
 
 from .catalog import CatalogEntry, DataCatalog
 from .partitioning import DatePartitioner, HashPartitioner, PartitionStrategy
-from .storage import GCSStorage, JsonStorage, ParquetStorage, S3Storage, get_storage
+from .storage import (
+    BigQueryStorage,
+    GCSStorage,
+    JsonStorage,
+    ParquetStorage,
+    S3Storage,
+    get_storage,
+)
 
 __all__ = [
     # Storage backends (ABC + implementations)
     "StorageBackend",
+    "BigQueryStorage",
     "GCSStorage",
     "JsonStorage",
     "ParquetStorage",

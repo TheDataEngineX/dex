@@ -20,10 +20,11 @@ kubectl cluster-info
 ```
 
 If not running:
+
 1. Open Docker Desktop
-2. Settings → Kubernetes → Enable Kubernetes
-3. Apply & Restart
-4. Wait for "Kubernetes is running" status
+1. Settings → Kubernetes → Enable Kubernetes
+1. Apply & Restart
+1. Wait for "Kubernetes is running" status
 
 ## Step 2: Install ArgoCD
 
@@ -39,6 +40,7 @@ kubectl wait --for=condition=Ready pods --all -n argocd --timeout=300s
 ```
 
 Verify installation:
+
 ```bash
 kubectl get pods -n argocd
 
@@ -54,6 +56,7 @@ kubectl get pods -n argocd
 ## Step 3: Access ArgoCD UI
 
 ### Option A: Port Forward (Recommended for local)
+
 ```bash
 # Port forward ArgoCD server to localhost
 kubectl port-forward svc/argocd-server -n argocd 8080:443
@@ -63,6 +66,7 @@ kubectl port-forward svc/argocd-server -n argocd 8080:443
 ```
 
 ### Option B: Expose via NodePort (Alternative)
+
 ```bash
 # Patch service to NodePort
 kubectl patch svc argocd-server -n argocd -p '{"spec":{"type":"NodePort"}}'
@@ -83,6 +87,7 @@ echo "ArgoCD Admin Password: $ARGOCD_PASSWORD"
 ```
 
 Login:
+
 - **URL**: https://localhost:8080
 - **Username**: `admin`
 - **Password**: (from above command)
@@ -98,6 +103,7 @@ rm /tmp/argocd
 ```
 
 Login via CLI:
+
 ```bash
 argocd login localhost:8080 --username admin --password $ARGOCD_PASSWORD --insecure
 ```
@@ -120,12 +126,14 @@ kubectl get applications -n argocd
 ## Step 7: Sync Applications
 
 ### Option A: Via ArgoCD UI
+
 1. Go to https://localhost:8080
-2. Click on `dex-dev` application
-3. Click "SYNC" button
-4. Review changes → Click "SYNCHRONIZE"
+1. Click on `dex-dev` application
+1. Click "SYNC" button
+1. Review changes → Click "SYNCHRONIZE"
 
 ### Option B: Via ArgoCD CLI
+
 ```bash
 # Sync dev environment
 argocd app sync dex-dev
@@ -164,6 +172,7 @@ kubectl port-forward -n dex-dev svc/dex 8000:8000
 ```
 
 Test endpoints:
+
 - http://localhost:8000/
 - http://localhost:8000/health
 - http://localhost:8000/ready
@@ -172,6 +181,7 @@ Test endpoints:
 ## Step 10: Test GitOps Workflow
 
 ### Simulate Image Update (Manual)
+
 ```bash
 # Update dev kustomization.yaml
 newTag="sha-test1234"
@@ -184,6 +194,7 @@ git push origin dev
 ```
 
 Watch ArgoCD detect change:
+
 ```bash
 # ArgoCD polls git every 3 minutes by default
 # Force refresh immediately:
@@ -196,6 +207,7 @@ argocd app wait dex-dev --sync
 ## Troubleshooting
 
 ### ArgoCD pods not starting
+
 ```bash
 # Check pod events
 kubectl describe pod <pod-name> -n argocd
@@ -208,6 +220,7 @@ kubectl logs <pod-name> -n argocd
 ```
 
 ### Application stuck in "OutOfSync"
+
 ```bash
 # Check sync status
 argocd app get dex-dev
@@ -220,6 +233,7 @@ kubectl get events -n dex-dev --sort-by='.lastTimestamp'
 ```
 
 ### Image pull errors
+
 ```bash
 # If using ghcr.io, images must be public or you need imagePullSecrets
 # For local testing, build image locally:
@@ -232,6 +246,7 @@ docker tag thedataenginex/dex:latest localhost:5000/dex:latest
 ```
 
 ### Can't access localhost:8080
+
 ```bash
 # Check port forward is running
 ps -ef | grep kubectl
@@ -241,6 +256,7 @@ kubectl port-forward svc/argocd-server -n argocd 8080:443
 ```
 
 ### Application health degraded
+
 ```bash
 # Check deployment status
 kubectl rollout status deployment/dex -n dex-dev
@@ -255,6 +271,7 @@ kubectl top pods -n dex-dev
 ## Clean Up
 
 ### Remove specific application
+
 ```bash
 # Delete application (keeps namespace)
 argocd app delete dex-dev
@@ -267,6 +284,7 @@ kubectl delete namespace dex-dev
 ```
 
 ### Uninstall ArgoCD
+
 ```bash
 # Delete all ArgoCD resources
 kubectl delete -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
@@ -278,10 +296,11 @@ kubectl delete namespace argocd
 ## Next Steps
 
 After local validation:
+
 1. ✅ ArgoCD working locally
-2. ⏭️ Set up ArgoCD in your target Kubernetes cluster (cloud-managed or self-hosted)
-3. ⏭️ Set up promotion workflow with PR-based promotion
-4. ⏭️ Configure webhooks for instant sync (instead of 3-min polling)
+1. ⏭️ Set up ArgoCD in your target Kubernetes cluster (cloud-managed or self-hosted)
+1. ⏭️ Set up promotion workflow with PR-based promotion
+1. ⏭️ Configure webhooks for instant sync (instead of 3-min polling)
 
 ## Tips
 

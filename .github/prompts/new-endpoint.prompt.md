@@ -7,7 +7,7 @@ Create a new FastAPI endpoint for the DataEngineX project.
 
 ## Requirements
 
-1. **Route** — Add the endpoint in `packages/dataenginex/src/dataenginex/api/routers/v1.py`
+1. **Route** — Add the endpoint in `src/careerdex/api/routers/v1.py` (or create a new router)
    - Use `@router.get`, `@router.post`, etc. with `response_model=`
    - Follow existing patterns in that file (lazy imports, structlog logging)
    - Use `structlog.get_logger(__name__)` for logging
@@ -27,4 +27,4 @@ Create a new FastAPI endpoint for the DataEngineX project.
 
 5. **Verify** — Run `poe check-all` to confirm lint + typecheck + tests pass
 
-Refer to existing endpoints in `packages/dataenginex/src/dataenginex/api/routers/v1.py` for patterns.
+Refer to existing endpoints in `src/careerdex/api/routers/v1.py` for patterns.

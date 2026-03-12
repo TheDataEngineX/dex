@@ -7,6 +7,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Plugin system** — `DataEngineXPlugin` ABC, `PluginRegistry` with register/get/all/health_check_all, `discover()` for auto-loading plugins via `importlib.metadata` entry_points (`dataenginex.plugins` group)
+- **Streamlit dashboard** — `BaseDashboard` and `DashboardConfig` (Pydantic) with 4 reusable panels: pipeline status, quality scores, model drift, alerts. Optional `dashboard` dependency group (`streamlit>=1.40.0`)
+- **Coverage gate** — `--cov-fail-under=80` enforced in `test-cov-core` poe task
+
+## [0.6.0] - 2026-03-03
+
+### Changed — BREAKING
+
+- **Routers removed** — `api/routers/v1.py` and `api/routers/ml.py` moved to application packages (e.g. `careerdex.api.routers`). `dataenginex` no longer ships any route definitions — it provides only reusable API utilities (auth, health, errors, pagination, rate limiting).
+- **FastAPI is now optional** — Core install (`pip install dataenginex`) includes only lightweight deps: `pydantic`, `pyyaml`, `loguru`, `httpx`, `python-dotenv`, `prometheus-client`. API/middleware consumers must install `pip install dataenginex[api]` to get FastAPI, uvicorn, structlog, OpenTelemetry.
+- **Root `__init__.py` slimmed** — `from dataenginex import ...` no longer re-exports `HealthChecker`, `HealthStatus`, `configure_logging`, `configure_tracing`, `get_logger`. Use `from dataenginex.api import ...` or `from dataenginex.middleware import ...` directly (requires `[api]` extra).
+- **Domain extraction** — Removed all CareerDEX-specific code from the framework:
+  - Removed domain schemas from `core/schemas.py`: `JobSourceEnum`, `JobLocation`, `JobBenefits`, `JobPosting`, `UserProfile`, `PipelineExecutionMetadata`, `DataQualityReport`
+  - Removed domain validators from `core/validators.py`: `SchemaValidator`, `DataHash`, `QualityScorer`, domain-specific `DataQualityChecks` methods
+  - Deleted `core/pipeline_config.py` (100% domain-specific)
+  - Cleaned up all domain-specific docstring examples (`job_posting`, `job_classifier`, `salary_min`) → replaced with generic examples
+- **Injectable `QualityGate`** — `QualityGate.__init__` now accepts `scorer`, `required_fields`, and `uniqueness_key` keyword arguments
+- **Real `LocalParquetStorage`** — Reads/writes actual Parquet files via `pyarrow` (optional dep with `_HAS_PYARROW` guard)
+- **`BigQueryStorage` stubbed** — All methods raise `NotImplementedError`
+
+### Fixed
+
+- **Pickle safety** — `ml/training.py` now uses `SafeUnpickler` restricting deserialization to sklearn/numpy namespaces only; HMAC signature verification on model load (`DATAENGINEX_MODEL_HMAC_KEY` env var)
+- **Error swallowing** — `ml/training.py` `evaluate()` silence `except Exception: pass` → `except ImportError: logger.debug(...)` for optional metrics
+- **LLM error handling** — `OllamaProvider.generate()`/`chat()` raise `ConnectionError` on HTTP failures instead of returning empty `LLMResponse`
+- **Pagination cursor** — `decode_cursor()` raises `ValueError` on invalid input instead of silently returning 0
+- **Storage backends** — `S3Storage.exists()` catches `NoSuchKey` specifically; `GCSStorage.exists()` returns `blob.exists()` directly with specific exception handling
+
+### Added
+
+- **RAG Vector DB adapter** — `VectorStoreBackend` ABC with `InMemoryBackend` and `ChromaDBBackend` implementations; `RAGPipeline` orchestrator for document ingestion and semantic retrieval; `Document` and `SearchResult` dataclasses (#94)
+- **LLM integration** — `LLMProvider` ABC with `OllamaProvider` (local Ollama REST API) and `MockProvider` for testing; `generate_with_context()` for RAG-style augmented generation; `ChatMessage`, `LLMConfig`, `LLMResponse` dataclasses (#95)
+- **CareerDEX Phase 1: Foundation** — config loading from `job_config.json`, schema validation (JobPosting, UserProfile, PipelineExecutionMetadata), medallion architecture bootstrap, sample data generation (#65)
+- **CareerDEX Phase 2: Job Ingestion** — `JobSourceConnector` ABC with LinkedIn, Indeed, Glassdoor, CompanyCareerPages connectors; `DeduplicationEngine` for content-hash dedup; `JobIngestionPipeline` orchestrator (#66)
+- **CareerDEX Phase 3: Feature Engineering** — `JobDescriptionParser` (skill/salary/seniority extraction), `ResumeParser`, `SkillNormalizer` with 30+ alias mappings and category taxonomy, `EmbeddingGenerator` with sentence-transformers + hash fallback, `InMemoryVectorStore` (#67)
+- **CareerDEX Phase 4: ML Models** — `ResumeJobMatcher` (weighted cosine + skill/location/salary scoring), `SalaryPredictor` (XGBoost-style with location/seniority/skills adjustments), `SkillGapAnalyzer` (collaborative filtering), `CareerPathRecommender` (transition graph), `ChurnPredictor` (logistic regression) (#68)
+- **CareerDEX Phase 5: API Services** — FastAPI router at `/api/v1/careerdex/` with endpoints: salary prediction, skill gap analysis, career paths, career health/churn risk, market trends, job recommendations; full Pydantic request/response models (#69)
+- **CareerDEX Phase 6: Testing & Deployment** — `DeploymentConfig` with K8s manifest helpers, `MonitoringConfig` with 5 default Prometheus alert rules, `SecurityAudit` for secret scanning and SQL injection detection (#70)
+- Re-exports in root `__init__.py` and `ml/__init__.py` for all new vector store and LLM symbols
+- 82 new unit tests: `test_careerdex_phases.py` (55 tests), `test_vectorstore.py` (16 tests), `test_llm.py` (11 tests)
+
 ## [0.5.0] - 2026-03-01
 
 ### Added
@@ -152,14 +195,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cursor-based pagination utilities
 - Versioned API router (`/api/v1/`)
 
-[Unreleased]: https://github.com/TheDataEngineX/DEX/compare/v0.5.0...HEAD
-[0.5.0]: https://github.com/TheDataEngineX/DEX/compare/v0.4.11...v0.5.0
-[0.4.11]: https://github.com/TheDataEngineX/DEX/compare/v0.4.10...v0.4.11
-[0.4.10]: https://github.com/TheDataEngineX/DEX/compare/v0.4.8...v0.4.10
-[0.4.8]: https://github.com/TheDataEngineX/DEX/compare/v0.4.6...v0.4.8
-[0.4.6]: https://github.com/TheDataEngineX/DEX/compare/v0.4.5...v0.4.6
-[0.4.5]: https://github.com/TheDataEngineX/DEX/compare/v0.4.3...v0.4.5
-[0.4.3]: https://github.com/TheDataEngineX/DEX/compare/v0.4.1...v0.4.3
-[0.4.1]: https://github.com/TheDataEngineX/DEX/compare/v0.4.0...v0.4.1
-[0.4.0]: https://github.com/TheDataEngineX/DEX/compare/v0.3.5...v0.4.0
 [0.3.5]: https://github.com/TheDataEngineX/DEX/releases/tag/v0.3.5
+[0.4.0]: https://github.com/TheDataEngineX/DEX/compare/v0.3.5...v0.4.0
+[0.4.1]: https://github.com/TheDataEngineX/DEX/compare/v0.4.0...v0.4.1
+[0.4.10]: https://github.com/TheDataEngineX/DEX/compare/v0.4.8...v0.4.10
+[0.4.11]: https://github.com/TheDataEngineX/DEX/compare/v0.4.10...v0.4.11
+[0.4.3]: https://github.com/TheDataEngineX/DEX/compare/v0.4.1...v0.4.3
+[0.4.5]: https://github.com/TheDataEngineX/DEX/compare/v0.4.3...v0.4.5
+[0.4.6]: https://github.com/TheDataEngineX/DEX/compare/v0.4.5...v0.4.6
+[0.4.8]: https://github.com/TheDataEngineX/DEX/compare/v0.4.6...v0.4.8
+[0.5.0]: https://github.com/TheDataEngineX/DEX/compare/v0.4.11...v0.5.0
+[unreleased]: https://github.com/TheDataEngineX/DEX/compare/v0.5.0...HEAD

@@ -1,9 +1,71 @@
 # DataEngineX — Copilot Instructions
 
-Be pragmatic , straight forward and challenge my ideas. Question my assumptions , point out the blank spots and highlight opportunity costs. No sugarcoating. No pandering. No bias. No Both siding. No Retro Active Reasoning. If it is an issues/bug/problem find the root problem and suggest a solution don't skip or bypass it.
+Be pragmatic, straight forward and challenge my ideas. Question my assumptions, point out the blank spots and highlight opportunity costs. No sugarcoating. No pandering. No bias. No Both siding. No Retro Active Reasoning. If it is an issue/bug/problem find the root problem and suggest a solution don't skip or bypass it.
 
 These standards apply to **all code** across the DataEngineX project.
 Domain-specific guidance lives in [instructions/](instructions/) — loaded automatically by file path.
+
+---
+
+## Workflow Orchestration
+
+### 1. Plan First
+- Enter plan mode for ANY non-trivial task (3+ steps or architectural decisions)
+- If something goes sideways, STOP and re-plan immediately — don't keep pushing
+- Write plan to `tasks/todo.md` with checkable items before starting implementation
+- Write detailed specs upfront to reduce ambiguity
+
+### 2. Subagent Strategy
+- Use subagents liberally to keep main context window clean
+- Offload research, exploration, and parallel analysis to subagents
+- For complex problems, throw more compute at it via subagents
+- One task per subagent for focused execution
+- Wave execution: group independent tasks in parallel waves, sequence dependent ones
+
+### 3. Self-Improvement Loop
+- After ANY correction from the user: update `tasks/lessons.md` with the pattern
+- Write rules for yourself that prevent the same mistake
+- Ruthlessly iterate on these lessons until mistake rate drops
+- Review lessons at session start for the relevant project
+- Log research findings, dead ends, and architectural decisions to `tasks/findings.md`
+
+### 4. Verification Before Done
+- Never mark a task complete without proving it works
+- Diff behavior between main and your changes when relevant
+- Ask yourself: "Would a staff engineer approve this?"
+- Run tests, check logs, demonstrate correctness
+
+### 5. Demand Elegance (Balanced)
+- For non-trivial changes: pause and ask "is there a more elegant way?"
+- If a fix feels hacky: "Knowing everything I know now, implement the elegant solution"
+- Skip this for simple, obvious fixes — don't over-engineer
+- Challenge your own work before presenting it
+
+### 6. Autonomous Bug Fixing
+- When given a bug report: just fix it. Don't ask for hand-holding
+- Point at logs, errors, failing tests — then resolve them
+- Zero context switching required from the user
+- Go fix failing CI tests without being told how
+
+---
+
+## Task Management
+
+1. **Plan First**: Write plan to `tasks/todo.md` with checkable items
+2. **Verify Plan**: Check in before starting implementation
+3. **Track Progress**: Mark items complete as you go
+4. **Explain Changes**: High-level summary at each step
+5. **Document Results**: Add review section to `tasks/todo.md`
+6. **Capture Lessons**: Update `tasks/lessons.md` after corrections
+7. **Log Research**: Record findings, dead ends, and decisions in `tasks/findings.md`
+
+---
+
+## Core Principles
+
+- **Simplicity First**: Make every change as simple as possible. Impact minimal code.
+- **No Laziness**: Find root causes. No temporary fixes. Senior developer standards.
+- **Minimal Impact**: Changes should only touch what's necessary. Avoid introducing bugs.
 
 ---
 
@@ -14,7 +76,7 @@ Domain-specific guidance lives in [instructions/](instructions/) — loaded auto
 - `careerdex` — Job data platform (Airflow DAGs, data models)
 - `weatherdex` — Weather pipeline (PySpark ML, notebooks)
 
-**Stack:** Python 3.11+ | FastAPI | uv | Ruff | mypy strict | pytest | Docker | Kubernetes (ArgoCD)
+**Stack:** Python 3.12+ | FastAPI | uv | Ruff | mypy strict | pytest | Docker | Kubernetes (ArgoCD)
 
 **Build:** `hatchling` backend + `uv` package manager | Dep groups: `dev`, `data` (PySpark/Airflow), `notebook`
 
@@ -98,6 +160,19 @@ Domain-specific guidance lives in [instructions/](instructions/) — loaded auto
 
 **When generating code:** include type hints, docstrings, error handling, and tests. Use structured logging (key-value pairs, not f-strings). Create/use images, design diagrams wherever required.
 
-**After generating code:** run `uv run poe lint`, `uv run poe typecheck`, and `uv run poe test` to validate. Fix any issues before submitting PRs.
+**After generating code:** run the full validation pipeline in this exact order:
+
+1. **Lint:** `uv run poe lint` (or `uv run python -m ruff check src/ packages/ tests/`)
+2. **Typecheck:** `uv run poe typecheck` (or `uv run python -m mypy packages/dataenginex/src/dataenginex/ --strict`)
+3. **Unit tests:** `uv run poe test` (or `uv run python -m pytest tests/ -x --tb=short -q`)
+4. **Run the real app:** Start the server with `uv run uvicorn careerdex.api.main:app --port 8000` and verify:
+   - Health probes: `curl http://localhost:8000/health`, `/ready`, `/startup`
+   - Existing endpoints still work: `/`, `/echo`, `/api/v1/data/sources`, `/api/v1/system/config`
+   - New/changed endpoints respond with correct data (not just 200 OK — check response bodies)
+   - Metrics endpoint: `curl http://localhost:8000/metrics`
+   - OpenAPI spec includes all routes: `curl http://localhost:8000/openapi.json`
+5. **Standalone module validation:** Import and run key classes outside the API to verify they work independently (not just through endpoints)
+
+Tests and lint passing is necessary but NOT sufficient. The real app must boot, serve requests, and return correct data. Never skip step 4.
 
 **Before submitting PRs:** Update/remove all the files in the entire project whether they are affeted or not. This is to ensure that the codebase is consistent and up to date with the latest changes. Bumping up versions.This includes code, tests, workflows, configs, documentation, all files in .github folder, comments, and any relevant files that may be impacted by the changes made in the PR.

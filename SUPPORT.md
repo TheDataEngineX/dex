@@ -15,9 +15,9 @@ This document explains how to get help for DataEngineX (DEX).
 Please check:
 
 1. `README.md`
-2. `docs/docs-hub.md`
-3. Existing Issues and Discussions
-4. Public docs site: `https://docs.thedataenginex.org`
+1. `docs/docs-hub.md`
+1. Existing Issues and Discussions
+1. Public docs site: `https://docs.thedataenginex.org`
 
 ## What to Include in Help Requests
 
