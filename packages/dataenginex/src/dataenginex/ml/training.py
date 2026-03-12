@@ -8,7 +8,11 @@ The ``BaseTrainer`` ABC defines a standard train → evaluate → save lifecycle
 
 from __future__ import annotations
 
+import hashlib
+import hmac
+import io
 import json
+import os
 import pickle
 import time
 from abc import ABC, abstractmethod
@@ -24,6 +28,61 @@ __all__ = [
     "SklearnTrainer",
     "TrainingResult",
 ]
+
+# ---------------------------------------------------------------------------
+# Pickle safety — restrict deserialization to trusted namespaces
+# ---------------------------------------------------------------------------
+
+_ALLOWED_PICKLE_MODULES: frozenset[str] = frozenset(
+    {
+        "sklearn",
+        "numpy",
+        "scipy",
+        "copy",
+        "builtins",
+        "collections",
+        "_codecs",
+    }
+)
+
+
+class _SafeUnpickler(pickle.Unpickler):
+    """Unpickler that only permits classes from trusted ML namespaces."""
+
+    def __init__(
+        self,
+        fp: io.BytesIO,
+        *,
+        extra_modules: frozenset[str] | None = None,
+    ) -> None:
+        super().__init__(fp)
+        self._allowed = _ALLOWED_PICKLE_MODULES | (extra_modules or frozenset())
+
+    def find_class(
+        self,
+        module: str,
+        name: str,
+    ) -> type:
+        top_level = module.split(".")[0]
+        if top_level not in self._allowed:
+            msg = (
+                f"Unsafe pickle: module '{module}' is not in the "
+                f"allowed list {sorted(self._allowed)}"
+            )
+            raise pickle.UnpicklingError(msg)
+        return super().find_class(module, name)  # type: ignore[no-any-return]
+
+
+def _hmac_sign(data: bytes) -> str:
+    """Compute HMAC-SHA256 of *data* using DEX_MODEL_SECRET or a default key."""
+    secret = os.environ.get("DEX_MODEL_SECRET", "dex-dev-only").encode()
+    return hmac.new(secret, data, hashlib.sha256).hexdigest()
+
+
+def _hmac_verify(data: bytes, expected_sig: str) -> bool:
+    """Return ``True`` if HMAC signature matches."""
+    actual = _hmac_sign(data)
+    return hmac.compare_digest(actual, expected_sig)
 
 
 @dataclass
@@ -94,7 +153,12 @@ class BaseTrainer(ABC):
         ...
 
     @abstractmethod
-    def load(self, path: str) -> None:
+    def load(
+        self,
+        path: str,
+        *,
+        extra_modules: frozenset[str] | None = None,
+    ) -> None:
         """Load a previously saved model from *path*."""
         ...
 
@@ -176,7 +240,7 @@ class SklearnTrainer(BaseTrainer):
 
         # Attempt classification metrics
         try:
-            from sklearn.metrics import (  # type: ignore[import-not-found]
+            from sklearn.metrics import (  # type: ignore[import-untyped]
                 f1_score,
                 precision_score,
                 recall_score,
@@ -215,8 +279,10 @@ class SklearnTrainer(BaseTrainer):
                 ),
                 4,
             )
-        except Exception:
-            pass
+        except ImportError:
+            logger.debug(
+                "sklearn.metrics not available — skipping precision/recall/f1",
+            )
 
         return metrics
 
@@ -227,13 +293,19 @@ class SklearnTrainer(BaseTrainer):
         return self.estimator.predict(X)
 
     def save(self, path: str) -> str:
-        """Pickle the fitted model and its metadata to *path*."""
+        """Pickle the fitted model, write an HMAC signature, and metadata."""
         if not self._is_fitted:
             raise RuntimeError("Model not yet trained")
 
         out = Path(path)
         out.parent.mkdir(parents=True, exist_ok=True)
-        out.write_bytes(pickle.dumps(self.estimator))
+
+        model_bytes = pickle.dumps(self.estimator)
+        out.write_bytes(model_bytes)
+
+        # HMAC sidecar — verifies integrity on load
+        sig_path = out.with_suffix(".sig")
+        sig_path.write_text(_hmac_sign(model_bytes))
 
         # Save metadata alongside
         meta = out.with_suffix(".json")
@@ -250,9 +322,43 @@ class SklearnTrainer(BaseTrainer):
         logger.info("Saved model %s to %s", self.model_name, out)
         return str(out)
 
-    def load(self, path: str) -> None:
-        """Load a pickled model from *path* and mark as fitted."""
-        data = Path(path).read_bytes()
-        self.estimator = pickle.loads(data)  # noqa: S301
+    def load(
+        self,
+        path: str,
+        *,
+        extra_modules: frozenset[str] | None = None,
+    ) -> None:
+        """Load a pickled model with HMAC verification and safe unpickling.
+
+        Args:
+            path: Filesystem path to the ``.pkl`` artifact.
+            extra_modules: Additional top-level module names to allow
+                during unpickling (e.g. ``frozenset({"tests"})`` for
+                test-only estimators).
+        """
+        artifact = Path(path)
+        data = artifact.read_bytes()
+
+        # Verify HMAC signature if sidecar exists
+        sig_path = artifact.with_suffix(".sig")
+        if sig_path.exists():
+            expected = sig_path.read_text().strip()
+            if not _hmac_verify(data, expected):
+                msg = (
+                    f"HMAC verification failed for {path}. "
+                    "The model file may have been tampered with."
+                )
+                raise ValueError(msg)
+        else:
+            logger.warning(
+                "No .sig sidecar for %s — skipping HMAC check",
+                path,
+            )
+
+        # Safe unpickle — restricted to sklearn/numpy namespaces
+        self.estimator = _SafeUnpickler(
+            io.BytesIO(data),
+            extra_modules=extra_modules,
+        ).load()
         self._is_fitted = True
         logger.info("Loaded model %s from %s", self.model_name, path)
