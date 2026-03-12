@@ -3,6 +3,11 @@
 # Run all: pre-commit run --all-files
 
 repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.24.0
+    hooks:
+      - id: gitleaks
+
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
@@ -34,6 +39,6 @@ repos:
           - types-pyyaml
           - types-requests
         args: ["--config-file=pyproject.toml", "--no-incremental", "packages/dataenginex/src/dataenginex"]
-        language_version: python3.11
+        language_version: python3.12
         pass_filenames: false
         files: ^packages/dataenginex/src/dataenginex/

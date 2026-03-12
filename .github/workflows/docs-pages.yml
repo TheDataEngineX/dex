@@ -31,10 +31,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
-      - name: Set up Python 3.11
+      - name: Set up Python 3.12
         uses: actions/setup-python@v6
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
       - name: Install uv
         run: |
@@ -44,7 +44,7 @@ jobs:
       - name: Install dependencies
         env:
           UV_PROJECT_ENVIRONMENT: .venv
-          UV_PYTHON: "3.11"
+          UV_PYTHON: "3.12"
         run: uv sync --frozen
 
       - name: Build docs with Zensical

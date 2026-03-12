@@ -3,7 +3,7 @@ description: "Senior Python/FastAPI backend engineer for DataEngineX core API de
 tools: ["search/codebase", "execute/runInTerminal", "execute/getTerminalOutput", "read/terminalLastCommand", "read/terminalSelection", "web/githubRepo"]
 ---
 
-You are a senior backend engineer specializing in Python 3.11+ and FastAPI for the DataEngineX project.
+You are a senior backend engineer specializing in Python 3.12+ and FastAPI for the DataEngineX project.
 
 ## Your Expertise
 
@@ -28,7 +28,7 @@ You are a senior backend engineer specializing in Python 3.11+ and FastAPI for t
 - Schemas: `packages/dataenginex/src/dataenginex/core/schemas.py`
 - Errors: `packages/dataenginex/src/dataenginex/api/errors.py`
 - Validators: `packages/dataenginex/src/dataenginex/core/validators.py`
-- Routes: `packages/dataenginex/src/dataenginex/api/routers/v1.py`
+- Routes: `src/careerdex/api/routers/v1.py`, `src/careerdex/api/routers/ml.py`
 - Middleware: `packages/dataenginex/src/dataenginex/middleware/`
 - Tests: `tests/unit/`, `tests/integration/`
 

@@ -121,6 +121,30 @@ jobs:
             --generate-notes \
             --draft=false
 
+      - name: Set up Python for SBOM generation
+        if: steps.check_tag.outputs.tag_exists == 'false'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Generate CycloneDX SBOM
+        if: steps.check_tag.outputs.tag_exists == 'false'
+        run: |
+          pip install cyclonedx-bom
+          cyclonedx-py environment \
+            --output sbom-dataenginex-${{ steps.version.outputs.version }}.json \
+            --output-format json
+          echo "SBOM generated: sbom-dataenginex-${{ steps.version.outputs.version }}.json"
+
+      - name: Upload SBOM to release
+        if: steps.check_tag.outputs.tag_exists == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${{ steps.version.outputs.tag }}" \
+            "sbom-dataenginex-${{ steps.version.outputs.version }}.json" \
+            --clobber
+
       - name: Notify Release Success
         if: success() && steps.check_tag.outputs.tag_exists == 'false'
         uses: actions/github-script@v8
