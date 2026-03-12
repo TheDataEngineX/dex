@@ -1,0 +1,57 @@
+[
+  {
+    "id": "json-001",
+    "company": "Acme Corp",
+    "title": "Senior Data Engineer",
+    "description": "Build and maintain data pipelines using Python, Spark, and Airflow. Requires 5+ years experience with large-scale data processing.",
+    "location": {"country": "US", "city": "Seattle"},
+    "employment_type": "full_time",
+    "required_skills": ["Python", "Spark", "Airflow", "SQL"],
+    "salary_min": 140000,
+    "salary_max": 190000
+  },
+  {
+    "id": "json-002",
+    "company": "DataFlow Inc",
+    "title": "ML Engineer",
+    "description": "Design and deploy machine learning models in production. Experience with PyTorch, MLflow, and Kubernetes required.",
+    "location": {"country": "US", "city": "San Francisco"},
+    "employment_type": "full_time",
+    "required_skills": ["Python", "PyTorch", "MLflow", "Kubernetes"],
+    "salary_min": 160000,
+    "salary_max": 220000
+  },
+  {
+    "id": "json-003",
+    "company": "CloudScale",
+    "title": "Backend Developer",
+    "description": "Develop REST APIs with FastAPI and PostgreSQL. Must have experience with Docker and CI/CD pipelines.",
+    "location": {"country": "UK", "city": "London"},
+    "employment_type": "full_time",
+    "required_skills": ["Python", "FastAPI", "PostgreSQL", "Docker"],
+    "salary_min": 65000,
+    "salary_max": 85000
+  },
+  {
+    "id": "json-004",
+    "company": "FinTech Solutions",
+    "title": "Data Analyst",
+    "description": "Analyze financial datasets and create dashboards. SQL and Python required along with Tableau experience.",
+    "location": {"country": "US", "city": "New York"},
+    "employment_type": "contract",
+    "required_skills": ["SQL", "Python", "Tableau"],
+    "salary_min": 90000,
+    "salary_max": 120000
+  },
+  {
+    "id": "json-005",
+    "company": "GreenTech",
+    "title": "DevOps Engineer",
+    "description": "Manage cloud infrastructure on AWS. Terraform and Kubernetes expertise needed for multi-region deployments.",
+    "location": {"country": "DE", "city": "Berlin"},
+    "employment_type": "full_time",
+    "required_skills": ["AWS", "Terraform", "Kubernetes", "Docker"],
+    "salary_min": 70000,
+    "salary_max": 95000
+  }
+]
