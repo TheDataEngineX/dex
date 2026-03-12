@@ -183,8 +183,8 @@ class TransformPipeline:
     Example::
 
         pipeline = TransformPipeline("bronze_to_silver")
-        pipeline.add(DropNullsTransform(["job_id", "company_name"]))
-        pipeline.add(CastTypesTransform({"salary_min": "float"}))
+        pipeline.add(DropNullsTransform(["event_id", "user_name"]))
+        pipeline.add(CastTypesTransform({"amount": "float"}))
         result = pipeline.run(records)
     """
 

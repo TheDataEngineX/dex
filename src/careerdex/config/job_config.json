@@ -1,0 +1,127 @@
+{
+  "pipeline": {
+    "name": "careerdex-job-ingestion",
+    "schedule": "0 */3 * * *",
+    "timeout_minutes": 120,
+    "retry_count": 3,
+    "retry_delay_seconds": 60
+  },
+  "sources": {
+    "linkedin": {
+      "enabled": true,
+      "api_endpoint": "https://api.linkedin.com/v2/jobs",
+      "batch_size": 100,
+      "rate_limit_per_minute": 80,
+      "expected_jobs_per_cycle": 1250
+    },
+    "indeed": {
+      "enabled": true,
+      "base_url": "https://www.indeed.com",
+      "batch_size": 50,
+      "rate_limit_per_minute": 30,
+      "expected_jobs_per_cycle": 6250
+    },
+    "glassdoor": {
+      "enabled": true,
+      "base_url": "https://www.glassdoor.com",
+      "batch_size": 50,
+      "rate_limit_per_minute": 20,
+      "expected_jobs_per_cycle": 2500
+    },
+    "company_career_pages": {
+      "enabled": true,
+      "ats_apis": {
+        "greenhouse": "https://boards-api.greenhouse.io/v1",
+        "lever": "https://api.lever.co/v0/postings"
+      },
+      "batch_size": 25,
+      "expected_jobs_per_cycle": 3750
+    }
+  },
+  "storage": {
+    "local_base_path": "data/careerdex",
+    "layers": {
+      "bronze": {
+        "path": "bronze",
+        "format": "parquet",
+        "compression": "snappy",
+        "retention_days": 90
+      },
+      "silver": {
+        "path": "silver",
+        "format": "parquet",
+        "compression": "snappy",
+        "retention_days": 365
+      },
+      "gold": {
+        "path": "gold",
+        "format": "parquet",
+        "compression": "snappy",
+        "retention_days": null
+      }
+    }
+  },
+  "quality": {
+    "min_quality_score": 0.6,
+    "required_fields": [
+      "job_id",
+      "source",
+      "source_job_id",
+      "company_name",
+      "job_title",
+      "job_description",
+      "location",
+      "employment_type",
+      "posted_date"
+    ],
+    "dedup_fields": [
+      "source_job_id",
+      "source",
+      "company_name",
+      "job_title"
+    ]
+  },
+  "embeddings": {
+    "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+    "dimension": 384,
+    "batch_size": 64,
+    "cache_ttl_seconds": 3600
+  },
+  "ml_models": {
+    "resume_job_matcher": {
+      "weights": {
+        "embedding_similarity": 0.50,
+        "skill_overlap": 0.20,
+        "location_match": 0.15,
+        "salary_fit": 0.15
+      }
+    },
+    "salary_predictor": {
+      "algorithm": "xgboost",
+      "percentiles": [25, 50, 75]
+    },
+    "skill_gap_analyzer": {
+      "top_k_recommendations": 5
+    },
+    "career_path_recommender": {
+      "max_paths": 3,
+      "min_transition_probability": 0.05
+    },
+    "churn_predictor": {
+      "algorithm": "logistic_regression",
+      "threshold": 0.7
+    }
+  },
+  "api": {
+    "cache_ttl": {
+      "recommendations": 300,
+      "salary_prediction": 86400,
+      "market_trends": 3600,
+      "skills_trending": 3600
+    },
+    "pagination": {
+      "default_page_size": 20,
+      "max_page_size": 100
+    }
+  }
+}

@@ -14,15 +14,14 @@ from __future__ import annotations
 from typing import Any
 
 import structlog
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field
-
 from dataenginex.ml.metrics import (
     model_prediction_latency_seconds,
     model_prediction_total,
 )
 from dataenginex.ml.registry import ModelRegistry
 from dataenginex.ml.serving import ModelServer, PredictionRequest, PredictionResponse
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel, Field
 
 __all__ = [
     "get_model_server",

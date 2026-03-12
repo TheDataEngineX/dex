@@ -12,8 +12,6 @@ from dataenginex.api.auth import AuthMiddleware
 from dataenginex.api.errors import APIHTTPException, ServiceUnavailableError
 from dataenginex.api.health import HealthChecker, HealthStatus
 from dataenginex.api.rate_limit import RateLimitMiddleware
-from dataenginex.api.routers.ml import ml_router
-from dataenginex.api.routers.v1 import router as v1_router
 from dataenginex.core.schemas import (
     ComponentStatus,
     EchoRequest,
@@ -35,6 +33,10 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse, PlainTextResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
+
+from careerdex.api.routers.ml import ml_router
+from careerdex.api.routers.v1 import v1_router
+from careerdex.phases.phase5_api_services import careerdex_router
 
 log_level = os.getenv("LOG_LEVEL", "INFO")
 json_logs = os.getenv("LOG_FORMAT", "json") == "json"
@@ -75,6 +77,7 @@ app.add_middleware(RateLimitMiddleware)
 
 app.include_router(v1_router)
 app.include_router(ml_router)
+app.include_router(careerdex_router)
 
 health_checker = HealthChecker()
 
@@ -185,6 +188,17 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
     return JSONResponse(status_code=500, content=payload.model_dump())
 
 
+@app.exception_handler(NotImplementedError)
+async def not_implemented_handler(request: Request, exc: NotImplementedError) -> JSONResponse:
+    logger.warning("not_implemented", error=str(exc), path=str(request.url.path))
+    payload = ErrorResponse(
+        error="not_implemented",
+        message=str(exc) or "This feature is not implemented yet",
+        request_id=_request_id(request),
+    )
+    return JSONResponse(status_code=501, content=payload.model_dump())
+
+
 @app.get("/metrics", tags=["observability"])
 async def metrics() -> Response:
     data, content_type = get_metrics()
@@ -241,4 +255,6 @@ def openapi_yaml() -> PlainTextResponse:
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    host = os.getenv("CAREERDEX_HOST", "0.0.0.0")
+    port = int(os.getenv("CAREERDEX_PORT", "8000"))
+    uvicorn.run(app, host=host, port=port)

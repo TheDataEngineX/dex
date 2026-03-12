@@ -1,119 +1,240 @@
-"""
-CareerDEX Phase 6: Testing & Deployment (full implementation)
+"""CareerDEX Phase 6: Testing, Documentation & Deployment (Issue #70).
+
+Provides utilities for:
+- Deployment configuration (Docker, K8s, GCP Cloud Run)
+- Monitoring dashboards and alerting rules
+- Load-test configuration (Locust)
+- Health-check integration
+- Security audit helpers
+
+This module does NOT perform actual deployment — it generates the
+configuration that deployment tools (ArgoCD, GitHub Actions) consume.
 """
 
 from __future__ import annotations
 
-import logging
-from datetime import datetime
+from dataclasses import dataclass, field
 from typing import Any
 
-logger = logging.getLogger(__name__)
+from loguru import logger
+
+__all__ = [
+    "AlertRule",
+    "DeploymentConfig",
+    "MonitoringConfig",
+    "SecurityAudit",
+    "generate_deployment_config",
+]
 
 
-class IntegrationTests:
-    """Integration tests for CareerDEX."""
-
-    @staticmethod
-    def test_end_to_end_pipeline() -> tuple[bool, dict[str, Any]]:
-        logger.info("Running end-to-end pipeline test...")
-        tests = {
-            "job_fetch": True,
-            "data_cleaning": True,
-            "deduplication": True,
-            "embedding_generation": True,
-            "vector_storage": True,
-            "gold_layer_storage": True,
-        }
-        return all(tests.values()), tests
+# ======================================================================
+# Deployment configuration
+# ======================================================================
 
 
-class PerformanceTests:
-    """Performance and load testing."""
+@dataclass
+class DeploymentConfig:
+    """Deployment parameters for CareerDEX."""
 
-    @staticmethod
-    def test_api_latency(endpoint: str, requests: int = 100) -> dict[str, Any]:
-        logger.info(f"Testing latency for {endpoint}")
+    image: str = "ghcr.io/thedataenginex/dex:latest"
+    replicas: int = 2
+    cpu_request: str = "250m"
+    cpu_limit: str = "1000m"
+    memory_request: str = "512Mi"
+    memory_limit: str = "2Gi"
+    port: int = 8000
+    health_path: str = "/health"
+    readiness_path: str = "/ready"
+    startup_path: str = "/startup"
+    env_vars: dict[str, str] = field(default_factory=dict)
+
+    def to_k8s_env(self) -> list[dict[str, str]]:
+        """Convert env vars to K8s manifest format."""
+        return [{"name": k, "value": v} for k, v in sorted(self.env_vars.items())]
+
+    def summary(self) -> dict[str, Any]:
+        """Return a deployment summary dict."""
         return {
-            "endpoint": endpoint,
-            "requests": requests,
-            "avg_latency_ms": 150,
-            "p95_ms": 450,
+            "image": self.image,
+            "replicas": self.replicas,
+            "resources": {
+                "cpu": f"{self.cpu_request}/{self.cpu_limit}",
+                "memory": f"{self.memory_request}/{self.memory_limit}",
+            },
+            "probes": {
+                "health": self.health_path,
+                "readiness": self.readiness_path,
+                "startup": self.startup_path,
+            },
+            "env_var_count": len(self.env_vars),
         }
 
 
-class Documentation:
-    """Documentation generation."""
-
-    @staticmethod
-    def generate_api_docs() -> dict[str, Any]:
-        return {"format": "OpenAPI 3.0", "endpoints": 20}
-
-    @staticmethod
-    def generate_deployment_guide() -> dict[str, Any]:
-        return {"format": "Markdown", "sections": 8}
+# ======================================================================
+# Monitoring & alerting
+# ======================================================================
 
 
-class MonitoringSetup:
-    """Monitoring and alerting configuration."""
+@dataclass
+class AlertRule:
+    """Prometheus alerting rule."""
 
-    @staticmethod
-    def setup_prometheus_metrics() -> dict[str, Any]:
+    name: str
+    expr: str
+    duration: str = "5m"
+    severity: str = "warning"
+    summary: str = ""
+
+    def to_prom_rule(self) -> dict[str, Any]:
+        """Serialise to Prometheus rule YAML structure."""
         return {
-            "metrics": [
-                "careerdex_pipeline_duration_seconds",
-                "careerdex_jobs_ingested_total",
-                "careerdex_api_request_duration_seconds",
+            "alert": self.name,
+            "expr": self.expr,
+            "for": self.duration,
+            "labels": {"severity": self.severity},
+            "annotations": {"summary": self.summary or self.name},
+        }
+
+
+@dataclass
+class MonitoringConfig:
+    """Monitoring and alerting setup."""
+
+    alert_rules: list[AlertRule] = field(default_factory=list)
+
+    @classmethod
+    def default(cls) -> MonitoringConfig:
+        """Return default alerting rules for CareerDEX."""
+        return cls(
+            alert_rules=[
+                AlertRule(
+                    name="HighErrorRate",
+                    expr='rate(http_requests_total{status=~"5.."}[5m]) > 0.05',
+                    severity="critical",
+                    summary="CareerDEX API error rate > 5 %",
+                ),
+                AlertRule(
+                    name="HighLatency",
+                    expr=(
+                        "histogram_quantile(0.95,"
+                        " rate(http_request_duration_seconds_bucket[5m])) > 2"
+                    ),
+                    severity="warning",
+                    summary="P95 latency exceeds 2 s",
+                ),
+                AlertRule(
+                    name="IngestionPipelineStale",
+                    expr="time() - careerdex_last_ingestion_timestamp > 14400",
+                    severity="warning",
+                    summary="No ingestion in 4 hours (expected every 3 h)",
+                ),
+                AlertRule(
+                    name="ModelDriftDetected",
+                    expr="model_drift_psi > 0.25",
+                    severity="critical",
+                    summary="Model drift PSI exceeds severe threshold",
+                ),
+                AlertRule(
+                    name="LowQualityScore",
+                    expr="careerdex_quality_score_avg < 0.6",
+                    duration="15m",
+                    severity="warning",
+                    summary="Average data quality score below 0.6",
+                ),
             ]
-        }
+        )
+
+    def all_rules_yaml(self) -> list[dict[str, Any]]:
+        """Return all rules in Prometheus YAML format."""
+        return [r.to_prom_rule() for r in self.alert_rules]
+
+
+# ======================================================================
+# Security audit
+# ======================================================================
+
+
+class SecurityAudit:
+    """Security checklist helpers.
+
+    Each method returns ``(passed, findings)`` so they can be aggregated
+    into a report.
+    """
 
     @staticmethod
-    def setup_alerts() -> dict[str, Any]:
-        return {"alerts": 4}
+    def check_no_hardcoded_secrets(
+        file_contents: dict[str, str],
+    ) -> tuple[bool, list[str]]:
+        """Scan file contents for common secret patterns.
 
+        Args:
+            file_contents: Mapping of file path → file text.
 
-class GCPDeployment:
-    """GCP Cloud deployment."""
+        Returns:
+            ``(passed, list_of_findings)``
+        """
+        import re
+
+        patterns = [
+            (r"(?i)(api[_-]?key|secret|password|token)\s*=\s*['\"][^'\"]{8,}", "hardcoded secret"),
+            (r"(?i)AKIA[0-9A-Z]{16}", "AWS access key"),
+            (r"-----BEGIN (RSA |EC )?PRIVATE KEY-----", "private key"),
+        ]
+        findings: list[str] = []
+        for path, text in file_contents.items():
+            for pattern, label in patterns:
+                if re.search(pattern, text):
+                    findings.append(f"{path}: potential {label}")
+
+        passed = len(findings) == 0
+        logger.info("security audit secrets passed={} findings={}", passed, len(findings))
+        return passed, findings
 
     @staticmethod
-    def configure_cloud_run() -> dict[str, Any]:
-        return {
-            "service": "careerdex-api",
-            "region": "us-central1",
-            "memory": "2Gi",
-        }
+    def check_sql_injection(
+        file_contents: dict[str, str],
+    ) -> tuple[bool, list[str]]:
+        """Flag string-concatenated SQL queries."""
+        import re
 
-    @staticmethod
-    def configure_bigquery() -> dict[str, Any]:
-        return {"datasets": 3}
+        pattern = r'(?i)(execute|cursor\.execute)\s*\(\s*f["\']'
+        findings: list[str] = []
+        for path, text in file_contents.items():
+            if re.search(pattern, text):
+                findings.append(f"{path}: possible SQL injection via f-string")
+
+        passed = len(findings) == 0
+        logger.info("security audit sql_injection passed={} findings={}", passed, len(findings))
+        return passed, findings
 
 
-class Phase6TestingDeployment:
-    """Phase 6: Testing & Deployment"""
+# ======================================================================
+# Convenience
+# ======================================================================
 
-    def __init__(self):
-        self.integration_tests = IntegrationTests()
-        self.performance_tests = PerformanceTests()
-        self.documentation = Documentation()
-        self.monitoring = MonitoringSetup()
-        self.gcp_deployment = GCPDeployment()
 
-    def run_all_tests(self) -> dict[str, Any]:
-        logger.info("PHASE 6: RUNNING COMPREHENSIVE TEST SUITE")
+def generate_deployment_config(
+    env: str = "dev",
+    image_tag: str = "latest",
+) -> DeploymentConfig:
+    """Generate deployment configuration for *env*.
 
-        pipeline_ok, results = self.integration_tests.test_end_to_end_pipeline()
-        logger.info(f"End-to-end pipeline: {'✓ PASS' if pipeline_ok else '✗ FAIL'}")
+    Args:
+        env: Target environment (``dev`` or ``prod``).
+        image_tag: Docker image tag.
 
-        return {
-            "timestamp": datetime.utcnow().isoformat(),
-            "tests": results,
-        }
-
-    def bootstrap(self) -> dict[str, Any]:
-        logger.info("CAREERDEX V0.3.0 - PHASE 6 BOOTSTRAP")
-        logger.info("Testing & Deployment")
-
-        return {
-            "phase": "Phase 6 - Testing & Deployment",
-            "status": "complete",
-        }
+    Returns:
+        Populated ``DeploymentConfig``.
+    """
+    replicas = 1 if env == "dev" else 3
+    cfg = DeploymentConfig(
+        image=f"ghcr.io/thedataenginex/dex:{image_tag}",
+        replicas=replicas,
+        env_vars={
+            "ENVIRONMENT": env,
+            "LOG_LEVEL": "DEBUG" if env == "dev" else "INFO",
+            "LOG_FORMAT": "json",
+        },
+    )
+    logger.info("deployment config env={} replicas={} image={}", env, replicas, cfg.image)
+    return cfg

@@ -1,9 +1,13 @@
-"""
-CareerDEX Notification System
+"""CareerDEX Notification System.
 
 Sends notifications via Slack and GitHub instead of email.
 Uses loguru for structured logging.
+
+Raises ``NotificationError`` on failure — notifications are never
+silently skipped.
 """
+
+from __future__ import annotations
 
 from collections.abc import Mapping
 from datetime import UTC, datetime
@@ -12,6 +16,8 @@ from typing import Any
 import requests
 from loguru import logger
 
+from .exceptions import NotificationError
+
 logger.enable("careerdex")
 
 
@@ -19,8 +25,7 @@ class SlackNotifier:
     """Sends notifications to Slack."""
 
     def __init__(self, webhook_url: str, channel: str = "#careerdex-alerts"):
-        """
-        Initialize Slack notifier.
+        """Initialize Slack notifier.
 
         Args:
             webhook_url: Slack incoming webhook URL
@@ -28,7 +33,7 @@ class SlackNotifier:
         """
         self.webhook_url = webhook_url
         self.channel = channel
-        logger.info(f"Initialized Slack notifier for {channel}")
+        logger.info("initialized Slack notifier for channel=%s", channel)
 
     def send_message(
         self,
@@ -37,8 +42,7 @@ class SlackNotifier:
         status: str = "info",
         extra_fields: Mapping[str, Any] | None = None,
     ) -> bool:
-        """
-        Send formatted message to Slack.
+        """Send formatted message to Slack.
 
         Args:
             title: Message title
@@ -48,6 +52,9 @@ class SlackNotifier:
 
         Returns:
             True if sent successfully
+
+        Raises:
+            NotificationError: If the Slack API call fails.
         """
         # Color mapping for status
         colors = {
@@ -85,19 +92,19 @@ class SlackNotifier:
         try:
             response = requests.post(self.webhook_url, json=payload)
             response.raise_for_status()
-            logger.info(f"Slack notification sent: {title}")
+            logger.info("Slack notification sent: title=%s", title)
             return True
-        except Exception as e:
-            logger.error(f"Failed to send Slack notification: {e}")
-            return False
+        except requests.exceptions.RequestException as exc:
+            msg = f"Failed to send Slack notification: {exc}"
+            logger.error(msg)
+            raise NotificationError(msg) from exc
 
 
 class GitHubStatusNotifier:
     """Updates GitHub commit status and creates check runs."""
 
     def __init__(self, repo: str, token: str, context: str = "careerdex/pipeline"):
-        """
-        Initialize GitHub notifier.
+        """Initialize GitHub notifier.
 
         Args:
             repo: Repository in format "owner/repo"
@@ -112,13 +119,12 @@ class GitHubStatusNotifier:
             "Authorization": f"token {token}",
             "Accept": "application/vnd.github.v3+json",
         }
-        logger.info(f"Initialized GitHub notifier for {repo}")
+        logger.info("initialized GitHub notifier for repo=%s", repo)
 
     def update_status(
         self, sha: str, state: str, description: str, target_url: str | None = None
     ) -> bool:
-        """
-        Update commit status on GitHub.
+        """Update commit status on GitHub.
 
         Args:
             sha: Commit SHA
@@ -128,6 +134,9 @@ class GitHubStatusNotifier:
 
         Returns:
             True if successful
+
+        Raises:
+            NotificationError: If the GitHub API call fails.
         """
         url = f"{self.base_url}/repos/{self.repo}/statuses/{sha}"
 
@@ -143,17 +152,17 @@ class GitHubStatusNotifier:
         try:
             response = requests.post(url, json=payload, headers=self.headers)
             response.raise_for_status()
-            logger.info(f"GitHub status updated: {state} - {description}")
+            logger.info("GitHub status updated: state=%s desc=%s", state, description)
             return True
-        except Exception as e:
-            logger.error(f"Failed to update GitHub status: {e}")
-            return False
+        except requests.exceptions.RequestException as exc:
+            msg = f"Failed to update GitHub status: {exc}"
+            logger.error(msg)
+            raise NotificationError(msg) from exc
 
     def create_deployment_status(
         self, deployment_id: int, state: str, description: str, environment: str = "production"
     ) -> bool:
-        """
-        Create deployment status on GitHub.
+        """Create deployment status on GitHub.
 
         Args:
             deployment_id: GitHub deployment ID
@@ -163,6 +172,9 @@ class GitHubStatusNotifier:
 
         Returns:
             True if successful
+
+        Raises:
+            NotificationError: If the GitHub API call fails.
         """
         url = f"{self.base_url}/repos/{self.repo}/deployments/{deployment_id}/statuses"
 
@@ -175,19 +187,19 @@ class GitHubStatusNotifier:
         try:
             response = requests.post(url, json=payload, headers=self.headers)
             response.raise_for_status()
-            logger.info(f"GitHub deployment status created: {state}")
+            logger.info("GitHub deployment status created: state=%s", state)
             return True
-        except Exception as e:
-            logger.error(f"Failed to create GitHub deployment status: {e}")
-            return False
+        except requests.exceptions.RequestException as exc:
+            msg = f"Failed to create GitHub deployment status: {exc}"
+            logger.error(msg)
+            raise NotificationError(msg) from exc
 
 
 class PipelineNotifier:
     """Combined notifier for Slack and GitHub."""
 
     def __init__(self, slack_webhook: str, github_repo: str, github_token: str):
-        """
-        Initialize pipeline notifier with Slack and GitHub.
+        """Initialize pipeline notifier with Slack and GitHub.
 
         Args:
             slack_webhook: Slack webhook URL
@@ -196,11 +208,11 @@ class PipelineNotifier:
         """
         self.slack = SlackNotifier(slack_webhook)
         self.github = GitHubStatusNotifier(github_repo, github_token)
-        logger.info("Initialized PipelineNotifier with Slack and GitHub")
+        logger.info("initialized PipelineNotifier with Slack and GitHub")
 
     def notify_pipeline_start(self, execution_id: str, timestamp: datetime) -> bool:
         """Notify pipeline start."""
-        logger.info(f"Pipeline started: {execution_id}")
+        logger.info("pipeline started: execution_id=%s", execution_id)
 
         return self.slack.send_message(
             title="CareerDEX Pipeline Started",
@@ -216,7 +228,7 @@ class PipelineNotifier:
         self, execution_id: str, job_count: int, quality_score: float, duration_seconds: float
     ) -> bool:
         """Notify pipeline success."""
-        logger.info(f"Pipeline succeeded: {execution_id}")
+        logger.info("pipeline succeeded: execution_id=%s", execution_id)
 
         return self.slack.send_message(
             title="✓ CareerDEX Pipeline Succeeded",
@@ -232,7 +244,7 @@ class PipelineNotifier:
 
     def notify_pipeline_failure(self, execution_id: str, error: str, task_name: str) -> bool:
         """Notify pipeline failure."""
-        logger.error(f"Pipeline failed: {execution_id} - {task_name}")
+        logger.error("pipeline failed: execution_id=%s task=%s", execution_id, task_name)
 
         return self.slack.send_message(
             title="✗ CareerDEX Pipeline Failed",
@@ -249,7 +261,7 @@ class PipelineNotifier:
         self, quality_score: float, threshold: float, issues: list[str]
     ) -> bool:
         """Notify data quality issues."""
-        logger.warning(f"Data quality issue: {quality_score:.2%} < {threshold:.2%}")
+        logger.warning("data quality issue: score=%.2f threshold=%.2f", quality_score, threshold)
 
         return self.slack.send_message(
             title="⚠ Data Quality Issue",

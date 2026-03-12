@@ -27,7 +27,7 @@ class SchemaVersion:
     """An immutable snapshot of a schema at a particular version.
 
     Attributes:
-        name: Schema identifier (e.g. ``"job_posting"``).
+        name: Schema identifier (e.g. ``"user_event"``).
         version: Semver string (e.g. ``"1.2.0"``).
         fields: Mapping of field names to type descriptions.
         required_fields: Fields that must be present in every record.

@@ -1,21 +1,24 @@
-"""
-CareerDEX Airflow DAG Configuration
+"""CareerDEX Airflow DAG Configuration.
 
 Replaces Prefect 2 with Apache Airflow for orchestration.
+
+**Status:** All fetch tasks raise ``StubNotImplementedError`` —
+real source connectors must be implemented before this DAG
+produces data.
 """
 
-# Import CareerDEX notifier
-import sys
+from __future__ import annotations
+
 from datetime import UTC, datetime, timedelta
-from pathlib import Path
 
 from airflow import DAG
 from airflow.models import Variable
 from airflow.operators.python import PythonOperator
 from loguru import logger
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
-from core.notifier import PipelineNotifier
+from careerdex.core.exceptions import StubNotImplementedError
+from careerdex.core.notifier import PipelineNotifier
+from careerdex.core.settings import get_settings
 
 # Configure loguru
 logger.enable("careerdex")
@@ -24,7 +27,7 @@ logger.enable("careerdex")
 default_args = {
     "owner": "careerdex",
     "depends_on_past": False,
-    "start_date": datetime(2026, 2, 13),
+    "start_date": datetime(2026, 2, 13, tzinfo=UTC),
     "email": [],  # Notifications via Slack instead
     "email_on_failure": False,
     "email_on_retry": False,
@@ -44,33 +47,55 @@ dag = DAG(
 
 
 def fetch_linkedin_jobs(**context):
-    """Fetch jobs from LinkedIn API."""
-    logger.info("Fetching jobs from LinkedIn...")
-    execution_date = context["execution_date"]
-    logger.info(f"Execution date: {execution_date}")
-    # Implementation would fetch from LinkedIn API
-    return {"count": 1250, "source": "linkedin"}
+    """Fetch jobs from LinkedIn API.
+
+    Raises:
+        StubNotImplementedError: Always — no real connector exists yet.
+    """
+    msg = (
+        "fetch_linkedin_jobs is a stub — implement a real LinkedIn API "
+        "connector in careerdex/phases/phase2_job_ingestion.py"
+    )
+    raise StubNotImplementedError(msg)
 
 
 def fetch_indeed_jobs(**context):
-    """Fetch jobs from Indeed."""
-    logger.info("Fetching jobs from Indeed...")
-    # Implementation would scrape Indeed
-    return {"count": 6250, "source": "indeed"}
+    """Fetch jobs from Indeed.
+
+    Raises:
+        StubNotImplementedError: Always — no real connector exists yet.
+    """
+    msg = (
+        "fetch_indeed_jobs is a stub — implement a real Indeed "
+        "connector in careerdex/phases/phase2_job_ingestion.py"
+    )
+    raise StubNotImplementedError(msg)
 
 
 def fetch_glassdoor_jobs(**context):
-    """Fetch jobs from Glassdoor."""
-    logger.info("Fetching jobs from Glassdoor...")
-    # Implementation would scrape Glassdoor
-    return {"count": 2500, "source": "glassdoor"}
+    """Fetch jobs from Glassdoor.
+
+    Raises:
+        StubNotImplementedError: Always — no real connector exists yet.
+    """
+    msg = (
+        "fetch_glassdoor_jobs is a stub — implement a real Glassdoor "
+        "connector in careerdex/phases/phase2_job_ingestion.py"
+    )
+    raise StubNotImplementedError(msg)
 
 
 def fetch_company_career_pages(**context):
-    """Fetch jobs from company career pages."""
-    logger.info("Fetching jobs from company career pages...")
-    # Implementation would scrape company pages
-    return {"count": 3750, "source": "company_career_pages"}
+    """Fetch jobs from company career pages.
+
+    Raises:
+        StubNotImplementedError: Always — no real connector exists yet.
+    """
+    msg = (
+        "fetch_company_career_pages is a stub — implement real ATS API "
+        "adapters in careerdex/phases/phase2_job_ingestion.py"
+    )
+    raise StubNotImplementedError(msg)
 
 
 def store_bronze_layer(**context):
@@ -89,7 +114,7 @@ def store_bronze_layer(**context):
         + company_result["count"]
     )
 
-    logger.info(f"Total jobs fetched: {total_jobs}")
+    logger.info("total jobs fetched: %d", total_jobs)
     return {"bronze_jobs": total_jobs}
 
 
@@ -99,7 +124,7 @@ def deduplicate_jobs(**context):
     task_instance = context["task_instance"]
     bronze_result = task_instance.xcom_pull(task_ids="store_bronze_layer")
 
-    logger.info(f"Processing {bronze_result['bronze_jobs']} jobs for deduplication...")
+    logger.info("processing %d jobs for deduplication", bronze_result["bronze_jobs"])
     # Implementation would deduplicate using DataHash framework
     return {"deduplicated_jobs": bronze_result["bronze_jobs"]}
 
@@ -110,7 +135,7 @@ def enrich_with_embeddings(**context):
     task_instance = context["task_instance"]
     dedup_result = task_instance.xcom_pull(task_ids="deduplicate_jobs")
 
-    logger.info(f"Generating embeddings for {dedup_result['deduplicated_jobs']} jobs...")
+    logger.info("generating embeddings for %d jobs", dedup_result["deduplicated_jobs"])
     # Implementation would generate embeddings using Phase 3 framework
     return {"enriched_jobs": dedup_result["deduplicated_jobs"]}
 
@@ -121,7 +146,7 @@ def store_gold_layer(**context):
     task_instance = context["task_instance"]
     enrich_result = task_instance.xcom_pull(task_ids="enrich_with_embeddings")
 
-    logger.info(f"Storing {enrich_result['enriched_jobs']} jobs to Gold layer...")
+    logger.info("storing %d jobs to Gold layer", enrich_result["enriched_jobs"])
     # Implementation would store to Gold layer
     return {"gold_jobs": enrich_result["enriched_jobs"]}
 
@@ -132,13 +157,16 @@ def quality_validation(**context):
     task_instance = context["task_instance"]
     task_instance.xcom_pull(task_ids="store_gold_layer")
 
-    quality_score = 0.92  # Placeholder
-    logger.info(f"Data quality score: {quality_score:.2%}")
+    settings = get_settings()
+    threshold = settings.quality.min_quality_score
 
-    if quality_score < 0.85:
-        logger.warning(f"Data quality below threshold: {quality_score:.2%}")
+    quality_score = 0.92  # Placeholder — must be replaced with real checks
+    logger.info("data quality score: %.2f, threshold: %.2f", quality_score, threshold)
 
-    return {"quality_score": quality_score}
+    if quality_score < threshold:
+        logger.warning("data quality below threshold: %.2f < %.2f", quality_score, threshold)
+
+    return {"quality_score": quality_score, "threshold": threshold}
 
 
 def notify_completion(**context):
@@ -152,6 +180,7 @@ def notify_completion(**context):
 
     jobs_count = gold_result["gold_jobs"]
     quality_score = quality_result["quality_score"]
+    threshold = quality_result["threshold"]
     execution_date = context["execution_date"]
 
     # Get credentials from Airflow Variables
@@ -164,7 +193,7 @@ def notify_completion(**context):
         notifier = PipelineNotifier(slack_webhook, github_repo, github_token)
 
         # Determine pipeline status
-        if quality_score >= 0.85:
+        if quality_score >= threshold:
             execution_id = context["run_id"]
             duration = (datetime.now(tz=UTC) - execution_date).total_seconds()
 
@@ -174,19 +203,19 @@ def notify_completion(**context):
                 quality_score=quality_score,
                 duration_seconds=duration,
             )
-            logger.info(f"Pipeline completed: {jobs_count} jobs, quality {quality_score:.2%}")
+            logger.info("pipeline completed: jobs=%d, quality=%.2f", jobs_count, quality_score)
         else:
             execution_id = context["run_id"]
             notifier.notify_data_quality_issue(
                 quality_score=quality_score,
-                threshold=0.85,
+                threshold=threshold,
                 issues=[
                     "Low quality score",
                     "Data validation checks failed",
                     "Possible data anomalies detected",
                 ],
             )
-            logger.warning(f"Pipeline quality issue: {quality_score:.2%} < 0.85")
+            logger.warning("pipeline quality issue: %.2f < %.2f", quality_score, threshold)
     else:
         logger.warning("Slack/GitHub credentials not configured, skipping notifications")
 
