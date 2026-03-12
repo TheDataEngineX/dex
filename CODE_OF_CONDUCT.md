@@ -28,7 +28,7 @@ This Code of Conduct applies in all project spaces, including Issues, Discussion
 Report conduct issues through:
 
 1. A private maintainer contact request via Discussions, or
-2. A direct maintainer issue request for confidential follow-up.
+1. A direct maintainer issue request for confidential follow-up.
 
 Please include context (links, screenshots, timestamps) where possible.
 

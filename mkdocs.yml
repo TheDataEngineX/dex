@@ -30,6 +30,7 @@ plugins:
 
 nav:
   - Home: index.md
+  - Quickstart: quickstart.md
   - Docs Hub: docs-hub.md
   - Development: DEVELOPMENT.md
   - Contributing: CONTRIBUTING.md
@@ -41,6 +42,7 @@ nav:
   - Deployment Runbook: DEPLOY_RUNBOOK.md
   - Observability: OBSERVABILITY.md
   - SDLC: SDLC.md
+  - Security Scanning: SECURITY_SCANNING.md
   - Operations:
     - Local K8s Setup: LOCAL_K8S_SETUP.md
     - Release Notes: RELEASE_NOTES.md
@@ -56,6 +58,8 @@ nav:
       - lakehouse: api-reference/lakehouse.md
       - middleware: api-reference/middleware.md
       - ml: api-reference/ml.md
+      - plugins: api-reference/plugins.md
+      - dashboard: api-reference/dashboard.md
       - warehouse: api-reference/warehouse.md
 
 docs_dir: docs

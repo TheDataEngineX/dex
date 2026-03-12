@@ -33,8 +33,8 @@ cmd = "pytest tests/integration/ -v --tb=short"
 help = "Internal: run integration tests without dependency sync"
 
 [tool.poe.tasks.test-cov-core]
-cmd = "pytest tests/ -v --cov=dataenginex --cov=careerdex --cov=weatherdex --cov-report=html --cov-report=xml:coverage.xml --cov-report=term-missing"
-help = "Internal: run coverage tests without dependency sync"
+cmd = "pytest tests/ -v --cov=dataenginex --cov=careerdex --cov=weatherdex --cov-report=html --cov-report=xml:coverage.xml --cov-report=term-missing --cov-fail-under=80"
+help = "Internal: run coverage tests without dependency sync (fails below 80%)"
 
 [tool.poe.tasks.test]
 shell = "poe uv-sync && poe test-core"
@@ -51,6 +51,11 @@ help = "Run integration tests only"
 [tool.poe.tasks.test-cov]
 shell = "poe uv-sync && poe test-cov-core"
 help = "Run tests with coverage report (HTML + XML + terminal)"
+
+# Load Testing
+[tool.poe.tasks.loadtest]
+cmd = "locust -f tests/load/locustfile.py --headless -u 10 -r 2 -t 30s --host http://localhost:8000"
+help = "Run Locust load tests (headless, 10 users, 30s) against localhost:8000"
 
 # Code Quality
 [tool.poe.tasks.lint]
@@ -69,10 +74,18 @@ help = "Auto-fix lint issues and format code"
 shell = "ruff format src/ packages/dataenginex/src/ tests/"
 help = "Format code with ruff"
 
+[tool.poe.tasks.docs-check]
+shell = "find . -name '*.md' -not -path './site/*' -not -path './.venv/*' -not -path './.pytest_cache/*' -not -path './.github/*' | xargs uvx mdformat --check"
+help = "Check markdown formatting across all docs"
+
+[tool.poe.tasks.docs-fix]
+shell = "find . -name '*.md' -not -path './site/*' -not -path './.venv/*' -not -path './.pytest_cache/*' -not -path './.github/*' | xargs uvx mdformat"
+help = "Auto-fix markdown formatting across all docs"
+
 [tool.poe.tasks.typecheck]
 cmd = "mypy packages/dataenginex/src/dataenginex/ --config-file=pyproject.toml --no-incremental"
 help = "Run mypy type checking with project config"
-env = { UV_PYTHON = "3.11", UV_PROJECT_ENVIRONMENT = ".venv" }
+env = { UV_PYTHON = "3.12", UV_PROJECT_ENVIRONMENT = ".venv" }
 
 [tool.poe.tasks.security]
 cmd = "uvx pip-audit --progress-spinner off"
@@ -157,8 +170,8 @@ cmd = "uv lock"
 help = "Resolve dependencies from pyproject.toml and write uv.lock"
 
 [tool.poe.tasks.uv-sync]
-cmd = "uv sync"
-help = "Install dependencies from uv.lock"
+cmd = "uv sync --group ml"
+help = "Install dependencies from uv.lock (includes ml group)"
 env = { UV_PROJECT_ENVIRONMENT = ".venv" }
 
 [tool.poe.tasks.uv-sync-all]

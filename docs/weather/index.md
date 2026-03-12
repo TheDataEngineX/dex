@@ -46,11 +46,11 @@ python -c "import weatherdex; print(weatherdex.__all__)"
 ## How to Adapt for Your Project
 
 1. Copy the structure: `src/{project_name}/`
-2. Update configs in `config/schema_definitions.py`
-3. Replace fetchers in `core/fetch_*.py`
-4. Implement business logic transformations
-5. Add ML models in `ml/`
-6. Create Airflow DAG similar to weather pipeline
+1. Update configs in `config/schema_definitions.py`
+1. Replace fetchers in `core/fetch_*.py`
+1. Implement business logic transformations
+1. Add ML models in `ml/`
+1. Create Airflow DAG similar to weather pipeline
 
 ## Reference Links
 
@@ -58,6 +58,6 @@ python -c "import weatherdex; print(weatherdex.__all__)"
 - **Medallion Architecture**: [docs/adr/0001-medallion-architecture.md](../adr/0001-medallion-architecture.md)
 - **Development Guide**: [docs/DEVELOPMENT.md](../DEVELOPMENT.md)
 
----
+______________________________________________________________________
 
 **Documentation Hub**: [See docs/docs-hub.md](../docs-hub.md)

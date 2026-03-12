@@ -26,6 +26,7 @@ Usage::
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import StrEnum
@@ -34,7 +35,7 @@ from typing import Any
 from loguru import logger
 
 from dataenginex.core.medallion_architecture import DataLayer, MedallionArchitecture
-from dataenginex.core.validators import DataQualityChecks, QualityScorer
+from dataenginex.core.validators import DataQualityChecks
 from dataenginex.data.profiler import DataProfiler, ProfileReport
 
 __all__ = [
@@ -171,26 +172,85 @@ class QualityStore:
 class QualityGate:
     """Orchestrates quality checks at medallion layer transitions.
 
-    Combines ``DataProfiler``, ``DataQualityChecks``, and ``QualityScorer``
-    to produce a single pass/fail ``QualityResult`` for a batch of records.
+    The gate is **domain-agnostic**: callers inject a scoring function,
+    required fields, and a uniqueness key to customise evaluation for their
+    data model.  When none are supplied the gate still computes completeness,
+    uniqueness, and consistency but accuracy defaults to ``0.0``.
 
     Args:
         store: Optional ``QualityStore`` to persist results automatically.
         profiler: Optional ``DataProfiler`` instance (created if omitted).
+        scorer: Optional callable ``(record) -> float`` returning a
+            per-record quality score (0–1).  Injected by the application.
+        required_fields: Field names required for the completeness check.
+            If ``None``, completeness defaults to ``1.0`` (no check).
+        uniqueness_key: Record key used for uniqueness checks
+            (default ``"id"``).
     """
 
     def __init__(
         self,
         store: QualityStore | None = None,
         profiler: DataProfiler | None = None,
+        *,
+        scorer: Callable[[dict[str, Any]], float] | None = None,
+        required_fields: set[str] | None = None,
+        uniqueness_key: str = "id",
     ) -> None:
         self._store = store
         self._profiler = profiler or DataProfiler()
+        self._scorer = scorer
+        self._required_fields = required_fields
+        self._uniqueness_key = uniqueness_key
 
     @property
     def store(self) -> QualityStore | None:
         """Return the attached quality store, if any."""
         return self._store
+
+    def _evaluate_records(
+        self,
+        records: list[dict[str, Any]],
+        effective_fields: set[str] | None,
+    ) -> tuple[list[float], list[float], int, int]:
+        """Score each record for completeness, accuracy, and uniqueness.
+
+        Returns:
+            Tuple of (completeness_scores, quality_scores, valid_count,
+            unique_count).
+        """
+        completeness_scores: list[float] = []
+        quality_scores: list[float] = []
+        valid_count = 0
+        seen_ids: set[str] = set()
+        unique_count = 0
+
+        for rec in records:
+            # Completeness
+            if effective_fields:
+                ok, _missing = DataQualityChecks.check_completeness(
+                    rec,
+                    effective_fields,
+                )
+                completeness_scores.append(1.0 if ok else 0.0)
+                if ok:
+                    valid_count += 1
+            else:
+                completeness_scores.append(1.0)
+                valid_count += 1
+
+            # Per-record quality score via injected scorer
+            quality_scores.append(
+                self._scorer(rec) if self._scorer else 0.0,
+            )
+
+            # Uniqueness via configured key
+            rid = str(rec.get(self._uniqueness_key, id(rec)))
+            if rid not in seen_ids:
+                unique_count += 1
+                seen_ids.add(rid)
+
+        return completeness_scores, quality_scores, valid_count, unique_count
 
     def evaluate(
         self,
@@ -205,7 +265,7 @@ class QualityGate:
         Steps performed:
         1. Profile the dataset (``DataProfiler``).
         2. Check completeness for each record (``DataQualityChecks``).
-        3. Score each record (``QualityScorer``).
+        3. Score each record via the injected ``scorer`` (accuracy).
         4. Check uniqueness across the batch.
         5. Compute per-dimension averages and overall score.
         6. Compare overall score to the layer's ``quality_threshold``.
@@ -213,8 +273,8 @@ class QualityGate:
         Args:
             records: List of record dicts to evaluate.
             layer: Target ``DataLayer`` (bronze / silver / gold).
-            required_fields: Field names required for completeness check.
-                Falls back to ``{"job_id", "source", "company_name", "job_title"}``.
+            required_fields: Override per-call required fields.
+                Falls back to constructor ``required_fields``.
             dataset_name: Name passed to the profiler.
 
         Returns:
@@ -240,40 +300,22 @@ class QualityGate:
         # 1. Profile
         profile = self._profiler.profile(records, dataset_name)
 
-        # 2. Required-field defaults
-        if required_fields is None:
-            required_fields = {"job_id", "source", "company_name", "job_title"}
+        # 2. Resolve required fields — call-site > constructor > skip
+        effective_fields = required_fields or self._required_fields
 
         # 3. Per-record evaluation
-        completeness_scores: list[float] = []
-        quality_scores: list[float] = []
-        valid_count = 0
-        seen_ids: set[str] = set()
-        unique_count = 0
-
-        for rec in records:
-            # Completeness
-            ok, _missing = DataQualityChecks.check_completeness(rec, required_fields)
-            completeness_scores.append(1.0 if ok else 0.0)
-            if ok:
-                valid_count += 1
-
-            # Quality score
-            quality_scores.append(QualityScorer.score_job_posting(rec))
-
-            # Uniqueness
-            rid = str(rec.get("job_id", id(rec)))
-            is_unique, _ = DataQualityChecks.check_uniqueness_job_id(rid, seen_ids)
-            if is_unique:
-                unique_count += 1
-                seen_ids.add(rid)
+        completeness_scores, quality_scores, valid_count, unique_count = self._evaluate_records(
+            records, effective_fields
+        )
 
         total = len(records)
         dim_completeness = sum(completeness_scores) / total
-        dim_accuracy = sum(quality_scores) / total
+        dim_accuracy = sum(quality_scores) / total if self._scorer else 0.0
         dim_uniqueness = unique_count / total
         dim_consistency = profile.completeness  # proxy via null-rate
-        dim_timeliness = 1.0  # placeholder — requires timestamp analysis
+        # Timeliness: placeholder — requires timestamp analysis.
+        # Callers needing real timeliness should subclass or post-process.
+        dim_timeliness = 1.0
 
         dimensions = {
             QualityDimension.COMPLETENESS.value: dim_completeness,

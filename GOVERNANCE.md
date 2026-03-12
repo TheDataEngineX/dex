@@ -27,9 +27,9 @@ DEX is licensed under the OSI-approved MIT License.
 ### Decision Process
 
 1. Open an Issue or Discussion
-2. Propose scope and trade-offs
-3. Collect feedback from maintainers/community
-4. Merge via pull request with documented rationale
+1. Propose scope and trade-offs
+1. Collect feedback from maintainers/community
+1. Merge via pull request with documented rationale
 
 For major changes (architecture, security, release process), prefer ADR updates under `docs/adr/`.
 

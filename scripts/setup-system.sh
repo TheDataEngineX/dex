@@ -41,7 +41,7 @@ detect_os() {
         echo ""
         echo "Required packages:"
         echo "  - git, curl, build tools (gcc, make)"
-        echo "  - Python 3.11+"
+        echo "  - Python 3.12+"
         echo "  - Java 17+ JRE (for PySpark)"
         echo "  - Docker + Docker Compose (for full stack)"
         echo ""

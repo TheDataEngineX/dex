@@ -17,8 +17,8 @@ Dashboards and the Prometheus datasource are auto-provisioned when using `docker
 ### Manual
 
 1. Open Grafana → **Dashboards** → **New** → **Import**.
-2. Upload the JSON from `infra/monitoring/grafana/dashboards/`.
-3. Select the correct data sources when prompted.
+1. Upload the JSON from `infra/monitoring/grafana/dashboards/`.
+1. Select the correct data sources when prompted.
 
 ## Data Sources
 

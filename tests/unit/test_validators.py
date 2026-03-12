@@ -6,11 +6,15 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from dataenginex.core.validators import (
-    DataHash,
     DataQualityChecks,
+    ValidationReport,
+)
+
+from careerdex.core.validators import (
+    CareerDEXQualityChecks,
+    DataHash,
     QualityScorer,
     SchemaValidator,
-    ValidationReport,
 )
 
 # ---------------------------------------------------------------------------
@@ -93,22 +97,22 @@ class TestDataQualityChecks:
         assert "a" in missing
 
     def test_accuracy_salary_valid(self) -> None:
-        ok, issues = DataQualityChecks.check_accuracy_salary(50000.0, 100000.0)
+        ok, issues = CareerDEXQualityChecks.check_accuracy_salary(50000.0, 100000.0)
         assert ok is True
         assert issues == []
 
     def test_accuracy_salary_min_gt_max(self) -> None:
-        ok, issues = DataQualityChecks.check_accuracy_salary(100000.0, 50000.0)
+        ok, issues = CareerDEXQualityChecks.check_accuracy_salary(100000.0, 50000.0)
         assert ok is False
         assert any("min" in i.lower() or ">" in i for i in issues)
 
     def test_accuracy_salary_above_threshold(self) -> None:
-        ok, issues = DataQualityChecks.check_accuracy_salary(50000.0, 600000.0)
+        ok, issues = CareerDEXQualityChecks.check_accuracy_salary(50000.0, 600000.0)
         assert ok is False
         assert any("threshold" in i.lower() for i in issues)
 
     def test_accuracy_salary_below_threshold(self) -> None:
-        ok, issues = DataQualityChecks.check_accuracy_salary(10000.0, 50000.0)
+        ok, issues = CareerDEXQualityChecks.check_accuracy_salary(10000.0, 50000.0)
         assert ok is False
         assert any("below" in i.lower() for i in issues)
 
@@ -148,31 +152,31 @@ class TestDataQualityChecks:
         assert any("future" in i.lower() for i in issues)
 
     def test_uniqueness_unique(self) -> None:
-        ok, msg = DataQualityChecks.check_uniqueness_job_id("j1", {"j2", "j3"})
+        ok, msg = CareerDEXQualityChecks.check_uniqueness_job_id("j1", {"j2", "j3"})
         assert ok is True
         assert msg == ""
 
     def test_uniqueness_duplicate(self) -> None:
-        ok, msg = DataQualityChecks.check_uniqueness_job_id("j1", {"j1", "j2"})
+        ok, msg = CareerDEXQualityChecks.check_uniqueness_job_id("j1", {"j1", "j2"})
         assert ok is False
         assert "Duplicate" in msg
 
     def test_validity_location_valid(self) -> None:
-        ok, issues = DataQualityChecks.check_validity_location("US", "Seattle")
+        ok, issues = CareerDEXQualityChecks.check_validity_location("US", "Seattle")
         assert ok is True
         assert issues == []
 
     def test_validity_location_bad_country(self) -> None:
-        ok, issues = DataQualityChecks.check_validity_location("USA", "Seattle")
+        ok, issues = CareerDEXQualityChecks.check_validity_location("USA", "Seattle")
         assert ok is False
         assert any("Country" in i for i in issues)
 
     def test_validity_location_short_city(self) -> None:
-        ok, issues = DataQualityChecks.check_validity_location("US", "")
+        ok, issues = CareerDEXQualityChecks.check_validity_location("US", "")
         assert ok is False
 
     def test_validity_location_bad_coords(self) -> None:
-        ok, issues = DataQualityChecks.check_validity_location(
+        ok, issues = CareerDEXQualityChecks.check_validity_location(
             "US",
             "Seattle",
             latitude=100.0,

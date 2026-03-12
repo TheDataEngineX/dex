@@ -21,7 +21,7 @@ applyTo: ".github/workflows/**/*.yml,.github/workflows/**/*.yaml"
 
 ## Patterns
 - `actions/checkout@v6` | `actions/github-script@v8` for Slack via `SLACK_WEBHOOK`
-- `uv` for deps (not pip) | Python 3.11 | `ubuntu-latest`
+- `uv` for deps (not pip) | Python 3.12 | `ubuntu-latest`
 - Declare `permissions:` per workflow — pin action versions to tags
 - CD triggers on `workflow_run` after CI success
 - Branch-based deployment: `dev` → dex-dev, `main` → dex (no stage or preview environments)

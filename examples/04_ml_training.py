@@ -22,6 +22,8 @@ from dataenginex.ml import (
     ModelStage,
     SklearnTrainer,
 )
+from dataenginex.ml.registry import ModelArtifact
+from dataenginex.ml.training import TrainingResult
 
 
 def main() -> None:
@@ -46,16 +48,29 @@ def main() -> None:
         print(f"Test set:     {len(X_test)} samples\n")
 
         # ----- 2. Train with SklearnTrainer --------------------------------
-        trainer = SklearnTrainer(artifact_dir=str(artifact_dir))
-        result = trainer.train(
+        from sklearn.ensemble import RandomForestClassifier  # type: ignore[import-untyped]
+
+        trainer = SklearnTrainer(
             model_name="demo_classifier",
             version="1.0.0",
-            X_train=X_train,
-            y_train=y_train,
-            X_test=X_test,
-            y_test=y_test,
-            params={"n_estimators": 50, "max_depth": 3},
+            estimator=RandomForestClassifier(n_estimators=50, max_depth=3, random_state=42),
         )
+        result = trainer.train(X_train=X_train, y_train=y_train)
+        eval_metrics = trainer.evaluate(X_test, y_test)
+        result.metrics.update(eval_metrics)
+
+        # Save model artifact
+        artifact_path = str(artifact_dir / "demo_classifier")
+        saved_path = trainer.save(artifact_path)
+        result = TrainingResult(
+            model_name=result.model_name,
+            version=result.version,
+            metrics=result.metrics,
+            parameters=result.parameters,
+            duration_seconds=result.duration_seconds,
+            artifact_path=saved_path,
+        )
+
         print("Training result:")
         print(f"  Model: {result.model_name} v{result.version}")
         print(f"  Duration: {result.duration_seconds:.2f}s")
@@ -63,14 +78,16 @@ def main() -> None:
         print(f"  Artifact: {result.artifact_path}\n")
 
         # ----- 3. Register in ModelRegistry --------------------------------
-        registry = ModelRegistry(registry_dir=str(registry_dir))
+        registry = ModelRegistry(persist_path=str(registry_dir / "registry.json"))
         artifact = registry.register(
-            name=result.model_name,
-            version=result.version,
-            artifact_path=result.artifact_path or "",
-            metrics=result.metrics,
-            parameters=result.parameters,
-            description="Demo binary classifier",
+            ModelArtifact(
+                name=result.model_name,
+                version=result.version,
+                artifact_path=result.artifact_path or "",
+                metrics=result.metrics,
+                parameters=result.parameters,
+                description="Demo binary classifier",
+            )
         )
         print(f"Registered: {artifact.name} v{artifact.version} [{artifact.stage.value}]")
 
@@ -87,20 +104,21 @@ def main() -> None:
 
         # ----- 5. Drift detection ------------------------------------------
         detector = DriftDetector()
-        ref_data = [[random.gauss(0, 1) for _ in range(4)] for _ in range(100)]
-        cur_data = [[random.gauss(0.5, 1.2) for _ in range(4)] for _ in range(100)]
+        feature_names = ["tenure", "monthly_spend", "support_tickets", "login_freq"]
+        ref_rows = [[random.gauss(0, 1) for _ in range(4)] for _ in range(100)]
+        cur_rows = [[random.gauss(0.5, 1.2) for _ in range(4)] for _ in range(100)]
 
-        drift_result = detector.detect(
-            reference_data=ref_data,
-            current_data=cur_data,
-            feature_names=["tenure", "monthly_spend", "support_tickets", "login_freq"],
-        )
+        # Transpose rows to feature-keyed dicts
+        ref_data = {f: [row[i] for row in ref_rows] for i, f in enumerate(feature_names)}
+        cur_data = {f: [row[i] for row in cur_rows] for i, f in enumerate(feature_names)}
+
+        reports = detector.check_dataset(reference=ref_data, current=cur_data)
         print("Drift detection:")
-        print(f"  Drift detected: {drift_result.drift_detected}")
-        print(f"  Overall score: {drift_result.drift_score:.4f}")
-        for feat in drift_result.feature_results:
+        any_drift = any(r.drift_detected for r in reports)
+        print(f"  Drift detected: {any_drift}")
+        for r in reports:
             print(
-                f"    {feat['feature']}: score={feat['drift_score']:.4f} drifted={feat['drifted']}"
+                f"    {r.feature_name}: psi={r.psi:.4f} drifted={r.drift_detected}"
             )
 
     print("\nDone! ✓")

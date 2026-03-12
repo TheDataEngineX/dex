@@ -4,7 +4,7 @@
 
 > **Quick Links:** [Dev Deployment](#deploy-to-dev) · [Prod Deployment](#deploy-to-prod) · [Rollback](#rollback) · [Emergency Procedures](#emergency-rollback-kubernetes)
 
----
+______________________________________________________________________
 
 This runbook describes how to release and rollback DEX using the `dev` → `main` branch-based deployment flow.
 
@@ -63,10 +63,12 @@ sequenceDiagram
 ```
 
 **Expected Outcome**:
+
 - CD updates `infra/argocd/overlays/dev/kustomization.yaml` in `dev`.
 - ArgoCD syncs `dex-dev` to the new SHA.
 
 **Verify**:
+
 ```bash
 kubectl get pods -n dex-dev
 argocd app get dex-dev
@@ -97,10 +99,12 @@ sequenceDiagram
 ```
 
 **Expected Outcome**:
+
 - CD updates `infra/argocd/overlays/prod/kustomization.yaml` in `main`.
 - ArgoCD syncs `dex` namespace to the new SHA.
 
 **Verify**:
+
 ```bash
 kubectl get pods -n dex
 argocd app get dex
@@ -169,28 +173,28 @@ Use this section for organization-level setup and domain cutover to `thedataengi
 ### GitHub Organization Setup
 
 1. Create/verify teams referenced in `CODEOWNERS`:
-    - `infra-team`
-    - `backend-team`
-    - `data-team`
-2. Ensure each team has appropriate repo permissions.
-3. Enable branch/ruleset protections for `main` and `dev`:
-    - Require pull request reviews
-    - Require status checks to pass before merge
-    - Enforce CODEOWNERS review where needed
-4. Enable Discussions for `TheDataEngineX/DEX`.
-5. Create at least one organization Project and define fields (status, priority, milestone).
-6. Configure project automation inputs:
-    - Variable `ORG_PROJECT_URL` = full URL of the org project
-    - Secret `ORG_PROJECT_TOKEN` = PAT with project write access
+   - `infra-team`
+   - `backend-team`
+   - `data-team`
+1. Ensure each team has appropriate repo permissions.
+1. Enable branch/ruleset protections for `main` and `dev`:
+   - Require pull request reviews
+   - Require status checks to pass before merge
+   - Enforce CODEOWNERS review where needed
+1. Enable Discussions for `TheDataEngineX/DEX`.
+1. Create at least one organization Project and define fields (status, priority, milestone).
+1. Configure project automation inputs:
+   - Variable `ORG_PROJECT_URL` = full URL of the org project
+   - Secret `ORG_PROJECT_TOKEN` = PAT with project write access
 
 ### GitHub Pages Setup (Docs)
 
 Repository includes `.github/workflows/docs-pages.yml`.
 
 1. In repo settings, enable **Pages** and select **GitHub Actions** as source.
-2. Confirm `github-pages` environment is available.
-3. Trigger workflow manually once (`Docs Pages Deploy`) to bootstrap deployment.
-4. Verify `site/CNAME` in artifact contains `docs.thedataenginex.org`.
+1. Confirm `github-pages` environment is available.
+1. Trigger workflow manually once (`Docs Pages Deploy`) to bootstrap deployment.
+1. Verify `site/CNAME` in artifact contains `docs.thedataenginex.org`.
 
 ### Cloudflare DNS Setup
 
@@ -205,52 +209,54 @@ Configure DNS records for `thedataenginex.org`:
 ### TLS / SSL
 
 1. Set Cloudflare SSL mode compatible with origin (recommended: Full / Full strict).
-2. Verify HTTPS for:
-    - `https://docs.thedataenginex.org`
-    - `https://api.thedataenginex.org`
+1. Verify HTTPS for:
+   - `https://docs.thedataenginex.org`
+   - `https://api.thedataenginex.org`
 
 ### Fast 10–15 Minute Execution Checklist
 
 1. Pages source = GitHub Actions.
-2. Set `ORG_PROJECT_URL` + `ORG_PROJECT_TOKEN`.
-3. Configure Cloudflare DNS (`docs`, `api`, apex).
-4. Trigger workflows manually:
-    - `Docs Pages Deploy`
-    - `Label Sync`
-    - `Project Automation`
-5. Smoke checks:
-    - Docs URL resolves with HTTPS
-    - Test issue + PR auto-added to project
-    - Labels from `.github/labels.yml` are present
+1. Set `ORG_PROJECT_URL` + `ORG_PROJECT_TOKEN`.
+1. Configure Cloudflare DNS (`docs`, `api`, apex).
+1. Trigger workflows manually:
+   - `Docs Pages Deploy`
+   - `Label Sync`
+   - `Project Automation`
+1. Smoke checks:
+   - Docs URL resolves with HTTPS
+   - Test issue + PR auto-added to project
+   - Labels from `.github/labels.yml` are present
 
 ### Exact Post-Merge Verification Order
 
 1. Merge PR.
-2. Wait for `Docs Pages Deploy` success.
-3. Validate `https://docs.thedataenginex.org`.
-4. Trigger `Label Sync` once and inspect labels.
-5. Open temporary test issue/PR and confirm project automation.
-6. Validate `https://api.thedataenginex.org` TLS/hostname routing.
-7. Send controlled warning alert and verify `.org` sender/recipient behavior.
+1. Wait for `Docs Pages Deploy` success.
+1. Validate `https://docs.thedataenginex.org`.
+1. Trigger `Label Sync` once and inspect labels.
+1. Open temporary test issue/PR and confirm project automation.
+1. Validate `https://api.thedataenginex.org` TLS/hostname routing.
+1. Send controlled warning alert and verify `.org` sender/recipient behavior.
 
 ### Rollback for Domain Cutover
 
 1. Revert Cloudflare DNS records to previous targets.
-2. Set DNS-only mode temporarily for diagnostics if needed.
-3. Re-run Pages deploy once DNS stabilizes.
+1. Set DNS-only mode temporarily for diagnostics if needed.
+1. Re-run Pages deploy once DNS stabilizes.
 
----
+______________________________________________________________________
 
 ## Related Documentation
 
 **Deployment:**
+
 - **[CI/CD Pipeline](CI_CD.md)** - Complete automation guide
 - **[Local K8s Setup](LOCAL_K8S_SETUP.md)** - Kubernetes & ArgoCD setup
 
 **Operations:**
+
 - **[Observability](OBSERVABILITY.md)** - Monitor deployments
 - **[SDLC](SDLC.md)** - Development lifecycle
 
----
+______________________________________________________________________
 
 **[← Back to Documentation Hub](docs-hub.md)**

@@ -1,27 +1,27 @@
-"""CareerDEX Pipeline - Job Ingestion, Matching, and Recommendation System.
+"""CareerDEX — Job Ingestion, Matching & Recommendation Platform.
 
 **Phases:**
-1. Phase 1: Foundation - Data models and schemas
-2. Phase 2: Job Ingestion - Raw data collection
-3. Phase 3: Embeddings - Vector representations
-4. Phase 4: ML Models - Matching and ranking
-5. Phase 5: API Services - REST API endpoints
-6. Phase 6: Testing & Deployment - Quality assurance and production deployment
+
+1. Foundation — config, schemas, medallion architecture
+2. Job Ingestion — multi-source connectors, deduplication
+3. Feature Engineering — text parsing, embeddings, vector store
+4. ML Models — matcher, salary, skill gap, career path, churn
+5. API Services — FastAPI routers for recommendations & market intel
+6. Testing & Deployment — monitoring, security, deploy config
 
 **Architecture:**
+
 - Medallion Architecture: Bronze → Silver → Gold layers
 - Dual Storage: Local Parquet + BigQuery cloud
 - Real-time Processing: Async/await patterns
-- ML Pipeline: scikit-learn based models
+- ML Pipeline: scikit-learn + XGBoost + embeddings
+- RAG: Vector DB + LLM integration
 
-**Configuration:**
-See config/ directory for pipeline-specific settings.
+**Configuration:** ``config/job_config.json``
 
-**Phases:**
-See phases/ directory for phase implementations.
+**Phases:** ``phases/`` directory
 """
 
-__all__ = [
-    "phases",
-    "config",
-]
+from __future__ import annotations
+
+__all__: list[str] = []

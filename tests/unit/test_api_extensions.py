@@ -126,7 +126,8 @@ class TestPagination:
         assert decode_cursor(cursor) == 42
 
     def test_decode_invalid_cursor(self) -> None:
-        assert decode_cursor("garbage") == 0
+        with pytest.raises(ValueError, match="Invalid pagination cursor"):
+            decode_cursor("garbage")
 
     def test_first_page(self) -> None:
         items = list(range(50))
@@ -165,11 +166,11 @@ class TestV1Router:
     async def test_data_sources(self) -> None:
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
-            resp = await client.get("/api/v1/data/sources")
+            resp = await client.get("/api/v1/careerdex/data/sources")
             assert resp.status_code == 200
             body = resp.json()
-            assert "data" in body
-            assert len(body["data"]) == 4
+            assert "sources" in body
+            assert len(body["sources"]) == 4
 
     async def test_data_quality(self) -> None:
         transport = ASGITransport(app=app)
@@ -202,7 +203,9 @@ class TestV1Router:
     async def test_system_config(self) -> None:
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
-            resp = await client.get("/api/v1/system/config")
+            resp = await client.get("/api/v1/careerdex/system/config")
             assert resp.status_code == 200
             body = resp.json()
             assert "schedule" in body
+            assert "expected_jobs_per_cycle" in body
+            assert "sources" in body

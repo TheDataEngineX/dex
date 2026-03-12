@@ -63,10 +63,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Set up Python 3.11
+      - name: Set up Python 3.12
         uses: actions/setup-python@v6
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
       - name: Install uv
         run: |
@@ -76,10 +76,10 @@ jobs:
       - name: Install dependencies (uv)
         env:
           UV_PROJECT_ENVIRONMENT: .venv
-          UV_PYTHON: "3.11"
+          UV_PYTHON: "3.12"
         run: |
           uv lock
-          uv sync
+          uv sync --group ml
 
       - name: Run lint suite
         run: uv run poe lint
@@ -92,6 +92,14 @@ jobs:
 
       - name: Run pytest
         run: uv run poe test-cov
+
+      - name: Smoke-test examples
+        run: |
+          uv run python examples/01_hello_pipeline.py
+          uv run python examples/03_quality_gate.py
+          uv run python examples/04_ml_training.py
+          uv run python examples/05_rag_demo.py
+          uv run python examples/06_llm_quickstart.py
 
       - name: Upload coverage to SonarCloud
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -188,10 +196,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Set up Python 3.11
+      - name: Set up Python 3.12
         uses: actions/setup-python@v6
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
       - name: Install uv
         run: |
@@ -201,10 +209,10 @@ jobs:
       - name: Install dependencies (with data + notebook groups)
         env:
           UV_PROJECT_ENVIRONMENT: .venv
-          UV_PYTHON: "3.11"
+          UV_PYTHON: "3.12"
         run: |
           uv lock
-          uv sync --group dev --group data --group notebook
+          uv sync --group dev --group data --group notebook --group ml
 
       - name: Run tests with PySpark + Airflow + Pandas
         run: uv run poe test-cov

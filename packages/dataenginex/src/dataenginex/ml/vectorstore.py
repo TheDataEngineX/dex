@@ -1,0 +1,440 @@
+"""RAG-ready Vector Database Adapter (Issue #94).
+
+Provides a pluggable vector-store abstraction with concrete backends:
+
+- **InMemoryBackend** — brute-force cosine similarity (testing / small datasets)
+- **ChromaDBBackend** — ChromaDB persistent store (medium workloads)
+
+All backends implement :class:`VectorStoreBackend` so they can be
+swapped transparently.  A :class:`RAGPipeline` orchestrator combines
+a ``VectorStoreBackend`` with an ``EmbeddingProvider`` and an optional
+LLM to build a full retrieve-augment-generate pipeline.
+
+Example::
+
+    from dataenginex.ml.vectorstore import InMemoryBackend, RAGPipeline
+
+    backend = InMemoryBackend(dimension=384)
+    rag = RAGPipeline(store=backend)
+    rag.ingest(["doc1 text", "doc2 text"])
+    results = rag.query("How do I deploy to K8s?", top_k=3)
+"""
+
+from __future__ import annotations
+
+import abc
+import math
+import uuid
+from dataclasses import dataclass, field
+from typing import Any
+
+from loguru import logger
+
+__all__ = [
+    "ChromaDBBackend",
+    "Document",
+    "InMemoryBackend",
+    "RAGPipeline",
+    "SearchResult",
+    "VectorStoreBackend",
+]
+
+
+# ======================================================================
+# Data models
+# ======================================================================
+
+
+@dataclass
+class Document:
+    """A text document with optional metadata and embedding."""
+
+    id: str = field(default_factory=lambda: uuid.uuid4().hex[:16])
+    text: str = ""
+    metadata: dict[str, Any] = field(default_factory=dict)
+    embedding: list[float] = field(default_factory=list)
+
+
+@dataclass
+class SearchResult:
+    """Single search hit from a vector store query."""
+
+    document: Document
+    score: float
+
+
+# ======================================================================
+# Abstract backend
+# ======================================================================
+
+
+class VectorStoreBackend(abc.ABC):
+    """Abstract vector-store backend.
+
+    All backends store fixed-dimension vectors keyed by string ID and
+    support nearest-neighbour queries by cosine similarity.
+    """
+
+    @abc.abstractmethod
+    def upsert(self, documents: list[Document]) -> int:
+        """Insert or update documents. Returns count upserted."""
+
+    @abc.abstractmethod
+    def query(
+        self,
+        embedding: list[float],
+        top_k: int = 10,
+        filter_metadata: dict[str, Any] | None = None,
+    ) -> list[SearchResult]:
+        """Return top-k nearest documents by cosine similarity."""
+
+    @abc.abstractmethod
+    def delete(self, ids: list[str]) -> int:
+        """Delete documents by id. Returns count deleted."""
+
+    @abc.abstractmethod
+    def count(self) -> int:
+        """Number of documents in the store."""
+
+    @abc.abstractmethod
+    def clear(self) -> None:
+        """Delete all documents."""
+
+    @abc.abstractmethod
+    def get(self, doc_id: str) -> Document | None:
+        """Retrieve a single document by ID."""
+
+
+# ======================================================================
+# In-memory backend
+# ======================================================================
+
+
+class InMemoryBackend(VectorStoreBackend):
+    """Brute-force in-memory vector store (testing & prototyping).
+
+    Stores all documents in a dict.  Queries iterate over all stored
+    vectors and compute cosine similarity.
+
+    Args:
+        dimension: Expected embedding dimension (for validation).
+    """
+
+    def __init__(self, dimension: int = 384) -> None:
+        self.dimension = dimension
+        self._docs: dict[str, Document] = {}
+
+    def upsert(self, documents: list[Document]) -> int:
+        """Insert or update documents."""
+        count = 0
+        for doc in documents:
+            if doc.embedding and len(doc.embedding) != self.dimension:
+                logger.warning(
+                    "embedding dimension mismatch id={} expected={} got={}",
+                    doc.id,
+                    self.dimension,
+                    len(doc.embedding),
+                )
+                continue
+            self._docs[doc.id] = doc
+            count += 1
+        logger.info("inmemory upserted={} total={}", count, len(self._docs))
+        return count
+
+    def query(
+        self,
+        embedding: list[float],
+        top_k: int = 10,
+        filter_metadata: dict[str, Any] | None = None,
+    ) -> list[SearchResult]:
+        """Return top-k nearest documents by cosine similarity."""
+        scored: list[SearchResult] = []
+        for doc in self._docs.values():
+            if not doc.embedding:
+                continue
+            if filter_metadata and not self._matches_filter(doc.metadata, filter_metadata):
+                continue
+            sim = self._cosine(embedding, doc.embedding)
+            scored.append(SearchResult(document=doc, score=sim))
+
+        scored.sort(key=lambda r: r.score, reverse=True)
+        return scored[:top_k]
+
+    def delete(self, ids: list[str]) -> int:
+        removed = 0
+        for doc_id in ids:
+            if doc_id in self._docs:
+                del self._docs[doc_id]
+                removed += 1
+        return removed
+
+    def count(self) -> int:
+        return len(self._docs)
+
+    def clear(self) -> None:
+        self._docs.clear()
+
+    def get(self, doc_id: str) -> Document | None:
+        return self._docs.get(doc_id)
+
+    # ------------------------------------------------------------------
+    # Helpers
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _cosine(a: list[float], b: list[float]) -> float:
+        dot = sum(x * y for x, y in zip(a, b, strict=False))
+        ma = math.sqrt(sum(x * x for x in a)) or 1.0
+        mb = math.sqrt(sum(y * y for y in b)) or 1.0
+        return dot / (ma * mb)
+
+    @staticmethod
+    def _matches_filter(
+        metadata: dict[str, Any],
+        filter_metadata: dict[str, Any],
+    ) -> bool:
+        return all(metadata.get(k) == v for k, v in filter_metadata.items())
+
+
+# ======================================================================
+# ChromaDB backend
+# ======================================================================
+
+
+class ChromaDBBackend(VectorStoreBackend):
+    """ChromaDB-backed vector store (optional dependency).
+
+    Falls back to :class:`InMemoryBackend` if ``chromadb`` is not
+    installed.
+
+    Args:
+        collection_name: ChromaDB collection name.
+        persist_directory: Path for local persistence (``None`` = in-memory).
+        dimension: Embedding dimension hint.
+    """
+
+    def __init__(
+        self,
+        collection_name: str = "dex_documents",
+        persist_directory: str | None = None,
+        dimension: int = 384,
+    ) -> None:
+        self.collection_name = collection_name
+        self.dimension = dimension
+        self._client: Any = None
+        self._collection: Any = None
+        self._fallback: InMemoryBackend | None = None
+
+        try:
+            import chromadb  # type: ignore[import-not-found]
+
+            if persist_directory:
+                self._client = chromadb.PersistentClient(path=persist_directory)
+            else:
+                self._client = chromadb.Client()
+            self._collection = self._client.get_or_create_collection(collection_name)
+            logger.info(
+                "ChromaDB backend ready collection={} persist={}",
+                collection_name,
+                persist_directory,
+            )
+        except ImportError:
+            logger.warning("chromadb not installed — falling back to InMemoryBackend")
+            self._fallback = InMemoryBackend(dimension=dimension)
+
+    def upsert(self, documents: list[Document]) -> int:
+        if self._fallback:
+            return self._fallback.upsert(documents)
+
+        ids = [d.id for d in documents]
+        embeddings = [d.embedding for d in documents if d.embedding]
+        texts = [d.text for d in documents]
+        metadatas = [d.metadata for d in documents]
+
+        if embeddings and len(embeddings) == len(ids):
+            self._collection.upsert(
+                ids=ids,
+                embeddings=embeddings,
+                documents=texts,
+                metadatas=metadatas,
+            )
+        else:
+            self._collection.upsert(
+                ids=ids,
+                documents=texts,
+                metadatas=metadatas,
+            )
+        logger.info("chromadb upserted={}", len(ids))
+        return len(ids)
+
+    def query(
+        self,
+        embedding: list[float],
+        top_k: int = 10,
+        filter_metadata: dict[str, Any] | None = None,
+    ) -> list[SearchResult]:
+        if self._fallback:
+            return self._fallback.query(embedding, top_k, filter_metadata)
+
+        kwargs: dict[str, Any] = {
+            "query_embeddings": [embedding],
+            "n_results": min(top_k, self._collection.count() or 1),
+        }
+        if filter_metadata:
+            kwargs["where"] = filter_metadata
+
+        results = self._collection.query(**kwargs)
+        hits: list[SearchResult] = []
+        if results and results.get("ids"):
+            for i, doc_id in enumerate(results["ids"][0]):
+                dist = results.get("distances", [[]])[0][i] if results.get("distances") else 0.0
+                text = results.get("documents", [[]])[0][i] if results.get("documents") else ""
+                meta = results.get("metadatas", [[]])[0][i] if results.get("metadatas") else {}
+                hits.append(
+                    SearchResult(
+                        document=Document(id=doc_id, text=text, metadata=meta),
+                        score=1.0 - dist,  # ChromaDB returns distance, convert to similarity
+                    )
+                )
+        return hits
+
+    def delete(self, ids: list[str]) -> int:
+        if self._fallback:
+            return self._fallback.delete(ids)
+        self._collection.delete(ids=ids)
+        return len(ids)
+
+    def count(self) -> int:
+        if self._fallback:
+            return self._fallback.count()
+        return int(self._collection.count())
+
+    def clear(self) -> None:
+        if self._fallback:
+            self._fallback.clear()
+            return
+        # Re-create collection
+        self._client.delete_collection(self.collection_name)
+        self._collection = self._client.get_or_create_collection(self.collection_name)
+
+    def get(self, doc_id: str) -> Document | None:
+        if self._fallback:
+            return self._fallback.get(doc_id)
+        result = self._collection.get(ids=[doc_id])
+        if result and result.get("ids") and result["ids"]:
+            text = result.get("documents", [""])[0] if result.get("documents") else ""
+            meta = result.get("metadatas", [{}])[0] if result.get("metadatas") else {}
+            return Document(id=doc_id, text=text, metadata=meta)
+        return None
+
+
+# ======================================================================
+# RAG pipeline orchestrator
+# ======================================================================
+
+
+class RAGPipeline:
+    """Retrieve-Augment-Generate pipeline orchestrator.
+
+    Combines a vector-store backend with an embedding provider to
+    support document ingestion and semantic retrieval.  When an LLM
+    adapter is attached, the ``generate`` method augments the prompt
+    with retrieved context.
+
+    Args:
+        store: Vector-store backend to use.
+        embed_fn: Callable that maps text → embedding vector.
+            If ``None``, uses a simple hash-based fallback.
+        dimension: Embedding dimension.
+    """
+
+    def __init__(
+        self,
+        store: VectorStoreBackend | None = None,
+        embed_fn: Any | None = None,
+        dimension: int = 384,
+    ) -> None:
+        self.dimension = dimension
+        self.store = store or InMemoryBackend(dimension=dimension)
+        self._embed_fn = embed_fn or self._hash_embed
+
+    def ingest(
+        self,
+        texts: list[str],
+        metadata: list[dict[str, Any]] | None = None,
+        ids: list[str] | None = None,
+    ) -> int:
+        """Embed and store a batch of texts.
+
+        Args:
+            texts: Raw text documents.
+            metadata: Optional per-document metadata.
+            ids: Optional document IDs (auto-generated if omitted).
+
+        Returns:
+            Number of documents stored.
+        """
+        meta = metadata or [{} for _ in texts]
+        doc_ids = ids or [uuid.uuid4().hex[:16] for _ in texts]
+
+        docs: list[Document] = []
+        for doc_id, text, m in zip(doc_ids, texts, meta, strict=True):
+            embedding = self._embed_fn(text)
+            docs.append(Document(id=doc_id, text=text, metadata=m, embedding=embedding))
+
+        count = self.store.upsert(docs)
+        logger.info("RAG ingest texts={} stored={}", len(texts), count)
+        return count
+
+    def query(
+        self,
+        question: str,
+        top_k: int = 5,
+        filter_metadata: dict[str, Any] | None = None,
+    ) -> list[SearchResult]:
+        """Retrieve top-k relevant documents for *question*."""
+        q_embed = self._embed_fn(question)
+        results = self.store.query(q_embed, top_k=top_k, filter_metadata=filter_metadata)
+        logger.info("RAG query top_k={} results={}", top_k, len(results))
+        return results
+
+    def build_context(
+        self,
+        question: str,
+        top_k: int = 5,
+        max_context_chars: int = 4000,
+    ) -> str:
+        """Build an LLM context string from retrieved documents.
+
+        Args:
+            question: User question.
+            top_k: Number of documents to retrieve.
+            max_context_chars: Maximum context length in characters.
+
+        Returns:
+            Formatted context string for LLM prompting.
+        """
+        results = self.query(question, top_k=top_k)
+        parts: list[str] = []
+        total = 0
+        for r in results:
+            chunk = f"[{r.document.id}] {r.document.text}"
+            if total + len(chunk) > max_context_chars:
+                break
+            parts.append(chunk)
+            total += len(chunk)
+        return "\n\n".join(parts)
+
+    # ------------------------------------------------------------------
+    # Fallback embedding
+    # ------------------------------------------------------------------
+
+    def _hash_embed(self, text: str) -> list[float]:
+        """Deterministic hash-based embedding for testing."""
+        import hashlib
+
+        h = hashlib.sha256(text.encode()).hexdigest()
+        vec = [int(h[i : i + 2], 16) / 255.0 for i in range(0, min(len(h), self.dimension * 2), 2)]
+        vec = (vec + [0.0] * self.dimension)[: self.dimension]
+        norm = math.sqrt(sum(x * x for x in vec)) or 1.0
+        return [x / norm for x in vec]

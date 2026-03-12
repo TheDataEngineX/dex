@@ -18,12 +18,12 @@ None. All new features are additive.
 ### Verification checklist
 
 1. `uv run poe lint` — Ruff checks clean
-2. `uv run poe typecheck` — mypy strict (40 files, 0 errors)
-3. `uv run poe test` — 299 passed, 28 skipped
-4. `docker compose build` — multi-stage Dockerfile builds successfully
-5. `docker compose -f docker-compose.test.yml up -d` — emulators start healthy
+1. `uv run poe typecheck` — mypy strict (40 files, 0 errors)
+1. `uv run poe test` — 299 passed, 28 skipped
+1. `docker compose build` — multi-stage Dockerfile builds successfully
+1. `docker compose -f docker-compose.test.yml up -d` — emulators start healthy
 
----
+______________________________________________________________________
 
 ## v0.4.11 — 2026-02-27
 
@@ -33,17 +33,19 @@ None. All new features are additive.
 - **Aligned alert rules** — Histogram quantile expressions use explicit bucket aggregation by `le` and `environment`
 - **CSV-canonical roadmap** — Standardized docs and release prep metadata
 
----
+______________________________________________________________________
 
 ## v1.0.0 — 2026-02-11
 
 ### Highlights
+
 - **SLO-aware monitoring**: Alerting rules now track latency, error rates, and saturation per environment, routed through Alertmanager runbooks aligned with the SLO definitions documented in `infra/prometheus/alerts/dataenginex-alerts.yml` and `infra/alertmanager`.
 - **Environment-labeled metrics**: The Prometheus client now exports all HTTP counters, histograms, and gauges with an `environment` label so dashboards & alerts can differentiate `dev`/`stage`/`prod` workloads without duplicating services.
 - **Pyconcepts-facing API**: Added `/api/external-data` (wraps `pyconcepts.external_data.fetch_external_data`) and `/api/insights` (text/event-stream) so downstream runners can consume the helper data + streaming insights from `pyconcepts`.
 - **Docs/tests**: `tests/test_main.py` and `tests/test_metrics.py` cover the new endpoints and metrics labels, and the documentation now explains how to validate the new alerts and APIs.
 
 ### Verification checklist
+
 1. `uv run poe lint` — Ruff/mypy checks green
-2. `uv run pytest -v` — 31 tests including the new endpoints pass
-3. `docker compose build` — multi-stage Dockerfile builds
+1. `uv run pytest -v` — 31 tests including the new endpoints pass
+1. `docker compose build` — multi-stage Dockerfile builds

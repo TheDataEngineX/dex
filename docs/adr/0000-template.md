@@ -3,6 +3,7 @@
 **ADR-XXXX**: [Brief title describing the decision]
 
 ## Status
+
 - [ ] Proposed
 - [ ] Accepted
 - [ ] Deprecated
@@ -11,6 +12,7 @@
 ## Context
 
 Describe the issue or problem that motivated this decision. Include:
+
 - Background information
 - Constraints
 - Assumptions
@@ -25,24 +27,29 @@ Describe what we will do and why we chose this approach.
 List other options evaluated and why they were rejected:
 
 1. **Alternative 1**
+
    - Pros:
    - Cons:
 
-2. **Alternative 2**
+1. **Alternative 2**
+
    - Pros:
    - Cons:
 
 ## Consequences
 
 ### Positive
+
 - Benefit 1
 - Benefit 2
 
 ### Negative
+
 - Trade-off 1
 - Trade-off 2
 
 ### Neutral
+
 - Side effect 1
 
 ## Implementation Notes

@@ -1,19 +1,19 @@
-"""
-Medallion Architecture Implementation (Issue #35 - Medallion Architecture)
+"""Medallion Architecture — Bronze / Silver / Gold data layers.
 
-Implements the Bronze → Silver → Gold data architecture for DEX ecosystem
-with support for local Parquet storage and BigQuery cloud integration.
+Provides configurable medallion layer management with pluggable storage backends.
+All dataset names are generic (``bronze``, ``silver``, ``gold``); domain-specific
+naming should be configured by the application.
 
 Classes:
     StorageFormat: Supported storage format enumeration.
-    DataLayer: Medallion architecture layer enumeration (bronze/silver/gold).
+    DataLayer: Medallion architecture layer enumeration.
     LayerConfiguration: Configuration dataclass for a single medallion layer.
-    MedallionArchitecture: Manages three-layer medallion architecture configs.
+    MedallionArchitecture: Manages three-layer medallion configs.
     StorageBackend: Abstract storage backend interface.
-    LocalParquetStorage: Local Parquet file storage.
-    BigQueryStorage: BigQuery cloud storage.
+    LocalParquetStorage: Real local Parquet file storage (pyarrow).
+    BigQueryStorage: BigQuery cloud storage (shim — delegates to lakehouse.storage).
     DualStorage: Dual local + cloud storage strategy.
-    DataLineage: In-memory data lineage tracker through medallion layers.
+    DataLineage: In-memory data lineage tracker.
 """
 
 from __future__ import annotations
@@ -87,7 +87,7 @@ class MedallionArchitecture:
         purpose="Preserve original data for historical reproducibility",
         storage_format=StorageFormat.PARQUET,
         local_path="data/bronze",
-        bigquery_dataset="careerdex_bronze",
+        bigquery_dataset="bronze",
         retention_days=90,
         schema_validation=False,
         quality_threshold=0.0,  # No quality threshold for raw data
@@ -101,7 +101,7 @@ class MedallionArchitecture:
         purpose="High-quality data ready for analytics and ML",
         storage_format=StorageFormat.PARQUET,
         local_path="data/silver",
-        bigquery_dataset="careerdex_silver",
+        bigquery_dataset="silver",
         retention_days=365,
         schema_validation=True,
         quality_threshold=0.75,  # >= 75% quality score
@@ -115,7 +115,7 @@ class MedallionArchitecture:
         purpose="Serve AI models and customer-facing APIs",
         storage_format=StorageFormat.PARQUET,
         local_path="data/gold",
-        bigquery_dataset="careerdex_gold",
+        bigquery_dataset="gold",
         retention_days=None,  # Indefinite retention
         schema_validation=True,
         quality_threshold=0.90,  # >= 90% quality score
@@ -189,11 +189,32 @@ class StorageBackend(ABC):
 
 
 class LocalParquetStorage(StorageBackend):
-    """Local Parquet file storage implementation."""
+    """Local Parquet file storage backed by pyarrow.
 
-    def __init__(self, base_path: str = "data"):
+    Raises ``RuntimeError`` if pyarrow is not installed.
+    """
+
+    def __init__(self, base_path: str = "data") -> None:
         self.base_path = base_path
-        logger.info(f"Initialized local Parquet storage at {base_path}")
+        logger.info("Initialized local Parquet storage at %s", base_path)
+
+    @staticmethod
+    def _require_pyarrow() -> Any:  # noqa: ANN401
+        """Import and return the ``pyarrow.parquet`` module.
+
+        Raises:
+            RuntimeError: If pyarrow is not installed.
+        """
+        try:
+            import pyarrow.parquet as pq  # noqa: PLC0415
+
+            return pq
+        except ImportError as exc:
+            msg = (
+                "pyarrow is required for LocalParquetStorage. "
+                "Install it with: uv pip install pyarrow"
+            )
+            raise RuntimeError(msg) from exc
 
     def write(
         self,
@@ -201,61 +222,85 @@ class LocalParquetStorage(StorageBackend):
         path: str,
         format: StorageFormat = StorageFormat.PARQUET,
     ) -> bool:
-        """
-        Write data to local Parquet file.
+        """Write data to a local Parquet file.
 
         Args:
-            data: Data to write (dict, list, or dataframe)
-            path: Relative path from base_path
-            format: Storage format (must be PARQUET for this backend)
+            data: List of dicts, or a pyarrow Table.
+            path: Relative path from base_path.
+            format: Must be ``PARQUET``.
 
         Returns:
-            True if successful, False otherwise
+            True on success.
+
+        Raises:
+            ValueError: If format is not PARQUET.
+            RuntimeError: If pyarrow is not installed.
         """
         if format != StorageFormat.PARQUET:
-            logger.error(f"LocalParquetStorage only supports PARQUET format, got {format}")
-            return False
+            msg = f"LocalParquetStorage only supports PARQUET format, got {format}"
+            raise ValueError(msg)
+
+        pq = self._require_pyarrow()
+        import pyarrow as pa  # noqa: PLC0415
+
+        full_path = Path(self.base_path) / path
+        full_path.parent.mkdir(parents=True, exist_ok=True)
 
         try:
-            full_path = f"{self.base_path}/{path}"
-            logger.info(f"Writing data to {full_path}")
-            # Implementation: Use pyarrow.parquet to write
-            # df.to_parquet(full_path, compression='snappy', index=False)
+            if isinstance(data, list):
+                table = pa.Table.from_pylist(data)
+            elif hasattr(data, "schema"):
+                # Already a pyarrow Table
+                table = data
+            else:
+                msg = f"Unsupported data type: {type(data).__name__}"
+                raise TypeError(msg)
+
+            pq.write_table(table, str(full_path), compression="snappy")
+            logger.info("Wrote %d rows to %s", len(table), full_path)
             return True
-        except Exception as e:
-            logger.error(f"Failed to write to {path}: {e}")
+        except (TypeError, pa.ArrowInvalid) as exc:
+            logger.error("Failed to write to %s: %s", path, exc)
             return False
 
-    def read(self, path: str, format: StorageFormat = StorageFormat.PARQUET) -> Any:
-        """
-        Read data from local Parquet file.
-
-        Args:
-            path: Relative path from base_path
-            format: Storage format
+    def read(
+        self,
+        path: str,
+        format: StorageFormat = StorageFormat.PARQUET,
+    ) -> list[dict[str, Any]] | None:
+        """Read data from a local Parquet file.
 
         Returns:
-            Data read from file, or None if failed
+            List of record dicts, or None if the file doesn't exist.
         """
-        try:
-            full_path = f"{self.base_path}/{path}"
-            logger.info(f"Reading data from {full_path}")
-            # Implementation: Use pyarrow.parquet to read
-            # df = pd.read_parquet(full_path)
+        pq = self._require_pyarrow()
+        full_path = Path(self.base_path) / path
+
+        if not full_path.exists():
+            logger.warning("File not found: %s", full_path)
             return None
-        except Exception as e:
-            logger.error(f"Failed to read from {path}: {e}")
+
+        try:
+            table = pq.read_table(str(full_path))
+            records: list[dict[str, Any]] = table.to_pylist()
+            logger.info("Read %d rows from %s", len(records), full_path)
+            return records
+        except Exception as exc:
+            logger.error("Failed to read from %s: %s", path, exc)
             return None
 
     def delete(self, path: str) -> bool:
-        """Delete Parquet file."""
+        """Delete a Parquet file from disk."""
+        full_path = Path(self.base_path) / path
+        if not full_path.exists():
+            logger.warning("Cannot delete — file not found: %s", full_path)
+            return False
         try:
-            full_path = f"{self.base_path}/{path}"
-            logger.info(f"Deleting {full_path}")
-            # Implementation: Use os.remove or shutil.rmtree
+            full_path.unlink()
+            logger.info("Deleted %s", full_path)
             return True
-        except Exception as e:
-            logger.error(f"Failed to delete {path}: {e}")
+        except OSError as exc:
+            logger.error("Failed to delete %s: %s", path, exc)
             return False
 
     def list_objects(self, prefix: str = "") -> list[str]:
@@ -271,87 +316,38 @@ class LocalParquetStorage(StorageBackend):
 
 
 class BigQueryStorage(StorageBackend):
-    """BigQuery cloud storage implementation."""
+    """BigQuery cloud storage — re-exported from :mod:`dataenginex.lakehouse.storage`.
 
-    def __init__(self, project_id: str, location: str = "US"):
-        self.project_id = project_id
-        self.location = location
-        logger.info(f"Initialized BigQuery storage for project {project_id}")
+    This is a backwards-compatibility shim.  The real implementation
+    lives in ``dataenginex.lakehouse.storage.BigQueryStorage``.
+    """
 
-    def write(
-        self,
-        data: Any,
-        path: str,
-        format: StorageFormat = StorageFormat.BIGQUERY,
-    ) -> bool:
-        """
-        Write data to BigQuery table.
+    def __new__(cls, *args: Any, **kwargs: Any) -> BigQueryStorage:  # noqa: ARG003
+        from dataenginex.lakehouse.storage import (
+            BigQueryStorage as _RealBQ,
+        )
 
-        Path format: "dataset.table"
+        return _RealBQ(*args, **kwargs)  # type: ignore[return-value]
 
-        Args:
-            data: Data to write (dataframe or dict records)
-            path: BigQuery path as "dataset.table"
-            format: Storage format
+    def __init__(self, project_id: str, location: str = "US") -> None:
+        # __init__ is needed for type checker / IDE hints but never runs
+        # because __new__ returns a different type.
+        pass  # pragma: no cover
 
-        Returns:
-            True if successful, False otherwise
-        """
-        if format != StorageFormat.BIGQUERY:
-            logger.error(f"BigQueryStorage should use BIGQUERY format, got {format}")
-            return False
-
-        try:
-            logger.info(f"Writing data to BigQuery {path}")
-            # Implementation: Use google.cloud.bigquery to write
-            # client.load_table_from_dataframe(df, path).result()
-            return True
-        except Exception as e:
-            logger.error(f"Failed to write to BigQuery {path}: {e}")
-            return False
+    def write(self, data: Any, path: str, format: StorageFormat = StorageFormat.BIGQUERY) -> bool:
+        raise AssertionError  # pragma: no cover
 
     def read(self, path: str, format: StorageFormat = StorageFormat.BIGQUERY) -> Any:
-        """
-        Read data from BigQuery table.
-
-        Args:
-            path: BigQuery path as "dataset.table"
-            format: Storage format
-
-        Returns:
-            Data read from table, or None if failed
-        """
-        try:
-            logger.info(f"Reading data from BigQuery {path}")
-            # Implementation: Use google.cloud.bigquery to read
-            # df = client.query(
-            #     f"SELECT * FROM `{self.project_id}.{path}`"
-            # ).to_dataframe()
-            return None
-        except Exception as e:
-            logger.error(f"Failed to read from BigQuery {path}: {e}")
-            return None
+        raise AssertionError  # pragma: no cover
 
     def delete(self, path: str) -> bool:
-        """Delete BigQuery table."""
-        try:
-            logger.info(f"Deleting BigQuery table {path}")
-            # Implementation: Use google.cloud.bigquery to delete
-            # client.delete_table(f"{self.project_id}.{path}")
-            return True
-        except Exception as e:
-            logger.error(f"Failed to delete from BigQuery {path}: {e}")
-            return False
+        raise AssertionError  # pragma: no cover
 
     def list_objects(self, prefix: str = "") -> list[str]:
-        """List BigQuery tables matching *prefix* (stub)."""
-        logger.info("Listing BigQuery tables with prefix %s", prefix)
-        return []
+        raise AssertionError  # pragma: no cover
 
     def exists(self, path: str) -> bool:
-        """Check if BigQuery table exists (stub)."""
-        logger.info("Checking BigQuery table existence: %s", path)
-        return False
+        raise AssertionError  # pragma: no cover
 
 
 class DualStorage:
@@ -395,7 +391,7 @@ class DualStorage:
         success = self.local_storage.write(data, local_path)
 
         if self.bigquery_storage and success:
-            bq_path = f"careerdex_{layer}.{key}_{timestamp.replace('-', '_').replace(':', '_')}"
+            bq_path = f"{layer}.{key}_{timestamp.replace('-', '_').replace(':', '_')}"
             self.bigquery_storage.write(data, bq_path)
 
         return success

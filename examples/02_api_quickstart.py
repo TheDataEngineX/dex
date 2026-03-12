@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import uvicorn
 from dataenginex.api import HealthChecker, HealthStatus
-from dataenginex.api.routers.v1 import router as v1_router
+from careerdex.api.routers.v1 import v1_router
 from dataenginex.middleware.logging_config import configure_logging
 from dataenginex.middleware.metrics import PrometheusMetrics
 from fastapi import FastAPI
@@ -34,7 +34,7 @@ def create_app() -> FastAPI:
 
     app = FastAPI(
         title="DataEngineX",
-        version="0.4.10",
+        version="0.5.0",
         description="Example DEX API instance",
     )
 

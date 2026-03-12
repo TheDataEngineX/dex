@@ -214,5 +214,43 @@ Regardless of domain:
 
 1. **Check for existing patterns** in the codebase (better than any doc)
 2. **Run the tests locally** - they show expected behavior
-3. **Ask the team** - better to clarify than guess
-4. **Refer to principles** in [copilot-instructions.md](copilot-instructions.md)
+3. **Run the real app** - tests passing doesn't mean the app works
+4. **Ask the team** - better to clarify than guess
+5. **Refer to principles** in [copilot-instructions.md](copilot-instructions.md)
+
+---
+
+## Real App Validation (Run Before Every PR)
+
+Tests and lint passing is necessary but NOT sufficient. Always run the real application.
+
+**Server startup:**
+```bash
+uv run uvicorn careerdex.api.main:app --port 8000
+```
+
+**Endpoint validation checklist:**
+- [ ] Server starts without import errors or crashes
+- [ ] `GET /health` → `{"status": "healthy"}`
+- [ ] `GET /ready` → all components `ready`
+- [ ] `GET /startup` → `started: true`
+- [ ] `GET /` → root response with version
+- [ ] `POST /echo` → echoes message back
+- [ ] `GET /metrics` → Prometheus metrics
+- [ ] `GET /openapi.json` → all routes registered
+- [ ] All new/changed endpoints return correct response bodies (not just 200 OK)
+- [ ] Validation errors return 422 with detail (send bad input on purpose)
+
+**Standalone module validation:**
+```bash
+uv run python -c "from careerdex.phases.phase1_foundation import bootstrap_phase1; print(bootstrap_phase1())"
+```
+- [ ] Key classes instantiate and produce correct output outside the API
+- [ ] No hidden import-time side effects or crashes
+
+**Full validation pipeline order:**
+1. `uv run poe lint` (or `uv run python -m ruff check src/ packages/ tests/`)
+2. `uv run poe typecheck` (or `uv run python -m mypy packages/dataenginex/src/dataenginex/ --strict`)
+3. `uv run poe test` (or `uv run python -m pytest tests/ -x --tb=short -q`)
+4. Start real server and curl all endpoints (above)
+5. Run standalone module imports (above)
