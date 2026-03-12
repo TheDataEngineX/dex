@@ -1,488 +1,469 @@
-"""
-CareerDEX Phase 3: Embeddings & Vector Search (Issue #67 - Days 5-7)
+"""CareerDEX Phase 3: Feature Engineering & Embeddings (Issue #67).
 
-Generates semantic embeddings for job postings and stores them in Pinecone
-for rapid semantic search and job matching.
+Implements text parsing, skill extraction, embedding generation, and
+vector-store integration for semantic job matching.
 
-Features:
-- HuggingFace embeddings (all-MiniLM-L6-v2, 768 dimensions)
-- Pinecone vector database integration
-- Semantic similarity search
-- Batch processing for scale
-- Embedding caching and versioning
-
-Deliverables:
-- Job description parser
-- Embedding generator
-- Pinecone index management
-- Similarity search API
-- Enrichment to Gold layer
+Components:
+    - ``JobDescriptionParser`` — extracts skills, salary, seniority from text
+    - ``ResumeParser`` — extracts structured fields from resume text
+    - ``SkillNormalizer`` — maps skill aliases to a canonical taxonomy
+    - ``EmbeddingGenerator`` — ``sentence-transformers`` wrapper (CPU-safe)
+    - ``VectorStore`` — abstract interface backed by ChromaDB or in-memory
 """
 
 from __future__ import annotations
 
-import logging
+import abc
+import math
+import re
+from dataclasses import dataclass, field
 from typing import Any
 
-logger = logging.getLogger(__name__)
+from loguru import logger
+
+from careerdex.core.exceptions import MissingDependencyError
+
+__all__ = [
+    "EmbeddingGenerator",
+    "InMemoryVectorStore",
+    "JobDescriptionParser",
+    "ResumeParser",
+    "SkillNormalizer",
+    "VectorStore",
+]
 
 
-class EmbeddingModel:
-    """Interface for embedding models."""
+# ======================================================================
+# Job description parsing
+# ======================================================================
 
-    def embed_text(self, text: str) -> list[float]:
-        """Generate embedding for text."""
-        raise NotImplementedError
+_SALARY_PATTERN = re.compile(
+    r"\$\s*([\d,]+(?:\.\d+)?)\s*(?:[-–—to]+\s*\$?\s*([\d,]+(?:\.\d+)?))?",
+    re.IGNORECASE,
+)
 
-    def embed_batch(self, texts: list[str]) -> list[list[float]]:
-        """Generate embeddings for batch of texts."""
-        raise NotImplementedError
-
-
-class HuggingFaceEmbedder(EmbeddingModel):
-    """
-    HuggingFace embedding model: all-MiniLM-L6-v2
-
-    Characteristics:
-    - Lightweight (~80MB)
-    - Fast inference
-    - 768-dimensional output
-    - Good for general semantic similarity
-    - Suitable for job matching tasks
-    """
-
-    def __init__(self, model_name: str = "sentence-transformers/all-MiniLM-L6-v2"):
-        self.model_name = model_name
-        self.embedding_dim = 768
-        self.batch_size = 64
-        logger.info(f"Initialized HuggingFace embedder: {model_name} ({self.embedding_dim}d)")
-
-    def embed_text(self, text: str) -> list[float]:
-        """
-        Generate embedding for single text.
-
-        Args:
-            text: Text to embed (job description, etc.)
-
-        Returns:
-            768-dimensional embedding vector
-        """
-        # Placeholder implementation
-        # Real implementation:
-        # from sentence_transformers import SentenceTransformer
-        # model = SentenceTransformer(self.model_name)
-        # embedding = model.encode(text)
-        # return embedding.tolist()
-
-        return [0.0] * self.embedding_dim
-
-    def embed_batch(self, texts: list[str]) -> list[list[float]]:
-        """
-        Generate embeddings for batch.
-
-        Args:
-            texts: List of texts to embed
-
-        Returns:
-            List of 768-dimensional embeddings
-        """
-        logger.info(f"Embedding batch of {len(texts)} texts...")
-
-        embeddings = []
-
-        # Process in chunks
-        for i in range(0, len(texts), self.batch_size):
-            batch = texts[i : i + self.batch_size]
-
-            # Placeholder implementation
-            # Real implementation would use sentence_transformers
-            batch_embeddings = [[0.0] * self.embedding_dim for _ in batch]
-            embeddings.extend(batch_embeddings)
-
-        logger.info(f"Generated {len(embeddings)} embeddings")
-        return embeddings
+_SENIORITY_KEYWORDS: dict[str, list[str]] = {
+    "entry_level": ["entry level", "junior", "associate", "intern", "graduate", "new grad"],
+    "mid_level": ["mid level", "mid-level", "intermediate"],
+    "senior": ["senior", "sr.", "lead", "staff", "principal"],
+    "executive": ["executive", "director", "vp", "vice president", "c-level", "cto", "ceo"],
+}
 
 
-class PineconeVectorDB:
-    """
-    Pinecone vector database integration.
+@dataclass
+class ParsedJobDescription:
+    """Structured output from job description parsing."""
 
-    Index Configuration:
-    - Metric: cosine (for normalized embeddings)
-    - Dimension: 768
-    - Index type: HNSW (hierarchical navigable small world)
-    - Replicas: 3 (for HA)
-    - Pod type: s1.x1 (starter)
-    """
-
-    def __init__(self, api_key: str = None, environment: str = "us-west-4"):
-        self.api_key = api_key
-        self.environment = environment
-        self.index_name = "careerdex-jobs"
-        self.embedding_dim = 768
-        self.metric = "cosine"
-        logger.info(f"Initialized Pinecone client ({environment})")
-
-    def create_index(self) -> bool:
-        """Create Pinecone index for CareerDEX."""
-        logger.info(f"Creating Pinecone index: {self.index_name}")
-
-        try:
-            # Placeholder implementation
-            # Real implementation:
-            # import pinecone
-            # pinecone.create_index(
-            #     name=self.index_name,
-            #     dimension=self.embedding_dim,
-            #     metric=self.metric,
-            #     pod_type="s1.x1",
-            #     replicas=3,
-            #     metadata_config={
-            #         "indexed": ["source", "job_id", "company_name", "salary_min", "salary_max"]
-            #     }
-            # )
-
-            logger.info(f"✓ Index created: {self.index_name}")
-            return True
-
-        except Exception as e:
-            logger.error(f"Failed to create index: {e}")
-            return False
-
-    def upsert_embeddings(self, vectors: list[tuple[str, list[float], dict[str, Any]]]) -> int:
-        """
-        Upsert (insert or update) embeddings to Pinecone.
-
-        Args:
-            vectors: List of (job_id, embedding, metadata) tuples
-
-        Returns:
-            Number of vectors upserted
-        """
-        logger.info(f"Upserting {len(vectors)} vectors to Pinecone...")
-
-        try:
-            # Placeholder implementation
-            # Real implementation:
-            # index = pinecone.Index(self.index_name)
-            # index.upsert(vectors=vectors, namespace="jobs")
-
-            logger.info(f"✓ Upserted {len(vectors)} vectors")
-            return len(vectors)
-
-        except Exception as e:
-            logger.error(f"Failed to upsert vectors: {e}")
-            return 0
-
-    def search(
-        self, query_embedding: list[float], top_k: int = 10, filters: dict[str, Any] = None
-    ) -> list[dict[str, Any]]:
-        """
-        Search for similar jobs.
-
-        Args:
-            query_embedding: Query embedding vector
-            top_k: Number of results to return
-            filters: Optional metadata filters (source, company, salary range, etc.)
-
-        Returns:
-            List of similar job results with scores
-        """
-        try:
-            # Placeholder implementation
-            # Real implementation:
-            # index = pinecone.Index(self.index_name)
-            # results = index.query(
-            #     vector=query_embedding,
-            #     top_k=top_k,
-            #     namespace="jobs",
-            #     filter=filters,
-            #     include_metadata=True
-            # )
-
-            return []
-
-        except Exception as e:
-            logger.error(f"Search failed: {e}")
-            return []
-
-    def delete_index(self) -> bool:
-        """Delete Pinecone index."""
-        try:
-            logger.info(f"Deleting index: {self.index_name}")
-            # pinecone.delete_index(self.index_name)
-            return True
-        except Exception as e:
-            logger.error(f"Failed to delete index: {e}")
-            return False
+    title_normalised: str = ""
+    skills: list[str] = field(default_factory=list)
+    seniority: str = "unknown"
+    salary_min: float | None = None
+    salary_max: float | None = None
+    remote: bool = False
+    location_city: str = ""
+    location_country: str = ""
 
 
 class JobDescriptionParser:
-    """Parses and extracts key information from job descriptions."""
+    """Extract structured fields from raw job description text."""
 
-    @staticmethod
-    def extract_sections(description: str) -> dict[str, str]:
-        """
-        Extract common job description sections.
-
-        Returns:
-            Dict with sections: about_role, requirements, responsibilities, etc.
-        """
-        sections = {
-            "full": description,
-            "about_role": "",
-            "responsibilities": "",
-            "requirements": "",
-            "qualifications": "",
-            "benefits": "",
-        }
-
-        # Placeholder: would use NLP to identify sections
-        return sections
-
-    @staticmethod
-    def extract_entities(description: str) -> dict[str, list[str]]:
-        """
-        Extract named entities from job description.
-
-        Returns:
-            Dict with: skills, tools, technologies, qualifications, etc.
-        """
-        entities = {
-            "skills": [],
-            "technologies": [],
-            "tools": [],
-            "certifications": [],
-            "experience_keywords": [],
-        }
-
-        # Placeholder: would use NER to extract entities
-        return entities
-
-    @staticmethod
-    def create_compact_representation(job: dict[str, Any]) -> str:
-        """
-        Create a compact text representation optimized for embedding.
-
-        Combines:
-        - Job title (high weight)
-        - Company name (high weight)
-        - Required skills (medium weight)
-        - Job description excerpt
+    def parse(self, title: str, description: str) -> ParsedJobDescription:
+        """Parse a job description into structured fields.
 
         Args:
-            job: Job posting dict
+            title: Job title string.
+            description: Full job description text.
 
         Returns:
-            Compact text optimized for embedding
+            ``ParsedJobDescription`` with extracted fields.
         """
-        parts = [
-            f"Title: {job.get('job_title', '')}",
-            f"Company: {job.get('company_name', '')}",
-            f"Skills: {' '.join(job.get('required_skills', []))}",
-            f"Description: {job.get('job_description', '')[:500]}",  # First 500 chars
+        combined = f"{title} {description}".lower()
+
+        return ParsedJobDescription(
+            title_normalised=self._normalise_title(title),
+            skills=self._extract_skills(combined),
+            seniority=self._detect_seniority(combined),
+            salary_min=self._extract_salary(description)[0],
+            salary_max=self._extract_salary(description)[1],
+            remote="remote" in combined or "work from home" in combined,
+        )
+
+    @staticmethod
+    def _normalise_title(title: str) -> str:
+        """Lower-case, strip extra whitespace."""
+        return " ".join(title.strip().lower().split())
+
+    @staticmethod
+    def _extract_skills(text: str) -> list[str]:
+        """Regex-based skill extraction from text."""
+        # Canonical list of tech skills to look for
+        known_skills = [
+            "python",
+            "java",
+            "javascript",
+            "typescript",
+            "go",
+            "rust",
+            "c++",
+            "sql",
+            "nosql",
+            "mongodb",
+            "postgresql",
+            "mysql",
+            "redis",
+            "aws",
+            "gcp",
+            "azure",
+            "docker",
+            "kubernetes",
+            "terraform",
+            "spark",
+            "kafka",
+            "airflow",
+            "dbt",
+            "snowflake",
+            "databricks",
+            "react",
+            "node.js",
+            "fastapi",
+            "flask",
+            "django",
+            "machine learning",
+            "deep learning",
+            "nlp",
+            "computer vision",
+            "pytorch",
+            "tensorflow",
+            "scikit-learn",
+            "pandas",
+            "numpy",
+            "git",
+            "ci/cd",
+            "linux",
+            "agile",
+            "scrum",
         ]
+        found: list[str] = []
+        for skill in known_skills:
+            pattern = r"\b" + re.escape(skill) + r"\b"
+            if re.search(pattern, text, re.IGNORECASE):
+                found.append(skill)
+        return sorted(set(found))
 
-        return " ".join(parts)
+    @staticmethod
+    def _detect_seniority(text: str) -> str:
+        for level, keywords in _SENIORITY_KEYWORDS.items():
+            for kw in keywords:
+                if kw in text:
+                    return level
+        return "unknown"
+
+    @staticmethod
+    def _extract_salary(text: str) -> tuple[float | None, float | None]:
+        match = _SALARY_PATTERN.search(text)
+        if not match:
+            return None, None
+        raw_min = match.group(1).replace(",", "")
+        sal_min = float(raw_min)
+        sal_max = None
+        if match.group(2):
+            sal_max = float(match.group(2).replace(",", ""))
+        return sal_min, sal_max
 
 
-class Phase3Embeddings:
-    """Phase 3: Embeddings & Vector Search implementation."""
+# ======================================================================
+# Resume parsing
+# ======================================================================
 
-    def __init__(self, pinecone_api_key: str = None):
-        self.embedder = HuggingFaceEmbedder()
-        self.vector_db = PineconeVectorDB(api_key=pinecone_api_key)
-        self.parser = JobDescriptionParser()
-        self.stats = {
-            "jobs_processed": 0,
-            "embeddings_generated": 0,
-            "vectors_stored": 0,
-            "errors": 0,
-        }
 
-    def bootstrap(self) -> bool:
-        """Initialize Phase 3 components."""
-        logger.info("=" * 70)
-        logger.info("PHASE 3: EMBEDDINGS & VECTOR SEARCH - BOOTSTRAP")
-        logger.info("=" * 70)
+@dataclass
+class ParsedResume:
+    """Structured output from resume parsing."""
 
-        # Create Pinecone index
-        if not self.vector_db.create_index():
-            logger.error("Failed to create Pinecone index")
-            return False
+    name: str = ""
+    email: str = ""
+    phone: str = ""
+    skills: list[str] = field(default_factory=list)
+    experience_years: int = 0
+    education: str = ""
+    current_title: str = ""
 
-        logger.info(f"✓ Embedder initialized: {self.embedder.model_name}")
-        logger.info(f"✓ Vector DB initialized: {self.vector_db.index_name}")
-        logger.info("✓ Description parser initialized")
-        logger.info("=" * 70)
 
-        return True
+class ResumeParser:
+    """Extract structured fields from resume text.
 
-    def process_jobs(self, jobs: list[dict[str, Any]]) -> dict[str, Any]:
-        """
-        Process batch of jobs: parse, embed, store vectors.
+    In production, PDF-to-text is handled by ``pdfplumber`` and
+    DOCX by ``python-docx``.  This class operates on plain text.
+    """
 
-        Args:
-            jobs: List of job postings from Silver layer
+    _EMAIL_RE = re.compile(r"[\w.+-]+@[\w-]+\.[\w.-]+")
+    _PHONE_RE = re.compile(r"\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}")
 
-        Returns:
-            Processing statistics
-        """
-        logger.info(f"Processing {len(jobs)} jobs for embedding...")
+    def parse(self, text: str) -> ParsedResume:
+        """Parse resume plain-text into structured fields."""
+        email_match = self._EMAIL_RE.search(text)
+        phone_match = self._PHONE_RE.search(text)
+        skills = JobDescriptionParser._extract_skills(text.lower())
 
-        # Step 1: Parse job descriptions
-        logger.info("Step 1: Parsing job descriptions...")
-        parsed_jobs = []
-        for job in jobs:
-            job["sections"] = self.parser.extract_sections(job.get("job_description", ""))
-            job["entities"] = self.parser.extract_entities(job.get("job_description", ""))
-            parsed_jobs.append(job)
+        return ParsedResume(
+            email=email_match.group(0) if email_match else "",
+            phone=phone_match.group(0) if phone_match else "",
+            skills=skills,
+        )
 
-        # Step 2: Create compact representations
-        logger.info("Step 2: Creating compact text representations...")
-        texts = [self.parser.create_compact_representation(job) for job in parsed_jobs]
 
-        # Step 3: Generate embeddings
-        logger.info("Step 3: Generating embeddings...")
-        embeddings = self.embedder.embed_batch(texts)
-        self.stats["embeddings_generated"] += len(embeddings)
+# ======================================================================
+# Skill normalisation
+# ======================================================================
 
-        # Step 4: Prepare vectors for Pinecone
-        logger.info("Step 4: Preparing vectors for vector DB...")
-        vectors_to_store = []
+_SKILL_ALIASES: dict[str, str] = {
+    "js": "javascript",
+    "ts": "typescript",
+    "py": "python",
+    "k8s": "kubernetes",
+    "tf": "terraform",
+    "ml": "machine learning",
+    "dl": "deep learning",
+    "react.js": "react",
+    "reactjs": "react",
+    "node": "node.js",
+    "nodejs": "node.js",
+    "postgres": "postgresql",
+    "mongo": "mongodb",
+    "scikit learn": "scikit-learn",
+    "sklearn": "scikit-learn",
+}
 
-        for job, embedding in zip(parsed_jobs, embeddings, strict=False):
-            vector_id = f"{job.get('source')}_{job.get('source_job_id')}"
+_SKILL_CATEGORIES: dict[str, str] = {
+    "python": "language",
+    "java": "language",
+    "javascript": "language",
+    "typescript": "language",
+    "go": "language",
+    "rust": "language",
+    "c++": "language",
+    "sql": "language",
+    "react": "framework",
+    "node.js": "framework",
+    "fastapi": "framework",
+    "flask": "framework",
+    "django": "framework",
+    "pytorch": "framework",
+    "tensorflow": "framework",
+    "scikit-learn": "framework",
+    "docker": "tool",
+    "kubernetes": "tool",
+    "terraform": "tool",
+    "git": "tool",
+    "spark": "tool",
+    "kafka": "tool",
+    "airflow": "tool",
+    "dbt": "tool",
+    "aws": "platform",
+    "gcp": "platform",
+    "azure": "platform",
+    "snowflake": "platform",
+    "databricks": "platform",
+    "machine learning": "domain",
+    "deep learning": "domain",
+    "nlp": "domain",
+    "computer vision": "domain",
+}
 
-            metadata = {
-                "job_id": job.get("job_id"),
-                "source": job.get("source"),
-                "company_name": job.get("company_name"),
-                "job_title": job.get("job_title"),
-                "salary_min": job.get("benefits", {}).get("salary_min"),
-                "salary_max": job.get("benefits", {}).get("salary_max"),
-                "location_city": job.get("location", {}).get("city"),
-                "location_country": job.get("location", {}).get("country"),
-                "posted_date": job.get("posted_date"),
-                "quality_score": job.get("quality_score", 0),
-            }
 
-            vectors_to_store.append((vector_id, embedding, metadata))
-            self.stats["jobs_processed"] += 1
+class SkillNormalizer:
+    """Maps skill aliases to canonical names and categorises them."""
 
-        # Step 5: Store in Pinecone
-        logger.info("Step 5: Storing vectors in Pinecone...")
-        stored = self.vector_db.upsert_embeddings(vectors_to_store)
-        self.stats["vectors_stored"] += stored
-
-        # Step 6: Enrich jobs with embedding reference
-        logger.info("Step 6: Enriching jobs with embedding metadata...")
-        for job, embedding in zip(parsed_jobs, embeddings, strict=False):
-            job["embeddings"] = embedding
-            job["embedding_model"] = self.embedder.model_name
-
-        logger.info("")
-        logger.info("=" * 70)
-        logger.info("PHASE 3 PROCESSING RESULTS")
-        logger.info("=" * 70)
-        logger.info(f"Jobs processed: {self.stats['jobs_processed']}")
-        logger.info(f"Embeddings generated: {self.stats['embeddings_generated']}")
-        logger.info(f"Vectors stored in Pinecone: {self.stats['vectors_stored']}")
-        logger.info(f"Errors: {self.stats['errors']}")
-        logger.info("=" * 70)
-
-        return {
-            "stats": self.stats,
-            "enriched_jobs": parsed_jobs,
-        }
-
-    def search_similar_jobs(
+    def __init__(
         self,
-        query_job: dict[str, Any],
+        aliases: dict[str, str] | None = None,
+        categories: dict[str, str] | None = None,
+    ) -> None:
+        self.aliases = aliases or dict(_SKILL_ALIASES)
+        self.categories = categories or dict(_SKILL_CATEGORIES)
+
+    def normalize(self, skill: str) -> str:
+        """Return canonical name for *skill*."""
+        key = skill.strip().lower()
+        return self.aliases.get(key, key)
+
+    def categorize(self, skill: str) -> str:
+        """Return the category of *skill* or ``'other'``."""
+        canonical = self.normalize(skill)
+        return self.categories.get(canonical, "other")
+
+    def normalize_list(self, skills: list[str]) -> list[str]:
+        """Normalise and deduplicate a list of skills."""
+        seen: set[str] = set()
+        result: list[str] = []
+        for s in skills:
+            n = self.normalize(s)
+            if n not in seen:
+                seen.add(n)
+                result.append(n)
+        return result
+
+
+# ======================================================================
+# Embedding generation
+# ======================================================================
+
+
+class EmbeddingGenerator:
+    """Generate text embeddings via *sentence-transformers* (optional dep).
+
+    Raises ``MissingDependencyError`` at embedding time if the library
+    is not installed — there is NO silent fallback.  Install with::
+
+        pip install sentence-transformers
+
+    The ``_hash_embed`` method exists only for **explicit testing** use
+    (call it directly if you need deterministic test vectors).
+    """
+
+    def __init__(
+        self,
+        model_name: str = "sentence-transformers/all-MiniLM-L6-v2",
+        dimension: int = 384,
+    ) -> None:
+        self.model_name = model_name
+        self.dimension = dimension
+        self._model: Any = None
+
+        try:
+            from sentence_transformers import SentenceTransformer  # type: ignore[import-untyped]
+
+            self._model = SentenceTransformer(model_name)
+            self.dimension = self._model.get_sentence_embedding_dimension()
+            logger.info("loaded sentence-transformers model=%s dim=%d", model_name, self.dimension)
+        except ImportError:
+            logger.warning(
+                "sentence-transformers not installed — embed()/embed_batch() "
+                "will raise MissingDependencyError until installed",
+            )
+
+    def embed(self, text: str) -> list[float]:
+        """Generate an embedding vector for *text*.
+
+        Raises:
+            MissingDependencyError: If ``sentence-transformers`` is not installed.
+        """
+        if self._model is not None:
+            vec = self._model.encode(text)
+            return vec.tolist()
+        msg = (
+            "sentence-transformers is required for embedding generation. "
+            "Install it with: pip install sentence-transformers"
+        )
+        raise MissingDependencyError(msg)
+
+    def embed_batch(self, texts: list[str]) -> list[list[float]]:
+        """Generate embeddings for a batch of texts.
+
+        Raises:
+            MissingDependencyError: If ``sentence-transformers`` is not installed.
+        """
+        if self._model is not None:
+            vecs = self._model.encode(texts)
+            return [v.tolist() for v in vecs]
+        msg = (
+            "sentence-transformers is required for batch embedding generation. "
+            "Install it with: pip install sentence-transformers"
+        )
+        raise MissingDependencyError(msg)
+
+    def _hash_embed(self, text: str) -> list[float]:
+        """Deterministic hash-based embedding (TESTING ONLY).
+
+        This method does NOT produce semantically meaningful vectors.
+        Call it directly in tests when you need a deterministic vector
+        without installing ``sentence-transformers``.
+        """
+        import hashlib
+
+        h = hashlib.sha256(text.encode()).hexdigest()
+        vec = [int(h[i : i + 2], 16) / 255.0 for i in range(0, min(len(h), self.dimension * 2), 2)]
+        # Pad or truncate to dimension
+        vec = (vec + [0.0] * self.dimension)[: self.dimension]
+        # L2-normalise
+        norm = math.sqrt(sum(x * x for x in vec)) or 1.0
+        return [x / norm for x in vec]
+
+
+# ======================================================================
+# Vector store
+# ======================================================================
+
+
+class VectorStore(abc.ABC):
+    """Abstract vector storage interface."""
+
+    @abc.abstractmethod
+    def add(
+        self,
+        ids: list[str],
+        embeddings: list[list[float]],
+        metadata: list[dict[str, Any]] | None = None,
+    ) -> int:
+        """Insert vectors. Returns count inserted."""
+
+    @abc.abstractmethod
+    def query(
+        self,
+        embedding: list[float],
         top_k: int = 10,
     ) -> list[dict[str, Any]]:
-        """
-        Find similar jobs to a given job posting.
+        """Return top-k nearest neighbours."""
 
-        Args:
-            query_job: Job posting to find similar matches for
-            top_k: Number of results to return
+    @abc.abstractmethod
+    def delete(self, ids: list[str]) -> int:
+        """Delete vectors by ID. Returns count deleted."""
 
-        Returns:
-            List of similar jobs ranked by similarity
-        """
-        logger.info(f"Searching for {top_k} jobs similar to {query_job.get('job_title')}...")
-
-        # Create compact representation
-        text = self.parser.create_compact_representation(query_job)
-
-        # Generate query embedding
-        query_embedding = self.embedder.embed_text(text)
-
-        # Search Pinecone
-        filters = {
-            "source": {"$ne": query_job.get("source")},  # Exclude same source to reduce duplicates
-        }
-
-        results = self.vector_db.search(query_embedding, top_k=top_k, filters=filters)
-
-        logger.info(f"Found {len(results)} similar jobs")
-        return results
+    @abc.abstractmethod
+    def count(self) -> int:
+        """Total number of stored vectors."""
 
 
-class SemanticSearch:
-    """Resume-to-Job semantic search."""
+class InMemoryVectorStore(VectorStore):
+    """In-memory brute-force vector store (testing & small datasets)."""
 
-    def __init__(self, vector_db: PineconeVectorDB, embedder: EmbeddingModel):
-        self.vector_db = vector_db
-        self.embedder = embedder
+    def __init__(self) -> None:
+        self._store: dict[str, tuple[list[float], dict[str, Any]]] = {}
 
-    def search_jobs_for_resume(
-        self, resume_text: str, top_k: int = 20, filters: dict[str, Any] = None
-    ) -> list[dict[str, Any]]:
-        """
-        Find best matching jobs for a resume/user profile.
+    def add(
+        self,
+        ids: list[str],
+        embeddings: list[list[float]],
+        metadata: list[dict[str, Any]] | None = None,
+    ) -> int:
+        meta = metadata or [{} for _ in ids]
+        for vid, vec, m in zip(ids, embeddings, meta, strict=True):
+            self._store[vid] = (vec, m)
+        logger.info("vector store: added {} vectors, total={}", len(ids), len(self._store))
+        return len(ids)
 
-        Args:
-            resume_text: Resume or professional summary text
-            top_k: Number of job matches to return
-            filters: Optional filters (location, salary range, etc.)
+    def query(self, embedding: list[float], top_k: int = 10) -> list[dict[str, Any]]:
+        scored: list[tuple[str, float, dict[str, Any]]] = []
+        for vid, (vec, meta) in self._store.items():
+            sim = self._cosine(embedding, vec)
+            scored.append((vid, sim, meta))
+        scored.sort(key=lambda x: x[1], reverse=True)
+        return [{"id": vid, "score": round(sim, 4), **meta} for vid, sim, meta in scored[:top_k]]
 
-        Returns:
-            List of matching jobs ranked by relevance
-        """
-        logger.info(f"Searching for {top_k} job matches for resume...")
+    def delete(self, ids: list[str]) -> int:
+        removed = 0
+        for vid in ids:
+            if vid in self._store:
+                del self._store[vid]
+                removed += 1
+        return removed
 
-        # Generate resume embedding
-        resume_embedding = self.embedder.embed_text(resume_text)
+    def count(self) -> int:
+        return len(self._store)
 
-        # Search Pinecone with optional filters
-        results = self.vector_db.search(resume_embedding, top_k=top_k, filters=filters)
-
-        logger.info(f"Found {len(results)} matching jobs")
-        return results
-
-    def rank_job_resume_matches(
-        self, job_embedding: list[float], resume_embedding: list[float]
-    ) -> float:
-        """
-        Calculate match score between job and resume using cosine similarity.
-
-        Args:
-            job_embedding: 768-dim job embedding
-            resume_embedding: 768-dim resume embedding
-
-        Returns:
-            Match score (0-1)
-        """
-        # Cosine similarity = dot product / (magnitude1 * magnitude2)
-        import math
-
-        dot_product = sum(j * r for j, r in zip(job_embedding, resume_embedding, strict=False))
-        mag1 = math.sqrt(sum(j**2 for j in job_embedding))
-        mag2 = math.sqrt(sum(r**2 for r in resume_embedding))
-
-        if mag1 == 0 or mag2 == 0:
-            return 0.0
-
-        return dot_product / (mag1 * mag2)
+    @staticmethod
+    def _cosine(a: list[float], b: list[float]) -> float:
+        dot = sum(x * y for x, y in zip(a, b, strict=False))
+        ma = math.sqrt(sum(x * x for x in a)) or 1.0
+        mb = math.sqrt(sum(y * y for y in b)) or 1.0
+        return dot / (ma * mb)
