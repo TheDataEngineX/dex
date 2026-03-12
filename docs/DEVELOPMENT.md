@@ -10,7 +10,7 @@
 |---------|----------|---------|
 | Git | Yes | Version control |
 | curl | Yes | Downloading tools |
-| Python 3.11+ | Yes | Runtime (managed by uv) |
+| Python 3.12+ | Yes | Runtime (managed by uv) |
 | build-essential / gcc | Yes | Native extension compilation |
 | Java 17+ JRE | Yes* | PySpark tests (`openjdk-17-jre-headless`) |
 | uv | Yes | Python package & env manager |
@@ -196,7 +196,7 @@ open http://localhost:9090
 | Issue | Solution |
 |-------|----------|
 | Pre-commit hooks fail | `uv run poe lint-fix` then retry |
-| Tests fail locally but pass in CI | Check Python version (3.11+), run `uv sync --reinstall` |
+| Tests fail locally but pass in CI | Check Python version (3.12+), run `uv sync --reinstall` |
 | Import errors | Run `uv sync --reinstall` and restart the shell |
 | Airflow DAG not found | Check `src/careerdex/dags/` folder, restart scheduler |
 

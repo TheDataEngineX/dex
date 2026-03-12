@@ -2,9 +2,10 @@
 
 [![CI/CD](https://github.com/TheDataEngineX/DEX/actions/workflows/ci.yml/badge.svg?branch=dev)](https://github.com/TheDataEngineX/DEX/actions/workflows/ci.yml)
 [![PyPI](https://img.shields.io/pypi/v/dataenginex)](https://pypi.org/project/dataenginex/)
-[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Coverage](https://img.shields.io/badge/coverage-94%25-brightgreen)](https://github.com/TheDataEngineX/DEX)
+[![Security](https://img.shields.io/badge/security-Trivy%20%7C%20CodeQL%20%7C%20SBOM-blue)](docs/SECURITY_SCANNING.md)
 
 A production-focused data engineering framework with medallion architecture, Airflow orchestration patterns, and enterprise observability foundations. DEX is both a core framework and a mono-repo for sub-projects built on top of it.
 
@@ -42,7 +43,7 @@ docker compose up -d
 DEX/
 ├── packages/
 │   ├── dataenginex/          # Core framework package (canonical source)
-│   │   └── packages/dataenginex/src/dataenginex/  #   API utilities, core, middleware
+│   │   └── packages/dataenginex/src/dataenginex/  #   API utilities, core, middleware, plugins, dashboard
 │
 ├── src/
 │   ├── careerdex/             # AI job matching & recommendations app
@@ -103,7 +104,7 @@ Raw Sources (LinkedIn, Indeed, Glassdoor, APIs)
 
 | Layer            | Technology                                      |
 |------------------|-------------------------------------------------|
-| Language         | Python 3.11+                                    |
+| Language         | Python 3.12+                                    |
 | Package Manager  | uv (dependencies/env) + Hatchling (build backend) |
 | Web Framework    | FastAPI + Uvicorn                               |
 | Orchestration    | Apache Airflow                                  |
@@ -114,6 +115,7 @@ Raw Sources (LinkedIn, Indeed, Glassdoor, APIs)
 | Containers       | Docker + docker compose                         |
 | Kubernetes       | Kustomize + ArgoCD (GitOps)                     |
 | CI/CD            | GitHub Actions                                  |
+| Dashboard        | Streamlit (optional `dashboard` dep group)      |
 
 ---
 
@@ -151,6 +153,43 @@ uv run poe docker-up         # Start local stack
 | [Roadmap (Canonical CSV)](docs/roadmap/project-roadmap.csv) | Planned and in-progress work |
 | [CareerDEX](docs/careerdex/index.md)              | Job matching project     |
 | [Weather](docs/weather/index.md)                  | Weather pipeline         |
+
+---
+
+## Plugin System
+
+DEX includes a plugin system for extending the framework:
+
+```python
+from dataenginex.plugins import discover, PluginRegistry
+
+# Auto-discover installed plugins via entry_points
+plugins = discover()
+registry = PluginRegistry()
+for plugin in plugins:
+    registry.register(plugin)
+
+# Health check all plugins
+status = registry.health_check_all()
+```
+
+Create a plugin by implementing `DataEngineXPlugin` and adding an entry point in `pyproject.toml`:
+
+```toml
+[project.entry-points."dataenginex.plugins"]
+my_plugin = "my_package.plugin:MyPlugin"
+```
+
+## Streamlit Dashboard
+
+DEX ships a configurable Streamlit dashboard for monitoring pipelines:
+
+```bash
+uv sync --group dashboard
+streamlit run examples/dashboard/run_dashboard.py
+```
+
+See [`examples/dashboard/`](examples/dashboard/) for configuration and usage.
 
 ---
 
@@ -198,4 +237,4 @@ Follow PyPI best practices, keep it concise.
 
 ---
 
-**Version**: v0.3.6 | **License**: MIT
+**Version**: v0.5.0 | **License**: MIT

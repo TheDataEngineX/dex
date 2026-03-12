@@ -17,7 +17,7 @@ Build a Language‑Learning Agent with OpenAI, LangGraph, Ollama & MCP
 Add Patreon
 Get Domain, Org account, email
 Use Slack
-Use Streamlit
+~~Use Streamlit~~ (done — `dataenginex.dashboard`)
 netlify
 
 # Publish Posts

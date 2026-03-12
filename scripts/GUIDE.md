@@ -14,7 +14,7 @@ uv run poe setup-system          # via poe task
 ```
 
 **Installs:**
-- Core: git, curl, build-essential, Python 3.11+, Java 17 JRE, uv
+- Core: git, curl, build-essential, Python 3.12+, Java 17 JRE, uv
 - Recommended: Docker + Docker Compose
 - Optional: Trivy (security scanning), actionlint (workflow linting)
 
