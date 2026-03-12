@@ -74,6 +74,14 @@ help = "Auto-fix lint issues and format code"
 shell = "ruff format src/ packages/dataenginex/src/ tests/"
 help = "Format code with ruff"
 
+[tool.poe.tasks.docs-check]
+shell = "find . -name '*.md' -not -path './site/*' -not -path './.venv/*' -not -path './.pytest_cache/*' -not -path './.github/*' | xargs uvx mdformat --check"
+help = "Check markdown formatting across all docs"
+
+[tool.poe.tasks.docs-fix]
+shell = "find . -name '*.md' -not -path './site/*' -not -path './.venv/*' -not -path './.pytest_cache/*' -not -path './.github/*' | xargs uvx mdformat"
+help = "Auto-fix markdown formatting across all docs"
+
 [tool.poe.tasks.typecheck]
 cmd = "mypy packages/dataenginex/src/dataenginex/ --config-file=pyproject.toml --no-incremental"
 help = "Run mypy type checking with project config"

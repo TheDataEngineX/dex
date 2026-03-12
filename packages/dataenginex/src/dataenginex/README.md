@@ -3,6 +3,7 @@
 `dataenginex` is the core DataEngineX framework package for building observable, production-ready data and API services.
 
 It provides:
+
 - FastAPI application primitives and API extensions
 - Middleware for structured logging, metrics, and tracing
 - Data quality and validation utilities

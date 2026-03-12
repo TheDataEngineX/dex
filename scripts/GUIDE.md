@@ -5,27 +5,32 @@ Utility scripts for DEX development and deployment.
 ## Scripts
 
 ### `setup-system.sh`
+
 Installs all Linux/macOS system-level packages required to develop, test, and run the DEX project locally.
 
 **Usage:**
+
 ```bash
 bash scripts/setup-system.sh     # direct
 uv run poe setup-system          # via poe task
 ```
 
 **Installs:**
+
 - Core: git, curl, build-essential, Python 3.12+, Java 17 JRE, uv
 - Recommended: Docker + Docker Compose
 - Optional: Trivy (security scanning), actionlint (workflow linting)
 
 **Supports:** Ubuntu/Debian, Fedora/RHEL, Arch Linux, macOS (Homebrew)
 
----
+______________________________________________________________________
 
 ### `promote.sh`
+
 Promotes from dev to prod by creating a PR from `dev` → `main`, or by updating the prod overlay with a specific image tag.
 
 **Usage:**
+
 ```bash
 # Branch promotion: dev → main (creates PR)
 ./scripts/promote.sh
@@ -38,31 +43,37 @@ Promotes from dev to prod by creating a PR from `dev` → `main`, or by updating
 ```
 
 **Features:**
+
 - Creates PR from `dev` → `main` for branch promotion
 - Optionally updates prod overlay kustomization.yaml with a specific image tag
 - Creates GitHub PR with deployment checklist (requires `gh` CLI)
 - Supports auto-merge with `--auto-merge` flag
 
 **Prerequisites:**
+
 - bash
 - GitHub CLI (`gh`) installed and authenticated
 - Git configured with push access to repository
 - On `main` branch with no uncommitted changes (for image tag mode)
 
 Make the scripts executable once:
+
 ```bash
 chmod +x ./scripts/*.sh
 ```
 
 ### `get-tags.sh`
+
 Displays current deployed image tags across all environments.
 
 **Usage:**
+
 ```bash
 ./scripts/get-tags.sh
 ```
 
 **Output Example:**
+
 ```
 Current Image Tags
 ============================================================
@@ -130,11 +141,14 @@ argocd app rollback dex <revision>
 ## Integration with CI/CD
 
 ### Automated Deployment
+
 GitHub Actions automatically updates GitOps overlays based on branch:
+
 - `dev` branch CI success → updates `infra/argocd/overlays/dev/kustomization.yaml`
 - `main` branch CI success → updates `infra/argocd/overlays/prod/kustomization.yaml`
 
 Example from CD workflow:
+
 ```yaml
 # .github/workflows/cd.yml
 - name: Update overlay image tags
@@ -146,7 +160,9 @@ Example from CD workflow:
 ```
 
 ### Manual Prod Promotion
+
 Use the promotion script for controlled prod deployments:
+
 ```bash
 # After dev is stable, promote to prod
 ./scripts/promote.sh
@@ -155,6 +171,7 @@ Use the promotion script for controlled prod deployments:
 ## Troubleshooting
 
 ### "Could not find image tag"
+
 ```bash
 # Check kustomization.yaml format
 cat infra/argocd/overlays/dev/kustomization.yaml
@@ -166,6 +183,7 @@ cat infra/argocd/overlays/dev/kustomization.yaml
 ```
 
 ### "You have uncommitted changes"
+
 ```bash
 # Stash changes
 git stash
@@ -178,6 +196,7 @@ git stash pop
 ```
 
 ### "gh: command not found"
+
 ```bash
 # Install GitHub CLI (Ubuntu)
 sudo apt-get update
@@ -188,6 +207,7 @@ gh auth login
 ```
 
 ### PR creation fails
+
 ```bash
 # Check gh auth status
 gh auth status
@@ -203,11 +223,11 @@ git push origin promote-prod-sha-abc12345
 ## Best Practices
 
 1. **Always promote via PR**: dev → main for traceability
-2. **Use PR reviews**: Require approvals before merging
-3. **Monitor deployments**: Check logs and metrics after promotion
-4. **Document promotions**: Use PR descriptions for audit trail
-5. **Keep environments in sync**: Regularly check with `get-tags.sh`
-6. **Use SHA tags**: Immutable, traceable, promotable
+1. **Use PR reviews**: Require approvals before merging
+1. **Monitor deployments**: Check logs and metrics after promotion
+1. **Document promotions**: Use PR descriptions for audit trail
+1. **Keep environments in sync**: Regularly check with `get-tags.sh`
+1. **Use SHA tags**: Immutable, traceable, promotable
 
 ## References
 

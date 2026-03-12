@@ -840,9 +840,9 @@ class TestDeploymentConfig:
     def test_generate_prod_config(self) -> None:
         from careerdex.phases.phase6_testing_deployment import generate_deployment_config
 
-        cfg = generate_deployment_config(env="prod", image_tag="v0.4.0")
+        cfg = generate_deployment_config(env="prod", image_tag="v0.5.0")
         assert cfg.replicas == 3
-        assert "v0.4.0" in cfg.image
+        assert "v0.5.0" in cfg.image
 
     def test_to_k8s_env(self) -> None:
         from careerdex.phases.phase6_testing_deployment import DeploymentConfig

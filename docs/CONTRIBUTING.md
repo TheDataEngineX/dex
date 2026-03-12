@@ -3,14 +3,15 @@ Thank you for contributing to DEX!
 ## Getting Started
 
 1. Read [DEVELOPMENT.md](./DEVELOPMENT.md) for setup instructions
-2. Fork the repository
-3. Create a feature branch from `dev`
-4. Make your changes
-5. Submit a pull request
+1. Fork the repository
+1. Create a feature branch from `dev`
+1. Make your changes
+1. Submit a pull request
 
 ## Commit Messages
 
 Use semantic commit format:
+
 - `feat(#123): add resume parser`
 - `fix(#124): handle edge case in matching`
 - `docs: update API docs`
@@ -27,17 +28,18 @@ Use semantic commit format:
 ## Before Submitting PR
 
 1. Run all checks locally:
+
    ```bash
    uv run poe lint        # Ruff lint check
    uv run poe typecheck   # Type checking
    uv run poe test        # Run tests
    ```
 
-2. Tests must pass with 80%+ coverage for new code
+1. Tests must pass with 80%+ coverage for new code
 
-3. Update documentation if needed
+1. Update documentation if needed
 
-4. Use PR template in `.github/PULL_REQUEST_TEMPLATE.md`
+1. Use PR template in `.github/PULL_REQUEST_TEMPLATE.md`
 
 ## Pull Request Process
 

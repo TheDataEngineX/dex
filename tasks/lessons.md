@@ -3,7 +3,7 @@
 > Self-improvement log. After any correction, mistake, or insight — record it here.
 > Agent reviews this at session start to avoid repeating mistakes.
 
----
+______________________________________________________________________
 
 ## Enforced Instincts
 
@@ -11,19 +11,20 @@
 > Violations of these rules should trigger immediate self-correction.
 
 1. **Always run the real app** — Tests + lint passing is NOT sufficient. `curl` the endpoints.
-2. **Never return fake data** — Unimplemented code raises `NotImplementedError`, never returns constants.
-3. **Grep after migrations** — After any rename/move, grep the entire codebase for stale references.
-4. **Lock after pyproject changes** — Run `uv lock && uv sync` after ANY pyproject.toml change.
-5. **Log findings** — Record research, dead ends, and decisions in `tasks/findings.md`.
-6. **Fresh context for complex tasks** — Use subagents to avoid context rot on multi-step work.
-7. **Use Context7 for library docs** — Add `use context7` to prompts involving FastAPI, PySpark, Pydantic, etc.
-8. **Use llmfit before pulling models** — Run `llmfit recommend --json --use-case <use-case>` before `ollama pull`.
+1. **Never return fake data** — Unimplemented code raises `NotImplementedError`, never returns constants.
+1. **Grep after migrations** — After any rename/move, grep the entire codebase for stale references.
+1. **Lock after pyproject changes** — Run `uv lock && uv sync` after ANY pyproject.toml change.
+1. **Log findings** — Record research, dead ends, and decisions in `tasks/findings.md`.
+1. **Fresh context for complex tasks** — Use subagents to avoid context rot on multi-step work.
+1. **Use Context7 for library docs** — Add `use context7` to prompts involving FastAPI, PySpark, Pydantic, etc.
+1. **Use llmfit before pulling models** — Run `llmfit recommend --json --use-case <use-case>` before `ollama pull`.
 
----
+______________________________________________________________________
 
 ## Patterns & Anti-Patterns
 
 ### Do This
+
 - Always run the real app (step 4) — tests + lint alone are NOT sufficient
 - Use `NotImplementedError` with descriptive messages for stubs, not fake/fallback data
 - Structured logging: `logger.info("event", key=value)` — never f-strings in log calls
@@ -32,13 +33,14 @@
 - Grep for the old pattern after any rename/migration to catch stragglers
 
 ### Don't Do This
+
 - Don't return fake/constant data from unimplemented endpoints — fail loud
 - Don't leave domain-specific examples (JobPosting, salary_min) in generic framework code
 - Don't skip `uv lock` after changing pyproject.toml — stale lockfile breaks CI
 - Don't assume tests passing = working app — curl the actual endpoints
 - Don't silently swallow exceptions — always re-raise with context
 
----
+______________________________________________________________________
 
 ## Corrections Log
 
@@ -51,7 +53,7 @@
 | 2026-03-05 | Constant/fallback values masked missing implementations | Stubs should raise `NotImplementedError` with actionable message, never return plausible fake data |
 | 2026-03-05 | CareerDEX schemas lived in generic dataenginex package | Domain models belong in the application package, not the framework — enforce package boundaries |
 
----
+______________________________________________________________________
 
 ## Version History
 

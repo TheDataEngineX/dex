@@ -4,7 +4,7 @@
 
 > **Quick Links:** [CI Workflow](#continuous-integration-ci) · [CD Workflow](#continuous-deployment-cd) · [Troubleshooting](#troubleshooting) · [Quick Reference](#quick-reference)
 
----
+______________________________________________________________________
 
 ## 📋 Table of Contents
 
@@ -25,11 +25,12 @@
 - [Related Documentation](#related-documentation)
 - [Quick Reference](#quick-reference)
 
----
+______________________________________________________________________
 
 ## Overview
 
 DEX uses a GitOps-based CI/CD pipeline with:
+
 - **CI**: Automated testing, linting, and security scanning on every PR
 - **CD**: Automated Docker builds and deployment manifest updates
 - **ArgoCD**: GitOps-based continuous deployment to Kubernetes
@@ -57,7 +58,7 @@ graph LR
     style ArgoMain fill:#d4edda
 ```
 
----
+______________________________________________________________________
 
 ## Project Structure
 
@@ -71,11 +72,13 @@ DEX is **dual-project**:
 ### Unified Testing
 
 The **root `pyproject.toml`** orchestrates all tests:
-- Imports `dataenginex>=0.4.0` as a dependency (editable path: `packages/dataenginex`)
+
+- Imports `dataenginex>=0.6.0` as a dependency (editable path: `packages/dataenginex`)
 - Defines app package build target under `[tool.hatch.build.targets.wheel] packages = ["src/careerdex"]`
-- Declares dependency groups: `dev` (required), `data` (PySpark/Airflow), `notebook` (pandas)
+- Declares dependency groups: `dev` (required), `data` (PySpark/Airflow), `notebook` (pandas), `ml` (sentence-transformers), `dashboard` (streamlit)
 
 **CI workflow** (`ci.yml`) runs both projects together in a single pipeline:
+
 - `lint-and-test` job: `uv sync` + `poe lint/test-cov` (tests both dataenginex + careerdex with dev deps only)
 - `integration-test` job (optional, label/dispatch): `uv sync --group data --group notebook` (full stack)
 
@@ -87,19 +90,21 @@ The **root `pyproject.toml`** orchestrates all tests:
   - `release-careerdex.yml`: Watches root `pyproject.toml` for version changes → creates `careerdex-vX.Y.Z` tag + release
 - **PyPI publishing** (`pypi-publish.yml`): Triggered by DataEngineX release → detects changes in `packages/dataenginex/` since last tag → publishes to PyPI
 
----
+______________________________________________________________________
 
 ## Continuous Integration (CI)
 
 **Workflow**: [`.github/workflows/ci.yml`](https://github.com/TheDataEngineX/DEX/blob/main/.github/workflows/ci.yml)
 
 **Triggers**:
+
 - Push to `main` or `dev` branches
 - Pull requests targeting `main` or `dev`
 
 **Jobs**:
 
 ### 1. Lint and Test
+
 Runs code quality checks and test suite:
 
 ```bash
@@ -113,6 +118,7 @@ uv run poe test-cov
 **Requirements**: All checks must pass before merge
 
 ### 2. Security Scans
+
 Runs in parallel via [`.github/workflows/security.yml`](https://github.com/TheDataEngineX/DEX/blob/main/.github/workflows/security.yml):
 
 - **CodeQL**: Static analysis for security vulnerabilities
@@ -121,13 +127,16 @@ Runs in parallel via [`.github/workflows/security.yml`](https://github.com/TheDa
 **Results**: Available in GitHub Security tab
 
 ### 3. Integration Test (Optional)
+
 Optional job for full dependency coverage (PySpark, Airflow, Pandas):
 
 **Trigger**:
+
 - Manual: `gh workflow run ci.yml`
 - Label: Add `full-test` label to pull request
 
 **What it does**:
+
 ```bash
 # Installs all dependency groups
 uv sync --group dev --group data --group notebook
@@ -159,6 +168,7 @@ ghcr.io/thedataenginex/dex:sha-a1b2c3d4
 ```
 
 **Tags Applied**:
+
 - `sha-XXXXXXXX` - Immutable SHA tag (always)
 - `v<project_version>` - Semantic release tag for main branch builds only
 - `latest` - Latest main branch build (main only)
@@ -213,6 +223,7 @@ trivy image ghcr.io/thedataenginex/dex:sha-XXXXXXXX
 **Results**: Uploaded to GitHub Security tab as SARIF report
 
 **Severity Thresholds**:
+
 - CRITICAL: Block deployment (manual review required)
 - HIGH: Alert but allow deployment
 - MEDIUM/LOW: Informational
@@ -228,13 +239,15 @@ DEX uses **parallel, independent release workflows** for each package:
 **Trigger**: Version change in `packages/dataenginex/pyproject.toml` on `main` branch
 
 **What it does**:
+
 1. Detects version bump in `packages/dataenginex/pyproject.toml`
-2. Extracts version (e.g., `0.5.0`)
-3. Creates git tag: `dataenginex-v0.5.0`
-4. Creates GitHub release → **automatically triggers `pypi-publish.yml`**
-5. Publishes to TestPyPI/PyPI
+1. Extracts version (e.g., `0.5.0`)
+1. Creates git tag: `dataenginex-v0.5.0`
+1. Creates GitHub release → **automatically triggers `pypi-publish.yml`**
+1. Publishes to TestPyPI/PyPI
 
 **How to release DataEngineX**:
+
 ```bash
 # Update version in packages/dataenginex/pyproject.toml
 version = "0.5.0"
@@ -252,20 +265,22 @@ git push origin main
 **Trigger**: Version change in root `pyproject.toml` on `main` branch
 
 **What it does**:
+
 1. Detects version bump in root `pyproject.toml`
-2. Extracts version (e.g., `0.3.6`)
-3. Creates git tag: `careerdex-v0.3.6`
-4. Creates GitHub release for the app
-5. No PyPI publish (app is Docker-based, not a library)
+1. Extracts version (e.g., `0.5.0`)
+1. Creates git tag: `careerdex-v0.5.0`
+1. Creates GitHub release for the app
+1. No PyPI publish (app is Docker-based, not a library)
 
 **How to release CareerDEX**:
+
 ```bash
 # Update version in root pyproject.toml
-version = "0.3.6"
+version = "0.5.0"
 
 # Commit and push
 git add pyproject.toml
-git commit -m "chore: bump careerdex to 0.3.6"
+git commit -m "chore: bump careerdex to 0.5.0"
 git push origin main
 ```
 
@@ -276,26 +291,30 @@ git push origin main
 **Trigger**: GitHub release published (from `release-dataenginex.yml`)
 
 **What it does**:
+
 1. Receives GitHub release event from DataEngineX release
-2. Detects if files under `packages/dataenginex/` actually changed since previous `dataenginex-vX.Y.Z` tag
-3. If changes found:
+1. Detects if files under `packages/dataenginex/` actually changed since previous `dataenginex-vX.Y.Z` tag
+1. If changes found:
    - Builds wheel distributions
    - Publishes to TestPyPI (dry-run)
    - Promotes to PyPI (stable semver tags only, not pre-release)
-4. If no changes: skips publishing with informational message
+1. If no changes: skips publishing with informational message
 
 **Publish gates**:
+
 - Only publishes if code actually changed (not just version bump in other files)
 - TestPyPI first for dry-run verification
 - PyPI promotion requires stable semver tag: `dataenginex-vMAJOR.MINOR.PATCH` (not `dataenginex-v1.2.3-rc1`)
 - Pre-release tags: publish to TestPyPI only
 
 **Automatic flow**:
+
 ```
 DataEngineX version bump → release-dataenginex.yml → GitHub release → pypi-publish.yml → PyPI
 ```
 
 **Manual trigger** (if needed):
+
 ```bash
 gh workflow run pypi-publish.yml -f tag=dataenginex-v0.5.0
 ```
@@ -605,15 +624,15 @@ kubectl get pod -n dex-dev -o jsonpath='{.items[0].spec.containers[0].image}'
 ### Development Workflow
 
 1. **Create feature branch** from `dev`
-2. **Develop and test locally**
-3. **Run quality checks** before committing: `uv run poe lint`, `uv run poe typecheck`, `uv run poe test`
-4. **Create PR** targeting `dev`
-5. **Wait for CI** to pass
-6. **Get code review** approval
-7. **Merge to dev** → Auto-deploys to dev environment
-8. **Verify in dev** environment
-9. **Create release PR** from `dev` → `main`
-10. **Merge to main** → Auto-deploys to prod
+1. **Develop and test locally**
+1. **Run quality checks** before committing: `uv run poe lint`, `uv run poe typecheck`, `uv run poe test`
+1. **Create PR** targeting `dev`
+1. **Wait for CI** to pass
+1. **Get code review** approval
+1. **Merge to dev** → Auto-deploys to dev environment
+1. **Verify in dev** environment
+1. **Create release PR** from `dev` → `main`
+1. **Merge to main** → Auto-deploys to prod
 
 ### Commit Messages
 
@@ -629,7 +648,7 @@ test: add integration tests for API
 
 ### PR Guidelines
 
-- **Keep PRs small**: <500 lines of code
+- **Keep PRs small**: \<500 lines of code
 - **Single purpose**: One feature/fix per PR
 - **Test coverage**: Include tests for new code
 - **Documentation**: Update docs for API changes
@@ -666,16 +685,18 @@ test: add integration tests for API
 ## Related Documentation
 
 **Next Steps:**
+
 - **[Deployment Runbook](DEPLOY_RUNBOOK.md)** - Deploy and rollback procedures
 - **[Local K8s Setup](LOCAL_K8S_SETUP.md)** - Kubernetes & ArgoCD setup
 - **[Observability](OBSERVABILITY.md)** - Monitor deployments
 
 **Related Topics:**
+
 - **[SDLC Overview](SDLC.md)** - Development lifecycle
 - **[Local K8s Setup](LOCAL_K8S_SETUP.md)** - Test locally
 - **[Contributing Guide](CONTRIBUTING.md)** - Development workflow
 
----
+______________________________________________________________________
 
 ## Quick Reference
 
@@ -731,6 +752,6 @@ git revert HEAD
 git push origin dev  # or main
 ```
 
----
+______________________________________________________________________
 
 **[← Back to Documentation Hub](docs-hub.md)**

@@ -30,7 +30,7 @@ ENV UV_PROJECT_ENVIRONMENT=/build/.venv \
 RUN /root/.local/bin/uv sync --frozen --no-dev
 
 # --- Stage 2: Minimal runtime image ---
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 WORKDIR /app
 

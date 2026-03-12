@@ -1,4 +1,5 @@
 # Tools/Technologies to be research/implementation
+
 Pyspark
 DataSecops
 MLOps
@@ -10,8 +11,8 @@ Databricks
 MLFlow
 Locust
 
-
 # Tasks
+
 JFrog
 Build a Language‑Learning Agent with OpenAI, LangGraph, Ollama & MCP
 Add Patreon
@@ -21,6 +22,7 @@ Use Slack
 netlify
 
 # Publish Posts
+
 LinkedIn.com
 Instagram
 Youtube

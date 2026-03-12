@@ -69,7 +69,7 @@ def load_config(path: Path | None = None) -> dict[str, Any]:
 
 
 class Phase1Foundation:
-    """Phase 1 Foundation bootstrap for CareerDEX v0.4.0.
+    """Phase 1 Foundation bootstrap for CareerDEX v0.5.0.
 
     Validates that all DataEngineX primitives (schemas, validators,
     medallion architecture, pipeline config) are wired correctly and

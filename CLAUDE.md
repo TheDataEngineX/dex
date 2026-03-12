@@ -5,17 +5,19 @@
 
 Be pragmatic, straight forward and challenge my ideas. Question my assumptions, point out the blank spots and highlight opportunity costs. No sugarcoating. No pandering. No bias. No both siding. No retro active reasoning. If it is an issue/bug/problem find the root problem and suggest a solution — don't skip or bypass it.
 
----
+______________________________________________________________________
 
 ## Workflow Orchestration
 
 ### 1. Plan First
+
 - Enter plan mode for ANY non-trivial task (3+ steps or architectural decisions)
 - If something goes sideways, STOP and re-plan immediately — don't keep pushing
 - Write plan to `tasks/todo.md` with checkable items before starting implementation
 - Write detailed specs upfront to reduce ambiguity
 
 ### 2. Subagent Strategy
+
 - Use subagents liberally to keep main context window clean
 - Offload research, exploration, and parallel analysis to subagents
 - For complex problems, throw more compute at it via subagents
@@ -23,6 +25,7 @@ Be pragmatic, straight forward and challenge my ideas. Question my assumptions, 
 - Wave execution: group independent tasks in parallel waves, sequence dependent ones
 
 ### 3. Self-Improvement Loop
+
 - After ANY correction from the user: update `tasks/lessons.md` with the pattern
 - Write rules for yourself that prevent the same mistake
 - Ruthlessly iterate on these lessons until mistake rate drops
@@ -30,36 +33,39 @@ Be pragmatic, straight forward and challenge my ideas. Question my assumptions, 
 - Log research findings, dead ends, and architectural decisions to `tasks/findings.md`
 
 ### 4. Verification Before Done
+
 - Never mark a task complete without proving it works
 - Diff behavior between main and your changes when relevant
 - Ask yourself: "Would a staff engineer approve this?"
 - Run tests, check logs, demonstrate correctness
 
 ### 5. Demand Elegance (Balanced)
+
 - For non-trivial changes: pause and ask "is there a more elegant way?"
 - If a fix feels hacky: "Knowing everything I know now, implement the elegant solution"
 - Skip this for simple, obvious fixes — don't over-engineer
 - Challenge your own work before presenting it
 
 ### 6. Autonomous Bug Fixing
+
 - When given a bug report: just fix it. Don't ask for hand-holding
 - Point at logs, errors, failing tests — then resolve them
 - Zero context switching required from the user
 - Go fix failing CI tests without being told how
 
----
+______________________________________________________________________
 
 ## Task Management
 
 1. **Plan First**: Write plan to `tasks/todo.md` with checkable items
-2. **Verify Plan**: Check in before starting implementation
-3. **Track Progress**: Mark items complete as you go
-4. **Explain Changes**: High-level summary at each step
-5. **Document Results**: Add review section to `tasks/todo.md`
-6. **Capture Lessons**: Update `tasks/lessons.md` after corrections
-7. **Log Research**: Record findings, dead ends, and decisions in `tasks/findings.md`
+1. **Verify Plan**: Check in before starting implementation
+1. **Track Progress**: Mark items complete as you go
+1. **Explain Changes**: High-level summary at each step
+1. **Document Results**: Add review section to `tasks/todo.md`
+1. **Capture Lessons**: Update `tasks/lessons.md` after corrections
+1. **Log Research**: Record findings, dead ends, and decisions in `tasks/findings.md`
 
----
+______________________________________________________________________
 
 ## Core Principles
 
@@ -67,7 +73,7 @@ Be pragmatic, straight forward and challenge my ideas. Question my assumptions, 
 - **No Laziness**: Find root causes. No temporary fixes. Senior developer standards.
 - **Minimal Impact**: Changes should only touch what's necessary. Avoid introducing bugs.
 
----
+______________________________________________________________________
 
 ## Project Overview
 
@@ -83,7 +89,7 @@ Be pragmatic, straight forward and challenge my ideas. Question my assumptions, 
 
 **Versions:** root careerdex-app 0.5.0 · dataenginex 0.6.0
 
----
+______________________________________________________________________
 
 ## Build & Run Commands
 
@@ -112,7 +118,7 @@ uv run poe uv-lock        # Regenerate lockfile
 uv run poe security       # Audit deps for vulnerabilities
 ```
 
----
+______________________________________________________________________
 
 ## Mandatory Validation Pipeline
 
@@ -130,11 +136,12 @@ Run in this exact order after ANY code change:
 
 **Tests passing ≠ app working. Step 4 is NON-NEGOTIABLE.**
 
----
+______________________________________________________________________
 
 ## Coding Standards
 
 ### Style
+
 - `from __future__ import annotations` in ALL source files
 - Ruff rules: E, F, I, B, UP, SIM, C90 · line-length 100 · max complexity 8
 - Functions: under 50 lines, max 4 parameters
@@ -142,23 +149,27 @@ Run in this exact order after ANY code change:
 - Comments explain "why", not "what"
 
 ### Type Safety
+
 - Type hints on all public functions (params + return)
 - `mypy --strict` on `packages/dataenginex/src/dataenginex/` only
 - Pydantic models for API boundaries
 - careerdex and weatherdex are NOT yet under mypy strict
 
 ### Logging — Dual Stack
+
 - **API/middleware:** `structlog.get_logger(__name__)` with `logger.info("event", key=value)`
 - **ML/backend:** `from loguru import logger` with `logger.info("message %s", arg)`
 - **NEVER:** `print()`, stdlib `logging`, or f-strings in log calls
 
 ### Error Handling
+
 - Catch specific exceptions, never bare `except:`
 - Log errors with full context (structured key-value pairs)
 - Re-raise with context, never silently swallow
 - Stubs: `raise NotImplementedError("descriptive message")` — never fake data
 
 ### Testing
+
 - 80%+ coverage target
 - Arrange-Act-Assert pattern
 - Mock external services, not code under test
@@ -166,21 +177,24 @@ Run in this exact order after ANY code change:
 - Test paths: `tests/unit/` (isolated) · `tests/integration/` (live uvicorn)
 
 ### Security
+
 - Never hardcode secrets, API keys, passwords, tokens
 - Parameterized queries only (never concatenate SQL)
 - Never log PII, credentials, or sensitive data
 - Validate all inputs at system boundaries (Pydantic)
 
 ### Observability
+
 - Prometheus metrics with `http_` prefix
 - OpenTelemetry tracing
 - Structured logs (key-value pairs)
 
----
+______________________________________________________________________
 
 ## Architecture Patterns
 
 ### API
+
 - Versioned routes: `/api/v1/`, `/api/v2/`
 - `response_model=` on every FastAPI endpoint
 - Lifespan: request logging → metrics → auth → rate limit
@@ -188,24 +202,27 @@ Run in this exact order after ANY code change:
 - Entry point: `src/careerdex/api/main.py`
 
 ### Data
+
 - Medallion architecture: Bronze → Silver → Gold
 - Airflow DAGs for orchestration
 - PySpark for transforms
 - `SchemaRegistry`, `DataCatalog`, data contracts via Pydantic
 
 ### ML
+
 - Model lifecycle: development → staging → production → archived
 - `ModelRegistry` (JSON-persisted)
 - Drift detection: PSI-based
 - PySpark ML pipelines via `src/weatherdex/ml/ml_utils.py`
 
 ### Infrastructure
+
 - Docker: multi-stage, Python 3.12-slim, non-root `dex` user
 - Kubernetes: Kustomize base + overlays (dev, prod)
 - ArgoCD GitOps: `dev` → dex-dev, `main` → dex
 - Monitoring: Prometheus + Grafana + AlertManager + Jaeger
 
----
+______________________________________________________________________
 
 ## Git Conventions
 
@@ -214,7 +231,7 @@ Run in this exact order after ANY code change:
 - **Reference issues:** `feat: add drift detection (#42)`
 - **Deployment:** `dev` → dex-dev, `main` → dex
 
----
+______________________________________________________________________
 
 ## Dependencies
 
@@ -222,9 +239,9 @@ Run in this exact order after ANY code change:
 - Pin with minimum version bounds
 - Dev deps in `[dependency-groups]`
 - dataenginex core: pydantic, pyyaml, loguru, httpx, python-dotenv, prometheus-client
-- dataenginex[api] extra: fastapi, uvicorn, structlog, python-json-logger, opentelemetry-*, email-validator
+- dataenginex[api] extra: fastapi, uvicorn, structlog, python-json-logger, opentelemetry-\*, email-validator
 
----
+______________________________________________________________________
 
 ## Red Flags 🚨
 
@@ -236,22 +253,22 @@ Run in this exact order after ANY code change:
 - Fake/constant data from unimplemented endpoints (use NotImplementedError)
 - Domain models in framework package (belong in application)
 
----
+______________________________________________________________________
 
 ## Workflow Rules
 
 > Detailed orchestration rules are at the top of this file. Quick reference:
 
 1. **Plan First** — Enter plan mode for any non-trivial task (3+ steps). Write plan to `tasks/todo.md`.
-2. **Subagents** — Use liberally. One task per subagent. Keep main context clean.
-3. **Self-Improvement** — After any correction, update `tasks/lessons.md` with the pattern.
-4. **Verify Before Done** — Never mark complete without proving it works. Run the full 5-step pipeline.
-5. **Demand Elegance** — For non-trivial changes, ask "is there a more elegant way?" Skip for simple fixes.
-6. **Autonomous Bug Fixing** — Given a bug report, just fix it. Zero context switching from user.
-7. **Simplicity First** — Make every change as simple as possible. Impact minimal code.
-8. **No Laziness** — Find root causes. No temporary fixes. Senior developer standards.
+1. **Subagents** — Use liberally. One task per subagent. Keep main context clean.
+1. **Self-Improvement** — After any correction, update `tasks/lessons.md` with the pattern.
+1. **Verify Before Done** — Never mark complete without proving it works. Run the full 5-step pipeline.
+1. **Demand Elegance** — For non-trivial changes, ask "is there a more elegant way?" Skip for simple fixes.
+1. **Autonomous Bug Fixing** — Given a bug report, just fix it. Zero context switching from user.
+1. **Simplicity First** — Make every change as simple as possible. Impact minimal code.
+1. **No Laziness** — Find root causes. No temporary fixes. Senior developer standards.
 
----
+______________________________________________________________________
 
 ## Developer Tools
 
@@ -264,7 +281,7 @@ Run in this exact order after ANY code change:
 
 **Context7 Rule:** Always use Context7 MCP when needing library/API documentation, code generation, or setup steps for FastAPI, PySpark, Pydantic, Airflow, or any third-party library — without the user having to explicitly ask.
 
----
+______________________________________________________________________
 
 ## Key Files
 
@@ -282,31 +299,36 @@ Run in this exact order after ANY code change:
 | `.github/CHECKLISTS.md` | Code review checklists |
 | `TODO.md` | Project-level task board |
 
----
+______________________________________________________________________
 
 ## Live API Endpoints
 
 ### Core
+
 - `GET /` — Root
 - `POST /echo` — Echo endpoint
 - `GET /health` · `GET /ready` · `GET /startup` — Health probes
 - `GET /metrics` — Prometheus metrics
 
 ### Data (v1)
+
 - `GET /api/v1/data/sources` — List data sources
 - `GET /api/v1/data/quality/summary` — Quality summary
 - `GET /api/v1/system/config` — System configuration
 
 ### Warehouse (v1)
+
 - `GET /api/v1/warehouse/layers` — List warehouse layers
 - `GET /api/v1/warehouse/lineage` — Data lineage
 
 ### ML (v1)
+
 - `GET /api/v1/models` — List models
 - `GET /api/v1/models/{name}` — Get model details
 - `POST /api/v1/predict` — Run prediction
 
 ### CareerDEX (v1)
+
 - `POST /api/v1/careerdex/salary/prediction` — Salary prediction
 - `GET /api/v1/careerdex/insights/skill-gaps` — Skill gap analysis
 - `GET /api/v1/careerdex/market/careers` — Career market data

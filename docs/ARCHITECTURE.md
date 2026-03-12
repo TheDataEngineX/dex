@@ -19,7 +19,7 @@ DEX is a unified framework that bridges **Data Engineering, Data Warehousing, Ma
 
 See [README.md](https://github.com/TheDataEngineX/DEX/blob/main/README.md) for the full philosophy and roadmap context.
 
-## Current State (v0.3.x - Foundation + Hardening)
+## Current State (v0.5.0 - Foundation + Data + ML Platform)
 
 ### Infrastructure Baseline (implemented)
 
@@ -37,7 +37,7 @@ See [README.md](https://github.com/TheDataEngineX/DEX/blob/main/README.md) for t
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                     DEX Platform (v0.3.0)                   │
+│                     DEX Platform (v0.5.0)                   │
 ├─────────────────────────────────────────────────────────────┤
 │                                                              │
 │  ┌──────────────┐     ┌──────────────┐    ┌──────────────┐│
@@ -100,8 +100,8 @@ Organization project hub: `https://github.com/orgs/TheDataEngineX/projects`
 
 - **Phase 1: Foundation (v0.1.0)** ✅ — CI/CD, GitOps, multi‑env deployments
 - **Phase 2: Production Hardening (v0.2.0)** ✅ — observability, health probes, API quality
-- **Phase 3: Data Platform (v0.3.0)** 🔄 — medallion architecture foundation, incremental data quality/schema implementation
-- **Phase 4: ML Platform (v0.4.0)** — training, registry, serving, monitoring
+- **Phase 3: Data Platform (v0.3.0)** ✅ — medallion architecture foundation, incremental data quality/schema implementation
+- **Phase 4: ML Platform (v0.4.0)** ✅ — training, registry, serving, monitoring
 - **Phase 5: Advanced Features (v0.5.0)** — auth, caching, analytics
 - **Phase 6: Production Ready (v1.0.0)** — DR, security, performance
 
@@ -116,15 +116,20 @@ src/
 ├── dataenginex/          # Core framework (API, middleware, validators, schemas)
 │   ├── api/              # FastAPI app, health, errors
 │   ├── core/             # Medallion architecture, validators, schemas
+│   ├── dashboard/        # Streamlit dashboard (panels, config)
+│   ├── ml/               # Training, registry, vectorstore, LLM adapters
+│   ├── plugins/          # Plugin system (ABC, registry, discovery)
 │   └── middleware/       # Logging, metrics, tracing, request handling
 ├── careerdex/            # Job data ingestion platform (phases 1-6)
+│   ├── api/              # FastAPI app entry point + routers
+│   ├── core/             # Domain schemas, validators, settings
 │   ├── phases/           # Implementation phases
 │   ├── dags/             # Airflow DAGs
 │   └── models/           # Data models
 └── weatherdex/           # Weather ML pipeline (reference implementation)
     ├── core/             # Pipeline core
     ├── ml/               # ML models
-   └── notebooks/        # Notebook-based experimentation assets
+    └── notebooks/        # Notebook-based experimentation assets
 ```
 
 ### Service Extraction Criteria
@@ -132,10 +137,10 @@ src/
 **When to Extract a Service:**
 
 1. **Independent Scaling**: Different resource requirements (e.g., GPU for ML)
-2. **Team Ownership**: Separate team needs autonomy
-3. **Technology Diversity**: Different tech stack required
-4. **Deployment Frequency**: Needs to deploy independently
-5. **Fault Isolation**: Failures shouldn't cascade
+1. **Team Ownership**: Separate team needs autonomy
+1. **Technology Diversity**: Different tech stack required
+1. **Deployment Frequency**: Needs to deploy independently
+1. **Fault Isolation**: Failures shouldn't cascade
 
 **First Extraction Candidate: ML Model Serving**
 
@@ -169,7 +174,7 @@ src/
 - **Object Storage**: MinIO (default) / S3-compatible adapters
 - **Secrets**: Sealed Secrets
 
-### Data & ML Stack (v0.3.0+)
+### Data & ML Stack (v0.5.0+)
 
 - **Orchestration**: Apache Airflow
 - **ML Tracking**: MLflow (preferred) or Weights & Biases
@@ -214,26 +219,33 @@ dev (auto) → prod (PR promotion via main branch)
 ### High Priority Risks
 
 1. **Complexity Creep**: Too many features, slow delivery
+
    - **Mitigation**: Strict prioritization, MVP mindset
 
-2. **Technical Debt**: Fast iteration sacrifices quality
+1. **Technical Debt**: Fast iteration sacrifices quality
+
    - **Mitigation**: 20% time for refactoring, code reviews
 
-3. **Infrastructure Costs**: Cloud bills spiral
+1. **Infrastructure Costs**: Cloud bills spiral
+
    - **Mitigation**: Resource limits, cost monitoring, right-sizing
 
-4. **Security Gaps**: Auth/secrets not implemented early
+1. **Security Gaps**: Auth/secrets not implemented early
+
    - **Mitigation**: Phase 5 prioritizes security hardening
 
 ### Medium Priority Risks
 
 1. **Data Quality Issues**: Bad data in production
+
    - **Mitigation**: Data quality framework in Phase 3
 
-2. **Model Drift**: Models degrade over time
+1. **Model Drift**: Models degrade over time
+
    - **Mitigation**: Monitoring and automated retraining in Phase 4
 
-3. **Scaling Bottlenecks**: Performance issues at scale
+1. **Scaling Bottlenecks**: Performance issues at scale
+
    - **Mitigation**: Load testing, HPA, caching
 
 ## Success Metrics
@@ -241,50 +253,52 @@ dev (auto) → prod (PR promotion via main branch)
 ### v0.2.0 (Production Hardening)
 
 - API uptime: >99%
-- P99 latency: <200ms
+- P99 latency: \<200ms
 - Test coverage: >80%
 - Zero critical security vulnerabilities
 
-### v0.3.0 (Data Platform)
+### v0.3.0 (Data Platform) ✅
 
 - Pipeline success rate: >95%
-- Data freshness: <1 hour delay
+- Data freshness: \<1 hour delay
 - Data quality checks: 100% passing
-- Pipeline runtime: <30 minutes
+- Pipeline runtime: \<30 minutes
 
-### v0.4.0 (ML Platform)
+### v0.4.0 (ML Platform) ✅
 
-- Model deployment time: <5 minutes
+- Model deployment time: \<5 minutes
 - Model accuracy: >baseline
-- Inference latency: <100ms
+- Inference latency: \<100ms
 - Drift detection: active
 
 ### v1.0.0 (Production)
 
 - SLA: 99.9% uptime
-- RTO: <1 hour
-- Cost per request: <$0.001
+- RTO: \<1 hour
+- Cost per request: \<$0.001
 - Customer satisfaction: >4/5
 
 ## Next Actions
 
 1. **Immediate** (This Sprint):
+
    - Database integration (PostgreSQL)
    - Authentication (JWT + API keys)
    - Cache layer (Redis)
 
-2. **Short Term** (Next 2 Sprints):
+1. **Short Term** (Next 2 Sprints):
+
    - ML experiment tracking (MLflow)
    - Model serving endpoints
    - Feature store integration
 
-3. **Medium Term** (Next Quarter):
-   - Complete v0.4.0 ML platform
-   - Production hardening for v1.0.0
+1. **Medium Term** (Next Quarter):
+
+   - Complete v1.0.0 production readiness
    - Performance tuning and load testing
 
----
+______________________________________________________________________
 
-**Last Updated**: 2026-02-15
+**Last Updated**: 2026-03-12
 **Document Owner**: Project Lead
 **Review Cadence**: Bi-weekly

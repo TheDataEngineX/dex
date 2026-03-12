@@ -34,7 +34,7 @@ def create_app() -> FastAPI:
 
     app = FastAPI(
         title="DataEngineX",
-        version="0.4.10",
+        version="0.5.0",
         description="Example DEX API instance",
     )
 

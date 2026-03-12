@@ -9,5 +9,7 @@ Auto-generated API documentation for the `dataenginex` package.
 | [data](data.md) | Data connectors, profiler, schema registry |
 | [lakehouse](lakehouse.md) | Storage backends, data catalog, partitioning |
 | [middleware](middleware.md) | Logging, metrics, tracing, request middleware |
-| [ml](ml.md) | ML training, model registry, drift detection, serving |
+| [ml](ml.md) | ML training, model registry, drift detection, serving, vectorstore, LLM adapters |
+| [plugins](plugins.md) | Plugin system — ABC, registry, auto-discovery |
+| [dashboard](dashboard.md) | Streamlit dashboard framework — panels, config |
 | [warehouse](warehouse.md) | Transforms, persistent lineage tracking |

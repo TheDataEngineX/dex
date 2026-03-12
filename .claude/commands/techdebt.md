@@ -1,6 +1,7 @@
 Scan the codebase for tech debt and report findings organized by severity.
 
 Search for:
+
 - `TODO`, `FIXME`, `HACK`, `XXX`, `NOQA` comments
 - `NotImplementedError` stubs that should be implemented
 - Bare `except:` blocks
@@ -13,9 +14,10 @@ Search for:
 - Deprecated patterns flagged by Ruff UP rules
 
 Output a prioritized report:
+
 1. **Critical** — Security issues, bare excepts, hardcoded secrets
-2. **High** — Missing tests, unimplemented stubs, broken patterns
-3. **Medium** — TODOs, missing type hints, code complexity
-4. **Low** — Style issues, documentation gaps
+1. **High** — Missing tests, unimplemented stubs, broken patterns
+1. **Medium** — TODOs, missing type hints, code complexity
+1. **Low** — Style issues, documentation gaps
 
 Include file paths, line numbers, and suggested fixes.

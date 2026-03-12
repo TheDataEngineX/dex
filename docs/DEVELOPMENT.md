@@ -1,6 +1,6 @@
 # Development Setup Guide
 
-**Version**: v0.3.6 | **Updated**: Feb 27, 2026
+**Version**: v0.5.0 | **Updated**: March 12, 2026
 
 ## Prerequisites
 
@@ -12,7 +12,7 @@
 | curl | Yes | Downloading tools |
 | Python 3.12+ | Yes | Runtime (managed by uv) |
 | build-essential / gcc | Yes | Native extension compilation |
-| Java 17+ JRE | Yes* | PySpark tests (`openjdk-17-jre-headless`) |
+| Java 17+ JRE | Yes\* | PySpark tests (`openjdk-17-jre-headless`) |
 | uv | Yes | Python package & env manager |
 | Docker + Compose | Recommended | Full stack, integration tests, emulators |
 | Trivy | Optional | Local security scanning (`uv run poe security`) |
@@ -92,6 +92,7 @@ git push origin feat/issue-XXX-description
 ```
 
 **PR Requirements:**
+
 - Link to issue: `Closes #XXX`
 - All checks pass (CI/CD ~3-5 min)
 - 1 approval required
@@ -121,12 +122,14 @@ git push origin main
 ```
 
 On `main`, release workflows create Git tags/releases automatically:
+
 - `careerdex-vX.Y.Z` from `release-careerdex.yml`
 - `dataenginex-vX.Y.Z` from `release-dataenginex.yml` (then triggers `pypi-publish.yml`)
 
 ## Local Data Setup
 
 ### Path-Based (Local Dev)
+
 ```bash
 mkdir -p ~/data/careerdex/{bronze,silver,gold}
 mkdir -p ~/data/weather/{bronze,silver,gold}
@@ -146,6 +149,7 @@ bq mk --dataset careerdex_gold
 ## Running Pipelines & Tests
 
 ### Airflow DAGs
+
 ```bash
 # Initialize database
 airflow db init
@@ -164,6 +168,7 @@ airflow tasks logs careerdex_job_ingestion fetch_linkedin 2024-01-01
 ```
 
 ### Testing
+
 ```bash
 # Run all tests with coverage
 uv run poe test-cov
@@ -176,6 +181,7 @@ uv run poe check-all
 ```
 
 ### Monitoring & Debugging
+
 ```bash
 # View application logs
 tail -f logs/app.log

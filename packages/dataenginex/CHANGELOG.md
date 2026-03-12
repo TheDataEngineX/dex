@@ -195,14 +195,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cursor-based pagination utilities
 - Versioned API router (`/api/v1/`)
 
-[Unreleased]: https://github.com/TheDataEngineX/DEX/compare/v0.5.0...HEAD
-[0.5.0]: https://github.com/TheDataEngineX/DEX/compare/v0.4.11...v0.5.0
-[0.4.11]: https://github.com/TheDataEngineX/DEX/compare/v0.4.10...v0.4.11
-[0.4.10]: https://github.com/TheDataEngineX/DEX/compare/v0.4.8...v0.4.10
-[0.4.8]: https://github.com/TheDataEngineX/DEX/compare/v0.4.6...v0.4.8
-[0.4.6]: https://github.com/TheDataEngineX/DEX/compare/v0.4.5...v0.4.6
-[0.4.5]: https://github.com/TheDataEngineX/DEX/compare/v0.4.3...v0.4.5
-[0.4.3]: https://github.com/TheDataEngineX/DEX/compare/v0.4.1...v0.4.3
-[0.4.1]: https://github.com/TheDataEngineX/DEX/compare/v0.4.0...v0.4.1
-[0.4.0]: https://github.com/TheDataEngineX/DEX/compare/v0.3.5...v0.4.0
 [0.3.5]: https://github.com/TheDataEngineX/DEX/releases/tag/v0.3.5
+[0.4.0]: https://github.com/TheDataEngineX/DEX/compare/v0.3.5...v0.4.0
+[0.4.1]: https://github.com/TheDataEngineX/DEX/compare/v0.4.0...v0.4.1
+[0.4.10]: https://github.com/TheDataEngineX/DEX/compare/v0.4.8...v0.4.10
+[0.4.11]: https://github.com/TheDataEngineX/DEX/compare/v0.4.10...v0.4.11
+[0.4.3]: https://github.com/TheDataEngineX/DEX/compare/v0.4.1...v0.4.3
+[0.4.5]: https://github.com/TheDataEngineX/DEX/compare/v0.4.3...v0.4.5
+[0.4.6]: https://github.com/TheDataEngineX/DEX/compare/v0.4.5...v0.4.6
+[0.4.8]: https://github.com/TheDataEngineX/DEX/compare/v0.4.6...v0.4.8
+[0.5.0]: https://github.com/TheDataEngineX/DEX/compare/v0.4.11...v0.5.0
+[unreleased]: https://github.com/TheDataEngineX/DEX/compare/v0.5.0...HEAD

@@ -4,7 +4,7 @@
 
 > **Quick Links:** [Lifecycle Stages](#lifecycle-stages) · [Development Workflow](#development-workflow-summary) · [Quality Gates](#4-verify-ci)
 
----
+______________________________________________________________________
 
 This document defines the software development lifecycle (SDLC) for DEX, including the required stages, artifacts, and quality gates.
 
@@ -43,6 +43,7 @@ graph LR
 **Entry**: Feature request, bug report, or operational task.
 
 **Activities**:
+
 - Define scope and acceptance criteria.
 - Identify impacted services, APIs, or pipelines.
 - Track work in GitHub Issues and GitHub Projects (milestones, priorities, owners).
@@ -53,13 +54,14 @@ graph LR
 
 Use the organization project space: `https://github.com/orgs/TheDataEngineX/projects`
 
----
+______________________________________________________________________
 
 ### 2) Design
 
 **Entry**: Approved plan.
 
 **Activities**:
+
 - Define interfaces, data contracts, and configuration changes.
 - Update architecture or runbook docs if required.
 
@@ -67,13 +69,14 @@ Use the organization project space: `https://github.com/orgs/TheDataEngineX/proj
 
 **Artifacts**: Updated documentation, diagrams if applicable.
 
----
+______________________________________________________________________
 
 ### 3) Implement
 
 **Entry**: Approved design.
 
 **Activities**:
+
 - Develop in a short-lived feature branch.
 - Add or update tests.
 - Update docs if behavior or interfaces change.
@@ -82,13 +85,14 @@ Use the organization project space: `https://github.com/orgs/TheDataEngineX/proj
 
 **Artifacts**: Code changes, tests, documentation updates.
 
----
+______________________________________________________________________
 
 ### 4) Verify (CI)
 
 **Entry**: Pull request opened against `dev` (integration) or `main` (release).
 
 **Required Checks**:
+
 - CI, security, and quality checks as defined in the CI/CD pipeline.
 
 See [CI/CD Pipeline](CI_CD.md) for the authoritative list of checks.
@@ -97,15 +101,17 @@ See [CI/CD Pipeline](CI_CD.md) for the authoritative list of checks.
 
 **Artifacts**: CI logs, security scan reports, test results.
 
----
+______________________________________________________________________
 
 ### 5) Release (CD)
 
 **Entry**:
+
 - Dev deployment: PR merged to `dev`.
 - Stage/Prod deployment: PR merged to `main`.
 
 **Actions**:
+
 - Build container image once and tag with commit SHA.
 - Push image to registry.
 - Update environment manifests via GitOps.
@@ -114,13 +120,14 @@ See [CI/CD Pipeline](CI_CD.md) for the authoritative list of checks.
 
 **Artifacts**: Image tag, git commit updating kustomization, ArgoCD sync history.
 
----
+______________________________________________________________________
 
 ### 6) Operate
 
 **Entry**: Deployment complete.
 
 **Activities**:
+
 - Monitor application health and logs.
 - Respond to alerts and incidents.
 - Apply rollback if required.
@@ -173,25 +180,27 @@ flowchart TD
 **Steps**:
 
 1. Create or update a GitHub Issue and add it to the GitHub Project board.
-2. Create a feature branch and implement changes.
-3. Open a PR to `dev` and request review.
-4. After validation in dev, open a release PR from `dev` → `main`.
-5. Merge after all required checks pass.
+1. Create a feature branch and implement changes.
+1. Open a PR to `dev` and request review.
+1. After validation in dev, open a release PR from `dev` → `main`.
+1. Merge after all required checks pass.
 
 See [Contributing Guide](CONTRIBUTING.md) for branch naming, local checks, and PR conventions.
 
----
+______________________________________________________________________
 
 ## Related Documentation
 
 **Development:**
+
 - **[Contributing Guide](CONTRIBUTING.md)** - Contribution workflow
 - **[CI/CD Pipeline](CI_CD.md)** - Automated build and deploy
 
 **Operations:**
+
 - **[Deployment Runbook](DEPLOY_RUNBOOK.md)** - Release procedures
 - **[Project Roadmap](roadmap/project-roadmap.csv)** - Issue tracking and milestone source
 
----
+______________________________________________________________________
 
 **[← Back to Documentation Hub](docs-hub.md)**
