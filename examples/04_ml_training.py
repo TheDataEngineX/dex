@@ -117,13 +117,9 @@ def main() -> None:
         any_drift = any(r.drift_detected for r in reports)
         print(f"  Drift detected: {any_drift}")
         for r in reports:
-<<<<<<< HEAD
-            print(f"    {r.feature_name}: psi={r.psi:.4f} drifted={r.drift_detected}")
-=======
             print(
                 f"    {r.feature_name}: psi={r.psi:.4f} drifted={r.drift_detected}"
             )
->>>>>>> origin/main
 
     print("\nDone! ✓")
 
