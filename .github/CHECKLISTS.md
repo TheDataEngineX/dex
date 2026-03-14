@@ -94,7 +94,7 @@ Quick reference checklists for common tasks. **Reference actual code patterns in
 
 **See examples:**
 - SQLAlchemy ORM → [src/dataenginex/core/database.py](../src/dataenginex/core/database.py)
-- Migrations → [infra/migrations/](../infra/migrations/)
+- Schema patterns → Check database documentation
 - Schema patterns → Check database documentation
 
 ---

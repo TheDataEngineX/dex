@@ -1,5 +1,8 @@
 # Local Docker Desktop K8s Setup Guide
 
+> **Note:** Kubernetes manifests (`argocd/`, `kustomize` overlays) are managed in a separate infrastructure repository.
+> The steps below describe the ArgoCD setup pattern; adapt manifest paths to your infrastructure repo.
+
 This guide walks you through setting up ArgoCD on Docker Desktop Kubernetes for local testing before cloud deployment.
 
 ## Prerequisites
@@ -112,7 +115,7 @@ argocd login localhost:8080 --username admin --password $ARGOCD_PASSWORD --insec
 
 ```bash
 # Apply the ArgoCD application manifest
-kubectl apply -f infra/argocd/application.yaml
+kubectl apply -f argocd/application.yaml  # path in your infrastructure repo
 
 # Verify applications created
 kubectl get applications -n argocd
@@ -185,10 +188,10 @@ Test endpoints:
 ```bash
 # Update dev kustomization.yaml
 newTag="sha-test1234"
-sed -i "s|newTag:.*|newTag: ${newTag}|g" infra/argocd/overlays/dev/kustomization.yaml
+sed -i "s|newTag:.*|newTag: ${newTag}|g" argocd/overlays/dev/kustomization.yaml
 
 # Commit and push (dev branch tracks dev environment)
-git add infra/argocd/overlays/dev/kustomization.yaml
+git add argocd/overlays/dev/kustomization.yaml
 git commit -m "test: update dev image to $newTag"
 git push origin dev
 ```

@@ -123,15 +123,6 @@ help = "Stop Docker Compose services"
 cmd = "docker compose logs -f"
 help = "View Docker Compose logs"
 
-# Kubernetes
-[tool.poe.tasks.k8s-deploy]
-cmd = "kubectl apply -k infra/argocd/base/"
-help = "Deploy to Kubernetes via Kustomize"
-
-[tool.poe.tasks.k8s-delete]
-cmd = "kubectl delete -k infra/argocd/base/"
-help = "Delete Kubernetes resources"
-
 # Documentation
 [tool.poe.tasks.docs]
 shell = "zensical build --clean && echo 'Documentation built. Open site/index.html'"

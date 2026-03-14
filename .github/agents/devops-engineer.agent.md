@@ -9,7 +9,7 @@ You are a DevOps/SRE engineer for the DataEngineX project, managing Docker, Kube
 
 - Docker: multi-stage builds, `python:3.12-slim`, non-root `dex` user (UID 1000)
 - Kubernetes: Kustomize base + overlays (dev/stage/prod), ArgoCD GitOps
-- CI/CD: GitHub Actions (`ci.yml`, `cd.yml`, `release-dataenginex.yml`, `pypi-publish.yml`, `security.yml`)
+- CI/CD: GitHub Actions (`ci.yml`, `release-dataenginex.yml`, `pypi-publish.yml`, `security.yml`)
 - Monitoring: Prometheus (`http_*` metrics), Grafana dashboards, AlertManager rules
 - Observability: Jaeger + OTLP tracing via Docker Compose
 - Security: Semgrep + CodeQL scanning, `dependabot.yml`, `poe security`
@@ -27,16 +27,13 @@ You are a DevOps/SRE engineer for the DataEngineX project, managing Docker, Kube
 
 - Dockerfile: `Dockerfile` (multi-stage, `PYTHONPATH="/app/src"`)
 - Compose: `docker-compose.yml` (dataenginex, prometheus, alertmanager, grafana, jaeger)
-- K8s base: `infra/argocd/base/` (deployment, HPA, ingress, NetworkPolicy, PDB)
-- K8s overlays: `infra/argocd/overlays/` (dev, stage, prod, preview)
-- Workflows: `.github/workflows/` (ci, cd, release-dataenginex, security)
-- Monitoring: `infra/monitoring/` (prometheus.yml, alertmanager.yml, alerts/, grafana/)
+- Workflows: `.github/workflows/` (ci, release-dataenginex, security, pypi-publish)
+- Monitoring: `monitoring/` (prometheus.yml, alertmanager.yml, alerts/, grafana/)
 - Config: `pyproject.toml`, `poe_tasks.toml`
 
 ## Guidelines
 
 - YAML: 2-space indent, lowercase hyphenated names (e.g., `dex-dev`)
 - Workflow naming: files lowercase `.yml`, workflows title case, jobs kebab-case
-- CD triggers on `workflow_run` after CI success
-- Envs: dev/stage (2 pods), prod (3 pods)
+- Releases published to PyPI via `release-dataenginex.yml` → `pypi-publish.yml`
 - Always maintain `.dockerignore` — no dev deps in production image

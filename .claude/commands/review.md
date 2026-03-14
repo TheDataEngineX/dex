@@ -11,7 +11,7 @@ Steps:
    - `src/**/*.py` → python.instructions.md
    - `tests/**/*.py` → testing.instructions.md
    - `.github/workflows/**` → workflows.instructions.md
-   - `infra/**/*` → infrastructure.instructions.md
+   - `monitoring/**/*,Dockerfile,docker-compose.yml` → infrastructure.instructions.md
 
 Review priorities:
 

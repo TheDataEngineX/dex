@@ -61,8 +61,8 @@ DEX/
 ├── examples/               # Runnable example scripts (01–10)
 ├── tests/                  # Test suite
 ├── docs/                   # Documentation
+├── monitoring/             # Local observability stack configs
 ├── .github/workflows/      # CI/CD pipelines
-├── infra/                  # Infrastructure as Code
 ├── pyproject.toml          # Project config (dataenginex 0.6.0)
 └── poe_tasks.toml          # Task definitions
 ```

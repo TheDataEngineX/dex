@@ -57,12 +57,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Storage abstraction** — `list_objects(prefix)` and `exists(path)` on `StorageBackend` ABC; concrete implementations in `LocalParquetStorage`, `BigQueryStorage`, `JsonStorage`, `ParquetStorage`, `S3Storage`, `GCSStorage`; `get_storage(uri)` factory function (#89)
 - **ML serving endpoints** — `POST /api/v1/predict`, `GET /api/v1/models`, `GET /api/v1/models/{name}` with `PredictRequestBody`/`PredictResponseBody` Pydantic models; ML-specific Prometheus metrics (`model_prediction_latency_seconds`, `model_prediction_total`, `model_predictions_in_flight`) (#92)
 - **Drift monitoring scheduler** — `DriftScheduler` with background thread for periodic drift checks; `DriftMonitorConfig`, `DriftCheckResult` dataclasses; publishes PSI scores to `model_drift_psi` gauge; increments `model_drift_alerts_total` counter on drift detection (#93)
-- Prometheus alert rules for drift monitoring — `ModelDriftModerate`, `ModelDriftSevere`, `DriftAlertSpike`, `DriftCheckStale` in `infra/monitoring/alerts/drift_alerts.yml`
+- Prometheus alert rules for drift monitoring — `ModelDriftModerate`, `ModelDriftSevere`, `DriftAlertSpike`, `DriftCheckStale` in `monitoring/alerts/drift_alerts.yml`
 - `endpoint_url` parameter on `S3Storage` for LocalStack/emulator support
 - `api_endpoint` parameter on `GCSStorage` for fake-gcs-server/emulator support
 - Docker emulator stack (`docker-compose.test.yml`) — LocalStack 4.0 (S3) + fake-gcs-server 1.49 (GCS)
 - 25 integration tests with emulator auto-detection in `tests/integration/test_storage_real.py`
-- Terraform module for cloud test buckets (`infra/terraform/test-storage/`)
+- Terraform module for cloud test buckets (moved to infrastructure repo)
 - Google-style docstrings across 55+ methods and 9 Pydantic models (#88)
 - `py.typed` marker for PEP 561 compliance — downstream consumers get type checking support
 - Module-level `__all__` in all 30 `.py` source files — every public symbol is explicitly gated

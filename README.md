@@ -59,15 +59,11 @@ DEX/
 │   ├── unit/                  #   Unit tests
 │   └── integration/           #   End-to-end tests
 │
-├── infra/                     # Infrastructure
-│   ├── argocd/                #   Kubernetes manifests (Kustomize + GitOps)
-│   │   ├── base/              #     Base deployment, service
-│   │   └── overlays/          #     dev, prod overrides
-│   └── monitoring/            #   Observability configs
-│       ├── prometheus.yml     #     Metrics scraping
-│       ├── alertmanager.yml   #     Alert routing
-│       ├── alerts/            #     Alert rules
-│       └── grafana/           #     Dashboards
+├── monitoring/                # Local observability stack configs
+│   ├── prometheus.yml         #   Metrics scraping
+│   ├── alertmanager.yml       #   Alert routing
+│   ├── alerts/                #   Alert rules
+│   └── grafana/               #   Grafana dashboards + provisioning
 │
 ├── docs/                      # Documentation
 ├── scripts/                   # Utility scripts

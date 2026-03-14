@@ -4,38 +4,28 @@ set -euo pipefail
 # ---------------------------------------------------------------
 # promote.sh — Branch-based promotion: dev → prod (main)
 #
-# Creates a PR to merge the dev branch into main, which triggers
-# CD to build + deploy to the prod environment (dex namespace)
-# via ArgoCD.
-#
-# Optionally promotes a specific image tag by updating the prod
-# overlay kustomization.yaml directly.
+# Creates a PR to merge the dev branch into main. If the PR
+# includes a version bump in pyproject.toml, the CI/release
+# pipeline will automatically tag and publish to PyPI.
 # ---------------------------------------------------------------
 
 usage() {
   cat <<'USAGE'
 Usage:
-  ./scripts/promote.sh [--image-tag <tag>] [--auto-merge]
+  ./scripts/promote.sh [--auto-merge]
 
 Promotes dev → prod by creating a merge PR from dev into main.
-If --image-tag is provided, updates prod overlay with that specific tag instead.
 
 Examples:
-  ./scripts/promote.sh                          # PR: dev → main
-  ./scripts/promote.sh --auto-merge             # PR: dev → main (auto-merge)
-  ./scripts/promote.sh --image-tag sha-abc12345 # Update prod overlay directly
+  ./scripts/promote.sh               # PR: dev → main
+  ./scripts/promote.sh --auto-merge  # PR: dev → main (auto-merge)
 USAGE
 }
 
-image_tag=""
 auto_merge="false"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --image-tag|-i)
-      image_tag="$2"
-      shift 2
-      ;;
     --auto-merge)
       auto_merge="true"
       shift 1
@@ -61,96 +51,8 @@ if [[ -n "$(git status --porcelain)" ]]; then
   fi
 fi
 
-repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-
 # ---------------------------------------------------------------
-# Mode 1: Direct image tag promotion (override prod overlay)
-# ---------------------------------------------------------------
-if [[ -n "$image_tag" ]]; then
-  if [[ ! "$image_tag" =~ ^(sha-[a-f0-9]{8}|v[0-9]+\.[0-9]+\.[0-9]+|latest)$ ]]; then
-    echo "Warning: image tag '${image_tag}' does not match expected format"
-    read -r -p "Continue anyway? (y/N) " continue_choice
-    if [[ "$continue_choice" != "y" ]]; then
-      exit 1
-    fi
-  fi
-
-  prod_kustomization="${repo_root}/infra/argocd/overlays/prod/kustomization.yaml"
-  echo "Promoting image ${image_tag} to prod overlay"
-
-  git checkout main
-  git pull origin main
-
-  branch_name="promote-prod-${image_tag}"
-  echo "Creating branch: ${branch_name}"
-  git checkout -b "$branch_name"
-
-  sed -i "s|newTag:.*|newTag: ${image_tag}|g" "$prod_kustomization"
-
-  echo "Changes:"
-  git diff "$prod_kustomization"
-
-  git add "$prod_kustomization"
-  git commit \
-    -m "chore: promote ${image_tag} to prod" \
-    -m "Image tag: ${image_tag}" \
-    -m "Created via promote.sh script." \
-    -m "ArgoCD will sync prod environment (dex namespace) after PR is merged."
-
-  git push origin "$branch_name"
-
-  if command -v gh >/dev/null 2>&1; then
-    pr_title="Promote ${image_tag} to prod"
-    pr_body=$(cat <<EOF
-## Image Promotion to Production
-
-**Image Tag**: \`${image_tag}\`
-
-### Checklist
-- [ ] Verify image tag is correct
-- [ ] Check dev environment is stable with this image
-- [ ] Notify team of production deployment
-- [ ] Verify rollback plan
-
-### Post-Merge
-1. CD pipeline will build and deploy to prod
-2. ArgoCD will sync dex (~3 minutes)
-3. Monitor: \`kubectl get pods -n dex\`
-4. Verify: \`kubectl rollout status deployment/dex -n dex\`
-
-### Rollback
-\`\`\`bash
-git revert HEAD
-git push origin main
-# Or: argocd app rollback dex
-\`\`\`
-
----
-Automated promotion via promote.sh
-EOF
-)
-
-    gh pr create --title "$pr_title" --body "$pr_body" --base main --head "$branch_name" --label "promotion" --label "prod"
-
-    if [[ "$auto_merge" == "true" ]]; then
-      gh pr merge "$branch_name" --auto --squash
-      echo "PR will auto-merge after checks pass"
-    else
-      gh pr view --web
-    fi
-  else
-    echo "GitHub CLI (gh) not found. Create a PR manually:"
-    echo "  Branch: ${branch_name}"
-    echo "  Title: Promote ${image_tag} to prod"
-  fi
-
-  git checkout main
-  echo "Promotion complete"
-  exit 0
-fi
-
-# ---------------------------------------------------------------
-# Mode 2: Branch promotion (dev → main)
+# Branch promotion (dev → main)
 # ---------------------------------------------------------------
 echo "Promoting dev → main (prod)"
 echo "This creates a PR to merge the dev branch into main."
@@ -184,22 +86,20 @@ if command -v gh >/dev/null 2>&1; then
 **Commits**: ${dev_ahead} commit(s) ahead
 
 ### Checklist
-- [ ] Dev environment is stable
-- [ ] All CI checks pass
-- [ ] Notify team of production deployment
-- [ ] Verify rollback plan
+- [ ] Dev branch is stable (all CI checks pass)
+- [ ] \`CHANGELOG.md\` is updated
+- [ ] Version is bumped in \`pyproject.toml\` (if releasing to PyPI)
+- [ ] Notify team of release
 
 ### Post-Merge
-1. CD pipeline builds image and updates prod overlay
-2. ArgoCD syncs dex (~3 minutes)
-3. Monitor: \`kubectl get pods -n dex\`
-4. Verify: \`kubectl rollout status deployment/dex -n dex\`
+- If \`pyproject.toml\` version was bumped: \`release-dataenginex.yml\` creates tag + GitHub release
+- \`pypi-publish.yml\` publishes to TestPyPI → PyPI automatically
 
 ### Rollback
+If the release has issues, yank the PyPI version and publish a patch:
 \`\`\`bash
-git revert HEAD
-git push origin main
-# Or: argocd app rollback dex
+# Yank via PyPI web UI, then:
+# Bump to patch version on dev → promote again
 \`\`\`
 
 ---

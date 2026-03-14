@@ -1,5 +1,5 @@
 ---
-applyTo: "infra/**/*,Dockerfile,docker-compose.yml"
+applyTo: "monitoring/**/*,Dockerfile,docker-compose.yml,docker-compose.test.yml"
 ---
 
 # Infrastructure — Project Specifics
@@ -9,15 +9,10 @@ applyTo: "infra/**/*,Dockerfile,docker-compose.yml"
 - No dev deps in production image — maintain `.dockerignore`
 - Docker Compose includes Jaeger + OTLP for local observability
 
-## Kubernetes
-- Kustomize base: `infra/argocd/base/` (deployment, HPA, ingress, NetworkPolicy, PDB)
-- Overlays: `infra/argocd/overlays/` (dev, prod)
-- ArgoCD GitOps — deploys on merge | Envs: dev (2 pods, dex-dev), prod (3 pods, dex)
-- Set resource limits/requests, liveness/readiness/startup probes
-
-## Monitoring
-- Prometheus: `infra/monitoring/prometheus.yml` | Alerts: `infra/monitoring/alerts/`
-- Grafana: `infra/monitoring/grafana/` | AlertManager: `infra/monitoring/alertmanager.yml`
+## Monitoring (Local Dev)
+- Prometheus: `monitoring/prometheus.yml` | Alerts: `monitoring/alerts/`
+- Grafana: `monitoring/grafana/` | AlertManager: `monitoring/alertmanager.yml`
+- Run with: `docker compose up -d`
 
 ## Conventions
 - YAML: 2-space indent | Names: lowercase hyphens (`dex-dev`) | Pin image tags, never `latest`

@@ -1,170 +1,115 @@
-# Deployment Runbook
+# Release Runbook
 
-**Procedures for deploying and rolling back DEX across environments.**
+**Procedures for releasing DataEngineX to PyPI and rolling back.**
 
-> **Quick Links:** [Dev Deployment](#deploy-to-dev) · [Prod Deployment](#deploy-to-prod) · [Rollback](#rollback) · [Emergency Procedures](#emergency-rollback-kubernetes)
+> **Quick Links:** [Release to PyPI](#release-to-pypi) · [Rollback](#rollback) · [Domain & Org Setup](#org--domain-rollout-github--cloudflare)
 
 ______________________________________________________________________
 
-This runbook describes how to release and rollback DEX using the `dev` → `main` branch-based deployment flow.
+This runbook describes how to release `dataenginex` and roll back bad releases using the `dev` → `main` branch-based flow.
 
-## Environments
-
-| Environment | Branch | Namespace | ArgoCD App |
-|-------------|--------|-----------|------------|
-| **dev** | `dev` | `dex-dev` | `dex-dev` |
-| **prod** | `main` | `dex` | `dex` |
+## Release Flow
 
 ```mermaid
 graph LR
-    Dev[dev branch] --> DevCD[CD Pipeline]
-    DevCD --> DevManifest[dev/kustomization.yaml]
-    DevManifest --> ArgoDev[ArgoCD]
-    ArgoDev --> DevK8s[dex-dev namespace]
+    Dev[dev branch] --> PR[PR: dev → main]
+    PR --> CI[CI passes]
+    CI --> Merge[Merge to main]
+    Merge --> VersionBump{Version bump<br/>in pyproject.toml?}
+    VersionBump -->|Yes| Tag[release-dataenginex.yml<br/>creates git tag + GitHub release]
+    Tag --> PyPI[pypi-publish.yml<br/>publishes to PyPI]
 
-    Main[main branch] --> MainCD[CD Pipeline]
-    MainCD --> ProdManifest[prod/kustomization.yaml]
-    ProdManifest --> ArgoProd[ArgoCD]
-    ArgoProd --> ProdK8s[dex namespace]
-
-    style DevK8s fill:#d4edda
-    style ProdK8s fill:#f8d7da
+    style PyPI fill:#d4edda
 ```
 
-## Pre-Deploy Checklist
+## Pre-Release Checklist
 
-- CI is green on the target branch (`dev` or `main`).
-- Image exists in registry: `ghcr.io/thedataenginex/dex:sha-XXXXXXXX`.
-- No open critical alerts in monitoring.
-- For production release, approval recorded in PR.
+- CI is green on `dev` branch.
+- `CHANGELOG.md` is updated.
+- Version in root `pyproject.toml` is bumped (semver).
+- Tests pass locally: `uv run poe test`.
+- Package builds cleanly: `uv build && twine check dist/*`.
 
-## Deploy to Dev
+## Release to PyPI
 
-**Trigger**: Merge PR into `dev` branch.
+**Trigger**: Merge a PR from `dev` → `main` that contains a version bump in `pyproject.toml`.
 
-```mermaid
-sequenceDiagram
-    participant Dev as Developer
-    participant GH as GitHub
-    participant CI as CI Pipeline
-    participant CD as CD Pipeline
-    participant Argo as ArgoCD
-    participant K8s as Kubernetes
+```bash
+# 1. Ensure dev is stable
+gh pr checks <dev-pr-number>
 
-    Dev->>GH: Merge PR to dev
-    GH->>CI: Run tests & lint
-    CI-->>GH: ✓ CI passes
-    GH->>CD: Trigger CD workflow
-    CD->>CD: Build image (sha-XXXXXXXX)
-    CD->>GH: Update dev/kustomization.yaml
-    GH->>Argo: Git change detected
-    Argo->>K8s: Sync dex-dev namespace
-    K8s-->>Dev: ✓ Deployment complete
+# 2. Bump version in pyproject.toml (e.g., 0.6.0 → 0.7.0)
+# Edit pyproject.toml: version = "0.7.0"
+
+# 3. Commit version bump on dev
+git add pyproject.toml CHANGELOG.md
+git commit -m "chore: bump dataenginex to 0.7.0"
+git push origin dev
+
+# 4. Create promotion PR: dev → main
+./scripts/promote.sh
+
+# 5. Merge PR after CI passes
+# release-dataenginex.yml automatically creates tag + GitHub release
+# pypi-publish.yml automatically publishes to TestPyPI, then PyPI
 ```
-
-**Expected Outcome**:
-
-- CD updates `infra/argocd/overlays/dev/kustomization.yaml` in `dev`.
-- ArgoCD syncs `dex-dev` to the new SHA.
 
 **Verify**:
 
 ```bash
-kubectl get pods -n dex-dev
-argocd app get dex-dev
-```
+# Check release was created
+gh release list
 
-## Deploy to Prod
+# Verify PyPI publication
+pip install dataenginex==0.7.0 --dry-run
 
-**Trigger**: Merge release PR from `dev` → `main`.
-
-```mermaid
-sequenceDiagram
-    participant Dev as Developer
-    participant GH as GitHub
-    participant CI as CI Pipeline
-    participant CD as CD Pipeline
-    participant Argo as ArgoCD
-    participant Prod as dex
-
-    Dev->>GH: Merge PR to main
-    GH->>CI: Run tests & lint
-    CI-->>GH: ✓ CI passes
-    GH->>CD: Trigger CD workflow
-    CD->>CD: Build image (sha-XXXXXXXX)
-    CD->>GH: Update prod/kustomization.yaml
-    GH->>Argo: Git change detected
-    Argo->>Prod: Sync dex namespace
-    Prod-->>Dev: ✓ Prod deployed
-```
-
-**Expected Outcome**:
-
-- CD updates `infra/argocd/overlays/prod/kustomization.yaml` in `main`.
-- ArgoCD syncs `dex` namespace to the new SHA.
-
-**Verify**:
-
-```bash
-kubectl get pods -n dex
-argocd app get dex
+# Confirm package is importable
+python -c "import dataenginex; print(dataenginex.__version__)"
 ```
 
 ## Rollback
 
-```mermaid
-graph TD
-    Start[Deployment Issue Detected] --> Decision{Which Environment?}
+### Yank a PyPI Release
 
-    Decision -->|Dev| DevLog["git log dev/kustomization.yaml"]
-    Decision -->|Prod| MainLog["git log prod/kustomization.yaml"]
-
-    DevLog --> DevRevert["git revert <commit-sha>"]
-    DevRevert --> DevPush["git push origin dev"]
-    DevPush --> DevArgo[ArgoCD syncs dex-dev]
-    DevArgo --> DevVerify["kubectl get pods -n dex-dev"]
-
-    MainLog --> MainRevert["git revert <commit-sha>"]
-    MainRevert --> MainPush["git push origin main"]
-    MainPush --> MainArgo[ArgoCD syncs dex]
-    MainArgo --> MainVerify["kubectl get pods -n dex"]
-
-    DevVerify --> End[✓ Rollback Complete]
-    MainVerify --> End
-
-    style Start fill:#f8d7da
-    style End fill:#d4edda
-```
-
-### Rollback Dev
+PyPI does not support deletion, but a yanked release is skipped by `pip install` (unless explicitly requested):
 
 ```bash
-git log --oneline infra/argocd/overlays/dev/kustomization.yaml
-git revert <commit-sha>
+# Via PyPI web UI: manage release → yank version
+# Inform users via GitHub release notes
+```
+
+### Publish a Patch Release
+
+```bash
+# Fix the issue on dev
+git checkout dev
+# ... apply fix ...
+
+# Bump to patch version (e.g., 0.7.1)
+# Edit pyproject.toml: version = "0.7.1"
+
+git add pyproject.toml
+git commit -m "fix: <description of fix>"
 git push origin dev
+
+# Promote to main and release
+./scripts/promote.sh
 ```
 
-ArgoCD will sync `dex-dev` back to the previous image.
+### Revert a Git Tag
 
-### Rollback Prod
+If the GitHub release was created but PyPI publish has not yet run (or failed):
 
 ```bash
-git log --oneline infra/argocd/overlays/prod/kustomization.yaml
-git revert <commit-sha>
-git push origin main
+# Delete tag locally and remotely
+git tag -d dataenginex-v0.7.0
+git push origin :refs/tags/dataenginex-v0.7.0
+
+# Delete the GitHub release
+gh release delete dataenginex-v0.7.0 --yes
 ```
 
-ArgoCD will sync `dex` back to the previous image.
-
-## Emergency Rollback (Kubernetes)
-
-If ArgoCD is unavailable, roll back directly:
-
-```bash
-kubectl rollout undo deployment/dex -n dex
-```
-
-Record the rollback by reverting the manifest in git once ArgoCD is available.
+______________________________________________________________________
 
 ## Org + Domain Rollout (GitHub + Cloudflare)
 
@@ -250,11 +195,10 @@ ______________________________________________________________________
 **Deployment:**
 
 - **[CI/CD Pipeline](CI_CD.md)** - Complete automation guide
-- **[Local K8s Setup](LOCAL_K8S_SETUP.md)** - Kubernetes & ArgoCD setup
 
 **Operations:**
 
-- **[Observability](OBSERVABILITY.md)** - Monitor deployments
+- **[Observability](OBSERVABILITY.md)** - Monitor applications built on DEX
 - **[SDLC](SDLC.md)** - Development lifecycle
 
 ______________________________________________________________________
