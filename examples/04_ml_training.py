@@ -16,14 +16,15 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
+from dataenginex.ml.registry import ModelArtifact
+from dataenginex.ml.training import TrainingResult
+
 from dataenginex.ml import (
     DriftDetector,
     ModelRegistry,
     ModelStage,
     SklearnTrainer,
 )
-from dataenginex.ml.registry import ModelArtifact
-from dataenginex.ml.training import TrainingResult
 
 
 def main() -> None:
@@ -117,9 +118,7 @@ def main() -> None:
         any_drift = any(r.drift_detected for r in reports)
         print(f"  Drift detected: {any_drift}")
         for r in reports:
-            print(
-                f"    {r.feature_name}: psi={r.psi:.4f} drifted={r.drift_detected}"
-            )
+            print(f"    {r.feature_name}: psi={r.psi:.4f} drifted={r.drift_detected}")
 
     print("\nDone! ✓")
 
