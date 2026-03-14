@@ -9,7 +9,7 @@ applyTo: "src/**/*.py"
 - `from __future__ import annotations` in all source files
 - Imports: stdlib → third-party → local (auto-sorted by ruff)
 - Run `poe check-all` (lint + typecheck + test) before committing
-- `mypy --strict` covers `packages/dataenginex/src/dataenginex/` only — careerdex/weatherdex not yet typed
+- `mypy --strict` covers `src/dataenginex/` only — all packages use mypy strict
 
 ## Logging — Dual Stack
 - API/middleware: `logger = structlog.get_logger(__name__)` → `logger.info("event", key=value)`
@@ -18,8 +18,8 @@ applyTo: "src/**/*.py"
 - stdlib `logging` is intercepted → loguru (never use it directly)
 
 ## Key Patterns
-- Pydantic: centralized in `packages/dataenginex/src/dataenginex/core/schemas.py` with `model_config = {"json_schema_extra": {"examples": [...]}}`
+- Pydantic: centralized in `src/dataenginex/core/schemas.py` with `model_config = {"json_schema_extra": {"examples": [...]}}`
 - Config: `python-dotenv` | Key env vars: `LOG_LEVEL`, `LOG_FORMAT`, `DEX_AUTH_ENABLED`, `DEX_JWT_SECRET`
 - Error hierarchy: `APIHTTPException` → `BadRequestError`, `NotFoundError`, `ServiceUnavailableError`
-- Validators: `packages/dataenginex/src/dataenginex/core/validators.py`
-- Observability: `packages/dataenginex/src/dataenginex/middleware/`
+- Validators: `src/dataenginex/core/validators.py`
+- Observability: `src/dataenginex/middleware/`

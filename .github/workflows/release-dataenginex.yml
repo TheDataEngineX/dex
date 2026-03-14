@@ -1,5 +1,5 @@
 # DataEngineX Release Automation
-# Triggered when packages/dataenginex/pyproject.toml version changes.
+# Triggered when pyproject.toml version changes on main.
 # Creates git tag + GitHub release, which triggers pypi-publish.yml.
 
 name: Release DataEngineX
@@ -9,7 +9,7 @@ on:
     branches:
       - main
     paths:
-      - 'packages/dataenginex/pyproject.toml'
+      - 'pyproject.toml'
 
 permissions:
   contents: write
@@ -59,9 +59,9 @@ jobs:
       - name: Extract DataEngineX version
         id: version
         run: |
-          VERSION=$(grep -m 1 "^version = " packages/dataenginex/pyproject.toml | sed 's/version = "//;s/".*//')
+          VERSION=$(grep -m 1 "^version = " pyproject.toml | sed 's/version = "//;s/".*//')
           if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
-            echo "Invalid DataEngineX version in packages/dataenginex/pyproject.toml: $VERSION"
+            echo "Invalid DataEngineX version in pyproject.toml: $VERSION"
             exit 1
           fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
@@ -71,7 +71,7 @@ jobs:
       - name: Extract DataEngineX changelog notes
         id: changelog
         run: |
-          CHANGELOG="packages/dataenginex/CHANGELOG.md"
+          CHANGELOG="CHANGELOG.md"
           if [[ -f "$CHANGELOG" ]]; then
             NOTES=$(awk "/^## \\[${{ steps.version.outputs.version }}\\]/{found=1; next} /^## \\[/{if(found) exit} found" "$CHANGELOG")
             if [[ -z "$NOTES" ]]; then

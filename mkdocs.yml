@@ -20,7 +20,7 @@ plugins:
   - mkdocstrings:
       handlers:
         python:
-          paths: [packages/dataenginex/src]
+          paths: [src]
           options:
             show_source: true
             show_root_heading: true
@@ -48,7 +48,6 @@ nav:
     - Release Notes: RELEASE_NOTES.md
     - Release PR Template: release-pr-template.md
   - Projects:
-    - CareerDEX: careerdex/index.md
     - Weather: weather/index.md
   - API Reference:
       - Overview: api-reference/index.md

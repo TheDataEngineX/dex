@@ -77,17 +77,15 @@ ______________________________________________________________________
 
 ## Project Overview
 
-**DEX (DataEngineX)** — data engineering and ML platform with three packages:
+**DEX (DataEngineX)** — pure package repo for the `dataenginex` core framework:
 
 | Package | Location | Purpose |
 |---------|----------|---------|
-| `dataenginex` | `packages/dataenginex/` | Core framework (FastAPI optional via `[api]` extra, middleware, observability, quality gates) |
-| `careerdex` | `src/careerdex/` | Job data platform (Airflow DAGs, data models, 6 live API endpoints) |
-| `weatherdex` | `src/weatherdex/` | Weather pipeline (PySpark ML, notebooks, feature engineering) |
+| `dataenginex` | `src/dataenginex/` | Core framework (FastAPI, middleware, observability, quality gates, ML registry) |
 
 **Stack:** Python 3.12+ · FastAPI · uv · Ruff · mypy strict · pytest · Docker · Kubernetes (ArgoCD)
 
-**Versions:** root careerdex-app 0.5.0 · dataenginex 0.6.0
+**Version:** dataenginex 0.6.0
 
 ______________________________________________________________________
 
@@ -128,9 +126,8 @@ Run in this exact order after ANY code change:
 1. uv run poe lint                    # Ruff lint
 2. uv run poe typecheck              # mypy --strict (dataenginex only)
 3. uv run poe test                   # pytest
-4. uv run uvicorn careerdex.api.main:app --port 8000  # Real server
-   # Then curl: /health, /ready, /startup, /, /echo
-   # /api/v1/data/sources, /api/v1/system/config, /metrics
+4. uv run python examples/02_api_quickstart.py  # Real server
+   # Then curl: /health, /, /echo, /metrics
 5. Import key classes standalone      # Verify modules work independently
 ```
 
@@ -151,9 +148,9 @@ ______________________________________________________________________
 ### Type Safety
 
 - Type hints on all public functions (params + return)
-- `mypy --strict` on `packages/dataenginex/src/dataenginex/` only
+- `mypy --strict` on `src/dataenginex/` only
 - Pydantic models for API boundaries
-- careerdex and weatherdex are NOT yet under mypy strict
+- Only `src/dataenginex/` is under mypy strict
 
 ### Logging — Dual Stack
 
@@ -199,7 +196,7 @@ ______________________________________________________________________
 - `response_model=` on every FastAPI endpoint
 - Lifespan: request logging → metrics → auth → rate limit
 - Auth: pure-Python HS256 JWT (no pyjwt dependency)
-- Entry point: `src/careerdex/api/main.py`
+- Example entry point: `examples/02_api_quickstart.py`
 
 ### Data
 
@@ -213,7 +210,7 @@ ______________________________________________________________________
 - Model lifecycle: development → staging → production → archived
 - `ModelRegistry` (JSON-persisted)
 - Drift detection: PSI-based
-- PySpark ML pipelines via `src/weatherdex/ml/ml_utils.py`
+- PySpark ML pipelines — see `examples/08_spark_ml.py`
 
 ### Infrastructure
 
@@ -287,11 +284,10 @@ ______________________________________________________________________
 
 | File | Purpose |
 |------|---------|
-| `pyproject.toml` | Root project config (careerdex-app) |
-| `packages/dataenginex/pyproject.toml` | Framework package config |
+| `pyproject.toml` | Package config (dataenginex 0.6.0) |
 | `poe_tasks.toml` | All poe task definitions |
-| `src/careerdex/api/main.py` | FastAPI app entry point |
-| `packages/dataenginex/src/dataenginex/` | Framework source |
+| `src/dataenginex/` | Framework source |
+| `examples/` | Runnable examples (01–10) |
 | `tests/` | All tests (unit + integration) |
 | `tasks/todo.md` | Task tracker — plan here first |
 | `tasks/lessons.md` | Lessons learned — update after corrections |
@@ -301,37 +297,11 @@ ______________________________________________________________________
 
 ______________________________________________________________________
 
-## Live API Endpoints
+## Framework API Endpoints (example app)
 
-### Core
+Run `uv run poe dev` to start the quickstart example server.
 
 - `GET /` — Root
 - `POST /echo` — Echo endpoint
-- `GET /health` · `GET /ready` · `GET /startup` — Health probes
+- `GET /health` — Health check
 - `GET /metrics` — Prometheus metrics
-
-### Data (v1)
-
-- `GET /api/v1/data/sources` — List data sources
-- `GET /api/v1/data/quality/summary` — Quality summary
-- `GET /api/v1/system/config` — System configuration
-
-### Warehouse (v1)
-
-- `GET /api/v1/warehouse/layers` — List warehouse layers
-- `GET /api/v1/warehouse/lineage` — Data lineage
-
-### ML (v1)
-
-- `GET /api/v1/models` — List models
-- `GET /api/v1/models/{name}` — Get model details
-- `POST /api/v1/predict` — Run prediction
-
-### CareerDEX (v1)
-
-- `POST /api/v1/careerdex/salary/prediction` — Salary prediction
-- `GET /api/v1/careerdex/insights/skill-gaps` — Skill gap analysis
-- `GET /api/v1/careerdex/market/careers` — Career market data
-- `GET /api/v1/careerdex/insights/career-health` — Career health score
-- `GET /api/v1/careerdex/market/trends` — Market trends
-- `GET /api/v1/careerdex/jobs/recommendations` — Job recommendations

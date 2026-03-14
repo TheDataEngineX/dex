@@ -68,13 +68,13 @@ Welcome! This directory contains code review standards for the DataEngineX proje
 
 | Domain | Read | Examples |
 |--------|------|----------|
-| **Python code** | [CHECKLISTS.md#python-code](CHECKLISTS.md#python-code) | [packages/dataenginex/src/dataenginex/](../packages/dataenginex/src/dataenginex/) |
-| **REST APIs** | [CHECKLISTS.md#rest-api-endpoints-fastapi](CHECKLISTS.md#rest-api-endpoints-fastapi) | [src/careerdex/api/](../src/careerdex/api/) |
-| **Data Pipelines** | [CHECKLISTS.md#data-pipelines](CHECKLISTS.md#data-pipelines) | [src/careerdex/dags/](../src/careerdex/dags/) |
-| **Databases** | [CHECKLISTS.md#database--sql](CHECKLISTS.md#database--sql) | [packages/dataenginex/src/dataenginex/core/](../packages/dataenginex/src/dataenginex/core/) |
+| **Python code** | [CHECKLISTS.md#python-code](CHECKLISTS.md#python-code) | [src/dataenginex/](../src/dataenginex/) |
+| **REST APIs** | [CHECKLISTS.md#rest-api-endpoints-fastapi](CHECKLISTS.md#rest-api-endpoints-fastapi) | [src/dataenginex/api/](../src/dataenginex/api/) |
+| **Data Pipelines** | [CHECKLISTS.md#data-pipelines](CHECKLISTS.md#data-pipelines) | [examples/](../examples/) |
+| **Databases** | [CHECKLISTS.md#database--sql](CHECKLISTS.md#database--sql) | [src/dataenginex/core/](../src/dataenginex/core/) |
 | **Tests** | [CHECKLISTS.md#tests](CHECKLISTS.md#tests) | [tests/](../tests/) |
 | **Documentation** | [CHECKLISTS.md#documentation--comments](CHECKLISTS.md#documentation--comments) | Any file in [src/](../src/) |
-| **Security** | [CHECKLISTS.md#security](CHECKLISTS.md#security-critical---check-every-pr) | [packages/dataenginex/src/dataenginex/api/auth.py](../packages/dataenginex/src/dataenginex/api/auth.py) |
+| **Security** | [CHECKLISTS.md#security](CHECKLISTS.md#security-critical---check-every-pr) | [src/dataenginex/api/auth.py](../src/dataenginex/api/auth.py) |
 
 ---
 

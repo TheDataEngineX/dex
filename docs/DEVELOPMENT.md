@@ -1,6 +1,6 @@
 # Development Setup Guide
 
-**Version**: v0.5.0 | **Updated**: March 12, 2026
+**Version**: v0.6.0 | **Updated**: March 14, 2026
 
 ## Prerequisites
 
@@ -57,15 +57,14 @@ All tests and linting should pass. You're ready to develop!
 
 ```
 DEX/
-├── packages/dataenginex/src/dataenginex/  # Main framework package
-├── src/careerdex/          # CareerDEX project
-├── src/weatherdex/         # Weather reference implementation
+├── src/dataenginex/        # Core framework package
+├── examples/               # Runnable example scripts (01–10)
 ├── tests/                  # Test suite
-├── docs/                  # Documentation
-├── .github/workflows/     # CI/CD pipelines
-├── infra/                 # Infrastructure as Code
-├── pyproject.toml         # Project config
-└── poe_tasks.toml        # Task definitions
+├── docs/                   # Documentation
+├── .github/workflows/      # CI/CD pipelines
+├── infra/                  # Infrastructure as Code
+├── pyproject.toml          # Project config (dataenginex 0.6.0)
+└── poe_tasks.toml          # Task definitions
 ```
 
 ## Development Workflow
@@ -100,30 +99,21 @@ git push origin feat/issue-XXX-description
 
 ### Version Management
 
-DEX uses **two independent version sources** and release tags:
+DEX has a single version source:
 
-- **CareerDEX app version**: root `pyproject.toml` → release tag `careerdex-vX.Y.Z`
-- **DataEngineX package version**: `packages/dataenginex/pyproject.toml` → release tag `dataenginex-vX.Y.Z` and PyPI publish flow
+- **dataenginex version**: root `pyproject.toml` → release tag `dataenginex-vX.Y.Z` and PyPI publish flow
 
 ```bash
-# CareerDEX release (app)
-# 1) Bump root version
+# DataEngineX release (package + PyPI flow)
+# 1) Bump version in root pyproject.toml
 # 2) Merge to main and push
 git add pyproject.toml
-git commit -m "chore: bump careerdex to X.Y.Z"
-git push origin main
-
-# DataEngineX release (package + PyPI flow)
-# 1) Bump package version
-# 2) Merge to main and push
-git add packages/dataenginex/pyproject.toml
 git commit -m "chore: bump dataenginex to X.Y.Z"
 git push origin main
 ```
 
-On `main`, release workflows create Git tags/releases automatically:
+On `main`, the release workflow creates Git tags/releases automatically:
 
-- `careerdex-vX.Y.Z` from `release-careerdex.yml`
 - `dataenginex-vX.Y.Z` from `release-dataenginex.yml` (then triggers `pypi-publish.yml`)
 
 ## Local Data Setup
@@ -131,8 +121,7 @@ On `main`, release workflows create Git tags/releases automatically:
 ### Path-Based (Local Dev)
 
 ```bash
-mkdir -p ~/data/careerdex/{bronze,silver,gold}
-mkdir -p ~/data/weather/{bronze,silver,gold}
+mkdir -p ~/data/dex/{bronze,silver,gold}
 ```
 
 ### Optional Cloud Warehouse Adapter (Example: BigQuery)
@@ -141,30 +130,27 @@ Use this only when validating the cloud warehouse path; local development can ru
 
 ```bash
 export GCP_PROJECT=your-dex-project
-bq mk --dataset careerdex_bronze
-bq mk --dataset careerdex_silver
-bq mk --dataset careerdex_gold
+bq mk --dataset dex_bronze
+bq mk --dataset dex_silver
+bq mk --dataset dex_gold
 ```
 
 ## Running Pipelines & Tests
 
-### Airflow DAGs
+### Example Scripts
 
 ```bash
-# Initialize database
-airflow db init
+# Medallion pipeline demo
+uv run python examples/07_api_ingestion.py
 
-# Start webserver (http://localhost:8080)
-airflow webserver --port 8080
+# PySpark ML (requires Java 17+)
+uv run python examples/08_spark_ml.py
 
-# In another terminal, start scheduler
-airflow scheduler
+# Feature engineering
+uv run python examples/09_feature_engineering.py
 
-# Trigger DAG
-airflow dags trigger careerdex_job_ingestion
-
-# View logs
-airflow tasks logs careerdex_job_ingestion fetch_linkedin 2024-01-01
+# Model analysis + drift detection
+uv run python examples/10_model_analysis.py
 ```
 
 ### Testing
@@ -191,7 +177,7 @@ export LOG_LEVEL=DEBUG
 uv run poe dev
 
 # Use Python debugger
-python -m pdb src/careerdex/api/main.py
+python -m pdb examples/02_api_quickstart.py
 
 # Prometheus metrics (if running)
 open http://localhost:9090
@@ -204,7 +190,7 @@ open http://localhost:9090
 | Pre-commit hooks fail | `uv run poe lint-fix` then retry |
 | Tests fail locally but pass in CI | Check Python version (3.12+), run `uv sync --reinstall` |
 | Import errors | Run `uv sync --reinstall` and restart the shell |
-| Airflow DAG not found | Check `src/careerdex/dags/` folder, restart scheduler |
+| PySpark examples fail | Check Java 17+ is installed (`java -version`) |
 
 ## Common Commands
 

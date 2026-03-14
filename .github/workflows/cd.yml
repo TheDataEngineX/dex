@@ -203,26 +203,21 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          PROJECT_VERSION=$(grep -m 1 '^version = ' pyproject.toml | sed 's/version = "//;s/".*//')
-          PACKAGE_VERSION=$(grep -m 1 '^version = ' packages/dataenginex/pyproject.toml | sed 's/version = "//;s/".*//')
+          VERSION=$(grep -m 1 '^version = ' pyproject.toml | sed 's/version = "//;s/".*//')
 
-          if [[ -z "$PROJECT_VERSION" || -z "$PACKAGE_VERSION" ]]; then
-            echo "Missing version in pyproject files."
+          if [[ -z "$VERSION" ]]; then
+            echo "Missing version in pyproject.toml."
             exit 1
           fi
 
           SEMVER_REGEX='^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$'
-          if [[ ! "$PROJECT_VERSION" =~ $SEMVER_REGEX ]]; then
-            echo "Root project version is not semver-compatible: $PROJECT_VERSION"
-            exit 1
-          fi
-          if [[ ! "$PACKAGE_VERSION" =~ $SEMVER_REGEX ]]; then
-            echo "DataEngineX package version is not semver-compatible: $PACKAGE_VERSION"
+          if [[ ! "$VERSION" =~ $SEMVER_REGEX ]]; then
+            echo "Project version is not semver-compatible: $VERSION"
             exit 1
           fi
 
-          echo "project_version=$PROJECT_VERSION" >> "$GITHUB_OUTPUT"
-          echo "package_version=$PACKAGE_VERSION" >> "$GITHUB_OUTPUT"
+          echo "project_version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "package_version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Extract commit SHA and image tags
         id: vars

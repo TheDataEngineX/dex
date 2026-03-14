@@ -1,6 +1,6 @@
 # DataEngineX PyPI Publishing
 # Triggered by GitHub release from release-dataenginex.yml (tag: dataenginex-vX.Y.Z).
-# Detects if packages/dataenginex/ actually changed since previous dataenginex tag, then publishes.
+# Detects if src/dataenginex/ actually changed since previous dataenginex tag, then publishes.
 
 name: PyPI Publish
 
@@ -58,7 +58,7 @@ jobs:
 
           git fetch --tags --force
 
-          PACKAGE_VERSION=$(grep -m 1 '^version = ' packages/dataenginex/pyproject.toml | sed 's/version = "//;s/".*//')
+          PACKAGE_VERSION=$(grep -m 1 '^version = ' pyproject.toml | sed 's/version = "//;s/".*//')
           echo "package_version=${PACKAGE_VERSION}" >> "$GITHUB_OUTPUT"
 
           CURRENT_TAG="${RELEASE_TAG:-${DISPATCH_TAG:-}}"
@@ -89,7 +89,7 @@ jobs:
 
           TAG_VERSION="${CURRENT_TAG#dataenginex-v}"
           if [[ "$EVENT_NAME" == "release" && "$TAG_VERSION" != "$PACKAGE_VERSION" ]]; then
-            echo "Release tag (${CURRENT_TAG}) does not match packages/dataenginex/pyproject.toml version (${PACKAGE_VERSION})."
+            echo "Release tag (${CURRENT_TAG}) does not match pyproject.toml version (${PACKAGE_VERSION})."
             exit 1
           fi
 
@@ -104,7 +104,7 @@ jobs:
 
           CHANGED_FILES="$(git diff --name-only "${PREVIOUS_TAG}" "${CURRENT_TAG}")"
 
-          if echo "${CHANGED_FILES}" | grep -Eq '^packages/dataenginex/'; then
+          if echo "${CHANGED_FILES}" | grep -Eq '^src/dataenginex/|^pyproject\.toml$'; then
             echo "DataEngineX changes found between ${PREVIOUS_TAG} and ${CURRENT_TAG}."
             echo "dataenginex_changed=true" >> "$GITHUB_OUTPUT"
           else
@@ -160,19 +160,18 @@ jobs:
       - name: Build package
         run: |
           uv tool install build
-          cd packages/dataenginex
           uvx --from build pyproject-build
 
       - name: Check distributions
         run: |
           uv tool install twine
-          uvx twine check packages/dataenginex/dist/*
+          uvx twine check dist/*
 
       - name: Upload distributions
         uses: actions/upload-artifact@v7
         with:
           name: python-distributions
-          path: packages/dataenginex/dist/
+          path: dist/
 
   publish-testpypi:
     name: Publish to TestPyPI
@@ -263,7 +262,7 @@ jobs:
             if (eventName !== 'release' && eventName !== 'workflow_run' && eventName !== 'workflow_dispatch') {
               reason = 'Build validation only (no release/workflow_run/manual publish event)';
             } else if (dataenginexChanged === 'false') {
-              reason = `No changes in packages/dataenginex/ since ${previousTag}`;
+              reason = `No changes in src/dataenginex/ since ${previousTag}`;
             } else if (approvedTag === 'false') {
               reason = `Tag ${currentTag} is not a stable release (requires dataenginex-vMAJOR.MINOR.PATCH)`;
             }
@@ -297,7 +296,7 @@ jobs:
           if [[ "${{ github.event_name }}" != "release" && "${{ github.event_name }}" != "workflow_run" && "${{ github.event_name }}" != "workflow_dispatch" ]]; then
             echo "Build validation only: publish jobs run only for release:published, workflow_run, or workflow_dispatch events."
           elif [[ "${{ needs.detect-dataenginex-changes.outputs.dataenginex_changed }}" == "false" ]]; then
-            echo "Skipping TestPyPI/PyPI publish: no changes in packages/dataenginex/ since previous tag ${{ needs.detect-dataenginex-changes.outputs.previous_tag }}."
+            echo "Skipping TestPyPI/PyPI publish: no changes in src/dataenginex/ since previous tag ${{ needs.detect-dataenginex-changes.outputs.previous_tag }}."
           elif [[ "${{ needs.detect-dataenginex-changes.outputs.approved_tag }}" == "false" ]]; then
             echo "Published to TestPyPI only: tag ${{ needs.detect-dataenginex-changes.outputs.current_tag }} is not an approved stable tag (requires dataenginex-vMAJOR.MINOR.PATCH)."
           fi

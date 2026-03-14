@@ -22,8 +22,8 @@ Quick reference checklists for common tasks. **Reference actual code patterns in
 - Can this be tested independently?
 
 **See examples:**
-- Clean code patterns → [packages/dataenginex/src/dataenginex/core/](../packages/dataenginex/src/dataenginex/core/)
-- Error handling → [packages/dataenginex/src/dataenginex/api/](../packages/dataenginex/src/dataenginex/api/)
+- Clean code patterns → [src/dataenginex/core/](../src/dataenginex/core/)
+- Error handling → [src/dataenginex/api/](../src/dataenginex/api/)
 - Tests → [tests/unit/](../tests/unit/)
 
 ---
@@ -46,8 +46,8 @@ Quick reference checklists for common tasks. **Reference actual code patterns in
 - Is the response schema documented?
 
 **See examples:**
-- API endpoints → [src/careerdex/api/](../src/careerdex/api/)
-- Request models → [packages/dataenginex/src/dataenginex/core/schemas.py](../packages/dataenginex/src/dataenginex/core/schemas.py)
+- API endpoints → [src/dataenginex/api/](../src/dataenginex/api/)
+- Request models → [src/dataenginex/core/schemas.py](../src/dataenginex/core/schemas.py)
 - Tests → [tests/integration/test_e2e_api.py](../tests/integration/test_e2e_api.py)
 
 ---
@@ -70,8 +70,8 @@ Quick reference checklists for common tasks. **Reference actual code patterns in
 - What metrics would tell us if it failed silently?
 
 **See examples:**
-- DAG patterns → [src/careerdex/dags/](../src/careerdex/dags/)
-- Data validation → [packages/dataenginex/src/dataenginex/core/validators.py](../packages/dataenginex/src/dataenginex/core/validators.py)
+- Pipeline patterns → [examples/07_api_ingestion.py](../examples/07_api_ingestion.py)
+- Data validation → [src/dataenginex/core/validators.py](../src/dataenginex/core/validators.py)
 - Tests → [tests/unit/test_data.py](../tests/unit/test_data.py)
 
 ---
@@ -93,7 +93,7 @@ Quick reference checklists for common tasks. **Reference actual code patterns in
 - Is this data connection secured?
 
 **See examples:**
-- SQLAlchemy ORM → [packages/dataenginex/src/dataenginex/core/database.py](../packages/dataenginex/src/dataenginex/core/database.py)
+- SQLAlchemy ORM → [src/dataenginex/core/database.py](../src/dataenginex/core/database.py)
 - Migrations → [infra/migrations/](../infra/migrations/)
 - Schema patterns → Check database documentation
 
@@ -162,8 +162,8 @@ Quick reference checklists for common tasks. **Reference actual code patterns in
 - What happens if someone sends malicious input?
 
 **See examples:**
-- Auth patterns → [packages/dataenginex/src/dataenginex/api/auth.py](../packages/dataenginex/src/dataenginex/api/auth.py)
-- Validation → [packages/dataenginex/src/dataenginex/core/validators.py](../packages/dataenginex/src/dataenginex/core/validators.py)
+- Auth patterns → [src/dataenginex/api/auth.py](../src/dataenginex/api/auth.py)
+- Validation → [src/dataenginex/core/validators.py](../src/dataenginex/core/validators.py)
 - Configuration → [.env.example](.env.example)
 
 ---
@@ -183,8 +183,8 @@ Quick reference checklists for common tasks. **Reference actual code patterns in
 - Could this timeout with large datasets?
 
 **See examples:**
-- Efficient queries → Check [packages/dataenginex/src/dataenginex/core/database.py](../packages/dataenginex/src/dataenginex/core/database.py)
-- Async patterns → [src/careerdex/api/](../src/careerdex/api/)
+- Efficient queries → Check [src/dataenginex/core/database.py](../src/dataenginex/core/database.py)
+- Async patterns → [src/dataenginex/api/](../src/dataenginex/api/)
 
 ---
 
@@ -226,7 +226,7 @@ Tests and lint passing is necessary but NOT sufficient. Always run the real appl
 
 **Server startup:**
 ```bash
-uv run uvicorn careerdex.api.main:app --port 8000
+uv run python examples/02_api_quickstart.py
 ```
 
 **Endpoint validation checklist:**
@@ -243,14 +243,14 @@ uv run uvicorn careerdex.api.main:app --port 8000
 
 **Standalone module validation:**
 ```bash
-uv run python -c "from careerdex.phases.phase1_foundation import bootstrap_phase1; print(bootstrap_phase1())"
+uv run python -c "import dataenginex; print('OK', dataenginex.__file__)"
 ```
 - [ ] Key classes instantiate and produce correct output outside the API
 - [ ] No hidden import-time side effects or crashes
 
 **Full validation pipeline order:**
-1. `uv run poe lint` (or `uv run python -m ruff check src/ packages/ tests/`)
-2. `uv run poe typecheck` (or `uv run python -m mypy packages/dataenginex/src/dataenginex/ --strict`)
+1. `uv run poe lint` (or `uv run python -m ruff check src/ tests/`)
+2. `uv run poe typecheck` (or `uv run python -m mypy src/dataenginex/ --strict`)
 3. `uv run poe test` (or `uv run python -m pytest tests/ -x --tb=short -q`)
 4. Start real server and curl all endpoints (above)
 5. Run standalone module imports (above)

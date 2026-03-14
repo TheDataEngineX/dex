@@ -43,19 +43,16 @@ Core documentation for all DEX developers:
 - **[Org + Domain Rollout](./DEPLOY_RUNBOOK.md)** - GitHub Organization and Cloudflare setup checklist
 - **[Kubernetes Setup](./LOCAL_K8S_SETUP.md)** - Local K8s configuration
 
-### Projects
+### Examples
 
-Project-specific documentation:
+Runnable pipeline and ML examples:
 
-**CareerDEX**
-
-- **[CareerDEX Docs](./careerdex/index.md)** - Project overview and implementation status
-- **[Source Package](https://github.com/TheDataEngineX/DEX/tree/main/src/careerdex)** - Package-level structure and architecture
-
-**Weather** (Reference Implementation)
-
-- **[Weather Docs](./weather/index.md)** - Reference implementation guide
-- **[Source Package](./weather/index.md)** - Source package summary
+- **[Examples Guide](../examples/GUIDE.md)** - Full index of all examples (01–10)
+- **[API Quickstart](../examples/02_api_quickstart.py)** - FastAPI server with dataenginex middleware
+- **[API Ingestion](../examples/07_api_ingestion.py)** - Bronze→Silver→Gold medallion pipeline
+- **[PySpark ML](../examples/08_spark_ml.py)** - Feature engineering + model training
+- **[Feature Engineering](../examples/09_feature_engineering.py)** - Time/lag/rolling features
+- **[Model Analysis](../examples/10_model_analysis.py)** - Drift detection + prediction analysis
 
 ### Planning
 
@@ -77,8 +74,7 @@ ______________________________________________________________________
 | Understand CI/CD | [CI/CD Pipeline](./CI_CD.md) |
 | Track work | [SDLC](./SDLC.md) |
 | Configure org + domain | [Org + Domain Rollout](./DEPLOY_RUNBOOK.md) |
-| Work on CareerDEX | [CareerDEX Docs](./careerdex/index.md) |
-| Learn from reference | [Weather Docs](./weather/index.md) |
+| Explore runnable examples | [Examples Guide](../examples/GUIDE.md) |
 
 ______________________________________________________________________
 
@@ -100,10 +96,6 @@ docs/
 │   ├── 0000-template.md
 │   ├── 0001-medallion-architecture.md
 │   └── ...
-├── careerdex/                  # CareerDEX project
-│   └── index.md
-├── weather/                    # Weather reference
-│   └── index.md
 ├── roadmap/                    # Strategic planning
 │   ├── project-roadmap.csv      # Canonical source of truth
 │   └── project-roadmap.json     # Derived export
@@ -112,4 +104,4 @@ docs/
 
 ______________________________________________________________________
 
-**Version**: v0.5.0 | **Updated**: March 12, 2026
+**Version**: v0.6.0 | **Updated**: March 14, 2026

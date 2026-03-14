@@ -1,7 +1,6 @@
 # DEX Continuous Integration
-# Tests both dataenginex (core package) and careerdex (app) in a single unified pipeline.
-# - dataenginex: packages/dataenginex/ → core framework
-# - careerdex: src/careerdex/ → job matching app
+# Tests dataenginex (core package) as a pure library.
+# - dataenginex: src/dataenginex/ → core framework
 # See docs/CI_CD.md for workflow architecture.
 
 name: Continuous Integration

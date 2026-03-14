@@ -1,7 +1,5 @@
 # DataEngineX Package Validation
-# Specific to the core package (packages/dataenginex/).
-# Validates that the pyproject.toml builds a valid wheel + passes twine checks.
-# CareerDEX app (src/careerdex/) is tested in ci.yml as an integrated app.
+# Validates that pyproject.toml builds a valid wheel + passes twine checks.
 
 name: Package Validation
 
@@ -11,8 +9,8 @@ on:
       - main
       - dev
     paths:
-      - 'packages/dataenginex/**'
-      - 'packages/**'
+      - 'src/dataenginex/**'
+      - 'pyproject.toml'
       - '.github/workflows/package-validation.yml'
   push:
     branches:
@@ -74,7 +72,6 @@ jobs:
 
       - name: Build and validate dataenginex
         run: |
-          cd packages/dataenginex
           uvx --from build pyproject-build
           uvx twine check dist/*
 

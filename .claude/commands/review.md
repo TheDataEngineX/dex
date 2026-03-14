@@ -6,7 +6,7 @@ Steps:
 1. Check against `.github/CHECKLISTS.md` review criteria
 1. Verify each changed file follows its domain-specific instructions:
    - `src/**/api/**/*.py` → fastapi.instructions.md
-   - `src/careerdex/**/*.py` → data-pipelines.instructions.md
+   - `src/**/data/**/*.py` → data-pipelines.instructions.md
    - `src/**/ml/**/*.py` → ml.instructions.md
    - `src/**/*.py` → python.instructions.md
    - `tests/**/*.py` → testing.instructions.md

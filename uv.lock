@@ -2,25 +2,25 @@ version = 1
 revision = 3
 requires-python = ">=3.12"
 resolution-markers = [
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook'",
-    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook'",
-    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra != 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook'",
-    "python_full_version < '3.13' and sys_platform == 'win32' and extra != 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra != 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook'",
-    "python_full_version < '3.13' and sys_platform == 'emscripten' and extra != 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook'",
-    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook'",
-    "python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook'",
-    "python_full_version >= '3.14' and extra == 'group-13-careerdex-app-dashboard' and extra != 'group-13-careerdex-app-notebook'",
-    "python_full_version == '3.13.*' and extra == 'group-13-careerdex-app-dashboard' and extra != 'group-13-careerdex-app-notebook'",
-    "python_full_version < '3.13' and extra == 'group-13-careerdex-app-dashboard' and extra != 'group-13-careerdex-app-notebook'",
-    "python_full_version >= '3.14' and extra != 'group-13-careerdex-app-dashboard' and extra != 'group-13-careerdex-app-notebook'",
-    "python_full_version == '3.13.*' and extra != 'group-13-careerdex-app-dashboard' and extra != 'group-13-careerdex-app-notebook'",
-    "python_full_version < '3.13' and extra != 'group-13-careerdex-app-dashboard' and extra != 'group-13-careerdex-app-notebook'",
+    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook'",
+    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook'",
+    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook'",
+    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra != 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook'",
+    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra != 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook'",
+    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook'",
+    "python_full_version < '3.13' and sys_platform == 'win32' and extra != 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook'",
+    "python_full_version < '3.13' and sys_platform == 'emscripten' and extra != 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook'",
+    "python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook'",
+    "python_full_version >= '3.14' and extra == 'group-11-dataenginex-dashboard' and extra != 'group-11-dataenginex-notebook'",
+    "python_full_version == '3.13.*' and extra == 'group-11-dataenginex-dashboard' and extra != 'group-11-dataenginex-notebook'",
+    "python_full_version < '3.13' and extra == 'group-11-dataenginex-dashboard' and extra != 'group-11-dataenginex-notebook'",
+    "python_full_version >= '3.14' and extra != 'group-11-dataenginex-dashboard' and extra != 'group-11-dataenginex-notebook'",
+    "python_full_version == '3.13.*' and extra != 'group-11-dataenginex-dashboard' and extra != 'group-11-dataenginex-notebook'",
+    "python_full_version < '3.13' and extra != 'group-11-dataenginex-dashboard' and extra != 'group-11-dataenginex-notebook'",
 ]
 conflicts = [[
-    { package = "careerdex-app", group = "dashboard" },
-    { package = "careerdex-app", group = "notebook" },
+    { package = "dataenginex", group = "dashboard" },
+    { package = "dataenginex", group = "notebook" },
 ]]
 
 [[package]]
@@ -104,7 +104,7 @@ version = "4.12.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "idna" },
-    { name = "typing-extensions", marker = "python_full_version < '3.13' or (extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook')" },
+    { name = "typing-extensions", marker = "python_full_version < '3.13' or (extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/96/f0/5eb65b2bb0d09ac6776f2eb54adee6abe8228ea05b20a5ad0e4945de8aac/anyio-4.12.1.tar.gz", hash = "sha256:41cfcc3a4c85d3f05c932da7c26d0201ac36f72abd4435ba90d0464a3ffed703", size = 228685, upload-time = "2026-01-06T11:45:21.246Z" }
 wheels = [
@@ -430,87 +430,6 @@ wheels = [
 ]
 
 [[package]]
-name = "careerdex-app"
-version = "0.5.0"
-source = { editable = "." }
-dependencies = [
-    { name = "dataenginex" },
-]
-
-[package.dev-dependencies]
-dashboard = [
-    { name = "streamlit" },
-]
-data = [
-    { name = "apache-airflow" },
-    { name = "databricks-cli" },
-    { name = "pyspark" },
-    { name = "requests" },
-]
-dev = [
-    { name = "mkdocs-material" },
-    { name = "mkdocstrings", extra = ["python"] },
-    { name = "mypy" },
-    { name = "poethepoet" },
-    { name = "pytest" },
-    { name = "pytest-asyncio" },
-    { name = "pytest-cov" },
-    { name = "ruff" },
-    { name = "types-pyyaml" },
-    { name = "types-requests" },
-    { name = "uv" },
-    { name = "zensical" },
-]
-ml = [
-    { name = "numpy" },
-    { name = "scikit-learn" },
-    { name = "sentence-transformers" },
-    { name = "xgboost" },
-]
-notebook = [
-    { name = "ipykernel" },
-    { name = "numpy" },
-    { name = "pandas", version = "3.0.0", source = { registry = "https://pypi.org/simple" } },
-]
-
-[package.metadata]
-requires-dist = [{ name = "dataenginex", editable = "packages/dataenginex" }]
-
-[package.metadata.requires-dev]
-dashboard = [{ name = "streamlit", specifier = ">=1.40.0" }]
-data = [
-    { name = "apache-airflow", specifier = ">=2.8.0" },
-    { name = "databricks-cli" },
-    { name = "pyspark", specifier = ">=4.1.1" },
-    { name = "requests", specifier = ">=2.32.0" },
-]
-dev = [
-    { name = "mkdocs-material", specifier = ">=9.6.0" },
-    { name = "mkdocstrings", extras = ["python"], specifier = ">=0.28.0" },
-    { name = "mypy", specifier = ">=1.19.0" },
-    { name = "poethepoet", specifier = ">=0.40.0" },
-    { name = "pytest", specifier = ">=9.0.2" },
-    { name = "pytest-asyncio", specifier = ">=1.3.0" },
-    { name = "pytest-cov", specifier = ">=7.0.0" },
-    { name = "ruff", specifier = ">=0.15.0" },
-    { name = "types-pyyaml", specifier = ">=6.0.12.20250822" },
-    { name = "types-requests", specifier = ">=2.32.4.20260107" },
-    { name = "uv", specifier = ">=0.10.0" },
-    { name = "zensical", specifier = ">=0.0.24" },
-]
-ml = [
-    { name = "numpy", specifier = ">=2.4" },
-    { name = "scikit-learn", specifier = ">=1.6.0" },
-    { name = "sentence-transformers", specifier = ">=2.0.0" },
-    { name = "xgboost", specifier = ">=3.0.0" },
-]
-notebook = [
-    { name = "ipykernel", specifier = ">=7.2.0" },
-    { name = "numpy", specifier = ">=2.4" },
-    { name = "pandas", specifier = ">=3.0" },
-]
-
-[[package]]
 name = "certifi"
 version = "2026.1.4"
 source = { registry = "https://pypi.org/simple" }
@@ -524,7 +443,7 @@ name = "cffi"
 version = "2.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "pycparser", marker = "implementation_name != 'PyPy' or (extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook')" },
+    { name = "pycparser", marker = "implementation_name != 'PyPy' or (extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/eb/56/b1ba7935a17738ae8453301356628e8147c79dbb825bcbc73dc7401f9846/cffi-2.0.0.tar.gz", hash = "sha256:44d1b5909021139fe36001ae048dbdde8214afa20200eda0f64c068cac5d5529", size = 523588, upload-time = "2025-09-08T23:24:04.541Z" }
 wheels = [
@@ -638,7 +557,7 @@ name = "click"
 version = "8.3.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook')" },
+    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/3d/fa/656b739db8587d7b5dfa22e22ed02566950fbfbcdc20311993483657a5c0/click-8.3.1.tar.gz", hash = "sha256:12ff4785d337a1bb490bb7e9c2b1ee5da3112e94a8622f26a6c77f5d2fc6842a", size = 295065, upload-time = "2025-11-15T20:45:42.706Z" }
 wheels = [
@@ -659,7 +578,7 @@ name = "colorlog"
 version = "6.10.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook')" },
+    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/a2/61/f083b5ac52e505dfc1c624eafbf8c7589a0d7f32daa398d2e7590efa5fda/colorlog-6.10.1.tar.gz", hash = "sha256:eb4ae5cb65fe7fec7773c2306061a8e63e02efc2c72eba9d27b0fa23c94f1321", size = 17162, upload-time = "2025-10-16T16:14:11.978Z" }
 wheels = [
@@ -779,7 +698,7 @@ name = "cryptography"
 version = "46.0.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "cffi", marker = "platform_python_implementation != 'PyPy' or (extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook')" },
+    { name = "cffi", marker = "platform_python_implementation != 'PyPy' or (extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/60/04/ee2a9e8542e4fa2773b81771ff8349ff19cdd56b7258a0cc442639052edb/cryptography-46.0.5.tar.gz", hash = "sha256:abace499247268e3757271b2f1e244b36b06f8515cf27c4d49468fc9eb16e93d", size = 750064, upload-time = "2026-02-10T19:18:38.255Z" }
 wheels = [
@@ -832,7 +751,7 @@ name = "cuda-bindings"
 version = "12.9.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "cuda-pathfinder", marker = "(sys_platform != 'emscripten' and sys_platform != 'win32') or (sys_platform == 'emscripten' and extra == 'group-13-careerdex-app-dashboard') or (sys_platform == 'emscripten' and extra != 'group-13-careerdex-app-notebook') or (sys_platform == 'win32' and extra == 'group-13-careerdex-app-dashboard') or (sys_platform == 'win32' and extra != 'group-13-careerdex-app-notebook')" },
+    { name = "cuda-pathfinder", marker = "(sys_platform != 'emscripten' and sys_platform != 'win32') or (sys_platform == 'emscripten' and extra == 'group-11-dataenginex-dashboard') or (sys_platform == 'emscripten' and extra != 'group-11-dataenginex-notebook') or (sys_platform == 'win32' and extra == 'group-11-dataenginex-dashboard') or (sys_platform == 'win32' and extra != 'group-11-dataenginex-notebook')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/0c/c2/65bfd79292b8ff18be4dd7f7442cea37bcbc1a228c1886f1dea515c45b67/cuda_bindings-12.9.4-cp312-cp312-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:694ba35023846625ef471257e6b5a4bc8af690f961d197d77d34b1d1db393f56", size = 11760260, upload-time = "2025-10-21T14:51:40.79Z" },
@@ -881,7 +800,7 @@ wheels = [
 [[package]]
 name = "dataenginex"
 version = "0.6.0"
-source = { editable = "packages/dataenginex" }
+source = { editable = "." }
 dependencies = [
     { name = "boto3" },
     { name = "email-validator" },
@@ -902,6 +821,42 @@ dependencies = [
     { name = "pyyaml" },
     { name = "structlog" },
     { name = "uvicorn" },
+]
+
+[package.dev-dependencies]
+dashboard = [
+    { name = "streamlit" },
+]
+data = [
+    { name = "apache-airflow" },
+    { name = "databricks-cli" },
+    { name = "pyspark" },
+    { name = "requests" },
+]
+dev = [
+    { name = "mkdocs-material" },
+    { name = "mkdocstrings", extra = ["python"] },
+    { name = "mypy" },
+    { name = "poethepoet" },
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+    { name = "pytest-cov" },
+    { name = "ruff" },
+    { name = "types-pyyaml" },
+    { name = "types-requests" },
+    { name = "uv" },
+    { name = "zensical" },
+]
+ml = [
+    { name = "numpy" },
+    { name = "scikit-learn" },
+    { name = "sentence-transformers" },
+    { name = "xgboost" },
+]
+notebook = [
+    { name = "ipykernel" },
+    { name = "numpy" },
+    { name = "pandas", version = "3.0.0", source = { registry = "https://pypi.org/simple" } },
 ]
 
 [package.metadata]
@@ -925,6 +880,40 @@ requires-dist = [
     { name = "pyyaml", specifier = ">=6.0.2" },
     { name = "structlog", specifier = ">=25.5.0" },
     { name = "uvicorn", specifier = ">=0.40.0" },
+]
+
+[package.metadata.requires-dev]
+dashboard = [{ name = "streamlit", specifier = ">=1.40.0" }]
+data = [
+    { name = "apache-airflow", specifier = ">=2.8.0" },
+    { name = "databricks-cli" },
+    { name = "pyspark", specifier = ">=4.1.1" },
+    { name = "requests", specifier = ">=2.32.0" },
+]
+dev = [
+    { name = "mkdocs-material", specifier = ">=9.6.0" },
+    { name = "mkdocstrings", extras = ["python"], specifier = ">=0.28.0" },
+    { name = "mypy", specifier = ">=1.19.0" },
+    { name = "poethepoet", specifier = ">=0.40.0" },
+    { name = "pytest", specifier = ">=9.0.2" },
+    { name = "pytest-asyncio", specifier = ">=1.3.0" },
+    { name = "pytest-cov", specifier = ">=7.0.0" },
+    { name = "ruff", specifier = ">=0.15.0" },
+    { name = "types-pyyaml", specifier = ">=6.0.12.20250822" },
+    { name = "types-requests", specifier = ">=2.32.4.20260107" },
+    { name = "uv", specifier = ">=0.10.0" },
+    { name = "zensical", specifier = ">=0.0.24" },
+]
+ml = [
+    { name = "numpy", specifier = ">=2.4" },
+    { name = "scikit-learn", specifier = ">=1.6.0" },
+    { name = "sentence-transformers", specifier = ">=2.0.0" },
+    { name = "xgboost", specifier = ">=3.0.0" },
+]
+notebook = [
+    { name = "ipykernel", specifier = ">=7.2.0" },
+    { name = "numpy", specifier = ">=2.4" },
+    { name = "pandas", specifier = ">=3.0" },
 ]
 
 [[package]]
@@ -1475,7 +1464,7 @@ source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "filelock" },
     { name = "fsspec" },
-    { name = "hf-xet", marker = "platform_machine == 'AMD64' or platform_machine == 'aarch64' or platform_machine == 'amd64' or platform_machine == 'arm64' or platform_machine == 'x86_64' or (extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook')" },
+    { name = "hf-xet", marker = "platform_machine == 'AMD64' or platform_machine == 'aarch64' or platform_machine == 'amd64' or platform_machine == 'arm64' or platform_machine == 'x86_64' or (extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook')" },
     { name = "httpx" },
     { name = "packaging" },
     { name = "pyyaml" },
@@ -1719,8 +1708,8 @@ name = "libcst"
 version = "1.8.6"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "pyyaml", marker = "python_full_version != '3.13.*' or (extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook')" },
-    { name = "pyyaml-ft", marker = "python_full_version == '3.13.*' or (extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook')" },
+    { name = "pyyaml", marker = "python_full_version != '3.13.*' or (extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook')" },
+    { name = "pyyaml-ft", marker = "python_full_version == '3.13.*' or (extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/de/cd/337df968b38d94c5aabd3e1b10630f047a2b345f6e1d4456bd9fe7417537/libcst-1.8.6.tar.gz", hash = "sha256:f729c37c9317126da9475bdd06a7208eb52fcbd180a6341648b45a56b4ba708b", size = 891354, upload-time = "2025-11-03T22:33:30.621Z" }
 wheels = [
@@ -1844,8 +1833,8 @@ name = "loguru"
 version = "0.7.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook')" },
-    { name = "win32-setctime", marker = "sys_platform == 'win32' or (extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook')" },
+    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook')" },
+    { name = "win32-setctime", marker = "sys_platform == 'win32' or (extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/3a/05/a1dae3dffd1116099471c643b8924f5aa6524411dc6c63fdae648c4f1aca/loguru-0.7.3.tar.gz", hash = "sha256:19480589e77d47b8d85b2c827ad95d49bf31b0dcde16593892eb51dd18706eb6", size = 63559, upload-time = "2024-12-06T11:20:56.608Z" }
 wheels = [
@@ -1996,7 +1985,7 @@ version = "1.6.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
-    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook')" },
+    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook')" },
     { name = "ghp-import" },
     { name = "jinja2" },
     { name = "markdown" },
@@ -2172,7 +2161,7 @@ name = "mypy"
 version = "1.19.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "librt", marker = "platform_python_implementation != 'PyPy' or (extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook')" },
+    { name = "librt", marker = "platform_python_implementation != 'PyPy' or (extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook')" },
     { name = "mypy-extensions" },
     { name = "pathspec" },
     { name = "typing-extensions" },
@@ -2351,7 +2340,7 @@ name = "nvidia-cudnn-cu12"
 version = "9.10.2.21"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-cublas-cu12", marker = "(sys_platform != 'emscripten' and sys_platform != 'win32') or (sys_platform == 'emscripten' and extra == 'group-13-careerdex-app-dashboard') or (sys_platform == 'emscripten' and extra != 'group-13-careerdex-app-notebook') or (sys_platform == 'win32' and extra == 'group-13-careerdex-app-dashboard') or (sys_platform == 'win32' and extra != 'group-13-careerdex-app-notebook')" },
+    { name = "nvidia-cublas-cu12", marker = "(sys_platform != 'emscripten' and sys_platform != 'win32') or (sys_platform == 'emscripten' and extra == 'group-11-dataenginex-dashboard') or (sys_platform == 'emscripten' and extra != 'group-11-dataenginex-notebook') or (sys_platform == 'win32' and extra == 'group-11-dataenginex-dashboard') or (sys_platform == 'win32' and extra != 'group-11-dataenginex-notebook')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/fa/41/e79269ce215c857c935fd86bcfe91a451a584dfc27f1e068f568b9ad1ab7/nvidia_cudnn_cu12-9.10.2.21-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:c9132cc3f8958447b4910a1720036d9eff5928cc3179b0a51fb6d167c6cc87d8", size = 705026878, upload-time = "2025-06-06T21:52:51.348Z" },
@@ -2364,7 +2353,7 @@ name = "nvidia-cufft-cu12"
 version = "11.3.3.83"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-nvjitlink-cu12", marker = "(sys_platform != 'emscripten' and sys_platform != 'win32') or (sys_platform == 'emscripten' and extra == 'group-13-careerdex-app-dashboard') or (sys_platform == 'emscripten' and extra != 'group-13-careerdex-app-notebook') or (sys_platform == 'win32' and extra == 'group-13-careerdex-app-dashboard') or (sys_platform == 'win32' and extra != 'group-13-careerdex-app-notebook')" },
+    { name = "nvidia-nvjitlink-cu12", marker = "(sys_platform != 'emscripten' and sys_platform != 'win32') or (sys_platform == 'emscripten' and extra == 'group-11-dataenginex-dashboard') or (sys_platform == 'emscripten' and extra != 'group-11-dataenginex-notebook') or (sys_platform == 'win32' and extra == 'group-11-dataenginex-dashboard') or (sys_platform == 'win32' and extra != 'group-11-dataenginex-notebook')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/60/bc/7771846d3a0272026c416fbb7e5f4c1f146d6d80704534d0b187dd6f4800/nvidia_cufft_cu12-11.3.3.83-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:848ef7224d6305cdb2a4df928759dca7b1201874787083b6e7550dd6765ce69a", size = 193109211, upload-time = "2025-03-07T01:44:56.873Z" },
@@ -2396,9 +2385,9 @@ name = "nvidia-cusolver-cu12"
 version = "11.7.3.90"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-cublas-cu12", marker = "(sys_platform != 'emscripten' and sys_platform != 'win32') or (sys_platform == 'emscripten' and extra == 'group-13-careerdex-app-dashboard') or (sys_platform == 'emscripten' and extra != 'group-13-careerdex-app-notebook') or (sys_platform == 'win32' and extra == 'group-13-careerdex-app-dashboard') or (sys_platform == 'win32' and extra != 'group-13-careerdex-app-notebook')" },
-    { name = "nvidia-cusparse-cu12", marker = "(sys_platform != 'emscripten' and sys_platform != 'win32') or (sys_platform == 'emscripten' and extra == 'group-13-careerdex-app-dashboard') or (sys_platform == 'emscripten' and extra != 'group-13-careerdex-app-notebook') or (sys_platform == 'win32' and extra == 'group-13-careerdex-app-dashboard') or (sys_platform == 'win32' and extra != 'group-13-careerdex-app-notebook')" },
-    { name = "nvidia-nvjitlink-cu12", marker = "(sys_platform != 'emscripten' and sys_platform != 'win32') or (sys_platform == 'emscripten' and extra == 'group-13-careerdex-app-dashboard') or (sys_platform == 'emscripten' and extra != 'group-13-careerdex-app-notebook') or (sys_platform == 'win32' and extra == 'group-13-careerdex-app-dashboard') or (sys_platform == 'win32' and extra != 'group-13-careerdex-app-notebook')" },
+    { name = "nvidia-cublas-cu12", marker = "(sys_platform != 'emscripten' and sys_platform != 'win32') or (sys_platform == 'emscripten' and extra == 'group-11-dataenginex-dashboard') or (sys_platform == 'emscripten' and extra != 'group-11-dataenginex-notebook') or (sys_platform == 'win32' and extra == 'group-11-dataenginex-dashboard') or (sys_platform == 'win32' and extra != 'group-11-dataenginex-notebook')" },
+    { name = "nvidia-cusparse-cu12", marker = "(sys_platform != 'emscripten' and sys_platform != 'win32') or (sys_platform == 'emscripten' and extra == 'group-11-dataenginex-dashboard') or (sys_platform == 'emscripten' and extra != 'group-11-dataenginex-notebook') or (sys_platform == 'win32' and extra == 'group-11-dataenginex-dashboard') or (sys_platform == 'win32' and extra != 'group-11-dataenginex-notebook')" },
+    { name = "nvidia-nvjitlink-cu12", marker = "(sys_platform != 'emscripten' and sys_platform != 'win32') or (sys_platform == 'emscripten' and extra == 'group-11-dataenginex-dashboard') or (sys_platform == 'emscripten' and extra != 'group-11-dataenginex-notebook') or (sys_platform == 'win32' and extra == 'group-11-dataenginex-dashboard') or (sys_platform == 'win32' and extra != 'group-11-dataenginex-notebook')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c8/32/f7cd6ce8a7690544d084ea21c26e910a97e077c9b7f07bf5de623ee19981/nvidia_cusolver_cu12-11.7.3.90-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:db9ed69dbef9715071232caa9b69c52ac7de3a95773c2db65bdba85916e4e5c0", size = 267229841, upload-time = "2025-03-07T01:46:54.356Z" },
@@ -2411,7 +2400,7 @@ name = "nvidia-cusparse-cu12"
 version = "12.5.8.93"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-nvjitlink-cu12", marker = "(sys_platform != 'emscripten' and sys_platform != 'win32') or (sys_platform == 'emscripten' and extra == 'group-13-careerdex-app-dashboard') or (sys_platform == 'emscripten' and extra != 'group-13-careerdex-app-notebook') or (sys_platform == 'win32' and extra == 'group-13-careerdex-app-dashboard') or (sys_platform == 'win32' and extra != 'group-13-careerdex-app-notebook')" },
+    { name = "nvidia-nvjitlink-cu12", marker = "(sys_platform != 'emscripten' and sys_platform != 'win32') or (sys_platform == 'emscripten' and extra == 'group-11-dataenginex-dashboard') or (sys_platform == 'emscripten' and extra != 'group-11-dataenginex-notebook') or (sys_platform == 'win32' and extra == 'group-11-dataenginex-dashboard') or (sys_platform == 'win32' and extra != 'group-11-dataenginex-notebook')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/bc/f7/cd777c4109681367721b00a106f491e0d0d15cfa1fd59672ce580ce42a97/nvidia_cusparse_cu12-12.5.8.93-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:9b6c161cb130be1a07a27ea6923df8141f3c295852f4b260c65f18f3e0a091dc", size = 288117129, upload-time = "2025-03-07T01:47:40.407Z" },
@@ -2434,15 +2423,15 @@ name = "nvidia-nccl-cu12"
 version = "2.27.5"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook'",
-    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook'",
-    "python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook'",
-    "python_full_version >= '3.14' and extra == 'group-13-careerdex-app-dashboard' and extra != 'group-13-careerdex-app-notebook'",
-    "python_full_version == '3.13.*' and extra == 'group-13-careerdex-app-dashboard' and extra != 'group-13-careerdex-app-notebook'",
-    "python_full_version < '3.13' and extra == 'group-13-careerdex-app-dashboard' and extra != 'group-13-careerdex-app-notebook'",
-    "python_full_version >= '3.14' and extra != 'group-13-careerdex-app-dashboard' and extra != 'group-13-careerdex-app-notebook'",
-    "python_full_version == '3.13.*' and extra != 'group-13-careerdex-app-dashboard' and extra != 'group-13-careerdex-app-notebook'",
-    "python_full_version < '3.13' and extra != 'group-13-careerdex-app-dashboard' and extra != 'group-13-careerdex-app-notebook'",
+    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook'",
+    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook'",
+    "python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook'",
+    "python_full_version >= '3.14' and extra == 'group-11-dataenginex-dashboard' and extra != 'group-11-dataenginex-notebook'",
+    "python_full_version == '3.13.*' and extra == 'group-11-dataenginex-dashboard' and extra != 'group-11-dataenginex-notebook'",
+    "python_full_version < '3.13' and extra == 'group-11-dataenginex-dashboard' and extra != 'group-11-dataenginex-notebook'",
+    "python_full_version >= '3.14' and extra != 'group-11-dataenginex-dashboard' and extra != 'group-11-dataenginex-notebook'",
+    "python_full_version == '3.13.*' and extra != 'group-11-dataenginex-dashboard' and extra != 'group-11-dataenginex-notebook'",
+    "python_full_version < '3.13' and extra != 'group-11-dataenginex-dashboard' and extra != 'group-11-dataenginex-notebook'",
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/bb/1c/857979db0ef194ca5e21478a0612bcdbbe59458d7694361882279947b349/nvidia_nccl_cu12-2.27.5-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:31432ad4d1fb1004eb0c56203dc9bc2178a1ba69d1d9e02d64a6938ab5e40e7a", size = 322400625, upload-time = "2025-06-26T04:11:04.496Z" },
@@ -2756,10 +2745,10 @@ resolution-markers = [
     "python_full_version >= '3.14' and sys_platform == 'emscripten'",
     "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32'",
     "python_full_version == '3.13.*' and sys_platform == 'win32'",
-    "python_full_version < '3.13' and sys_platform == 'win32'",
     "python_full_version == '3.13.*' and sys_platform == 'emscripten'",
-    "python_full_version < '3.13' and sys_platform == 'emscripten'",
     "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version < '3.13' and sys_platform == 'win32'",
+    "python_full_version < '3.13' and sys_platform == 'emscripten'",
     "python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32'",
 ]
 dependencies = [
@@ -3357,7 +3346,7 @@ name = "pytest"
 version = "9.0.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook')" },
+    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook')" },
     { name = "iniconfig" },
     { name = "packaging" },
     { name = "pluggy" },
@@ -3374,7 +3363,7 @@ version = "1.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pytest" },
-    { name = "typing-extensions", marker = "python_full_version < '3.13' or (extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook')" },
+    { name = "typing-extensions", marker = "python_full_version < '3.13' or (extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/90/2c/8af215c0f776415f3590cac4f9086ccefd6fd463befeae41cd4d3f193e5a/pytest_asyncio-1.3.0.tar.gz", hash = "sha256:d7f52f36d231b80ee124cd216ffb19369aa168fc10095013c6b014a34d3ee9e5", size = 50087, upload-time = "2025-11-10T16:07:47.256Z" }
 wheels = [
@@ -3599,7 +3588,7 @@ source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "attrs" },
     { name = "rpds-py" },
-    { name = "typing-extensions", marker = "python_full_version < '3.13' or (extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook')" },
+    { name = "typing-extensions", marker = "python_full_version < '3.13' or (extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/22/f5/df4e9027acead3ecc63e50fe1e36aca1523e1719559c499951bb4b53188f/referencing-0.37.0.tar.gz", hash = "sha256:44aefc3142c5b842538163acb373e24cce6632bd54bdb01b21ad5863489f50d8", size = 78036, upload-time = "2025-10-13T15:30:48.871Z" }
 wheels = [
@@ -4145,7 +4134,7 @@ name = "sqlalchemy"
 version = "2.0.46"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "greenlet", marker = "platform_machine == 'AMD64' or platform_machine == 'WIN32' or platform_machine == 'aarch64' or platform_machine == 'amd64' or platform_machine == 'ppc64le' or platform_machine == 'win32' or platform_machine == 'x86_64' or (extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook')" },
+    { name = "greenlet", marker = "platform_machine == 'AMD64' or platform_machine == 'WIN32' or platform_machine == 'aarch64' or platform_machine == 'amd64' or platform_machine == 'ppc64le' or platform_machine == 'win32' or platform_machine == 'x86_64' or (extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook')" },
     { name = "typing-extensions" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/06/aa/9ce0f3e7a9829ead5c8ce549392f33a12c4555a6c0609bb27d882e9c7ddf/sqlalchemy-2.0.46.tar.gz", hash = "sha256:cf36851ee7219c170bb0793dbc3da3e80c582e04a5437bc601bfe8c85c9216d7", size = 9865393, upload-time = "2026-01-21T18:03:45.119Z" }
@@ -4240,7 +4229,7 @@ version = "0.52.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
-    { name = "typing-extensions", marker = "python_full_version < '3.13' or (extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook')" },
+    { name = "typing-extensions", marker = "python_full_version < '3.13' or (extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/c4/68/79977123bb7be889ad680d79a40f339082c1978b5cfcf62c2d8d196873ac/starlette-0.52.1.tar.gz", hash = "sha256:834edd1b0a23167694292e94f597773bc3f89f362be6effee198165a35d62933", size = 2653702, upload-time = "2026-01-18T13:34:11.062Z" }
 wheels = [
@@ -4394,29 +4383,29 @@ name = "torch"
 version = "2.10.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "cuda-bindings", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine != 'x86_64' and extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook') or (sys_platform != 'linux' and extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook')" },
+    { name = "cuda-bindings", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine != 'x86_64' and extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook') or (sys_platform != 'linux' and extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook')" },
     { name = "filelock" },
     { name = "fsspec" },
     { name = "jinja2" },
     { name = "networkx" },
-    { name = "nvidia-cublas-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine != 'x86_64' and extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook') or (sys_platform != 'linux' and extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook')" },
-    { name = "nvidia-cuda-cupti-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine != 'x86_64' and extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook') or (sys_platform != 'linux' and extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook')" },
-    { name = "nvidia-cuda-nvrtc-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine != 'x86_64' and extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook') or (sys_platform != 'linux' and extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook')" },
-    { name = "nvidia-cuda-runtime-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine != 'x86_64' and extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook') or (sys_platform != 'linux' and extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook')" },
-    { name = "nvidia-cudnn-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine != 'x86_64' and extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook') or (sys_platform != 'linux' and extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook')" },
-    { name = "nvidia-cufft-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine != 'x86_64' and extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook') or (sys_platform != 'linux' and extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook')" },
-    { name = "nvidia-cufile-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine != 'x86_64' and extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook') or (sys_platform != 'linux' and extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook')" },
-    { name = "nvidia-curand-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine != 'x86_64' and extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook') or (sys_platform != 'linux' and extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook')" },
-    { name = "nvidia-cusolver-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine != 'x86_64' and extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook') or (sys_platform != 'linux' and extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook')" },
-    { name = "nvidia-cusparse-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine != 'x86_64' and extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook') or (sys_platform != 'linux' and extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook')" },
-    { name = "nvidia-cusparselt-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine != 'x86_64' and extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook') or (sys_platform != 'linux' and extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook')" },
-    { name = "nvidia-nccl-cu12", version = "2.27.5", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine != 'x86_64' and extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook') or (sys_platform != 'linux' and extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook')" },
-    { name = "nvidia-nvjitlink-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine != 'x86_64' and extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook') or (sys_platform != 'linux' and extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook')" },
-    { name = "nvidia-nvshmem-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine != 'x86_64' and extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook') or (sys_platform != 'linux' and extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook')" },
-    { name = "nvidia-nvtx-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine != 'x86_64' and extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook') or (sys_platform != 'linux' and extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook')" },
+    { name = "nvidia-cublas-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine != 'x86_64' and extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook') or (sys_platform != 'linux' and extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook')" },
+    { name = "nvidia-cuda-cupti-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine != 'x86_64' and extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook') or (sys_platform != 'linux' and extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook')" },
+    { name = "nvidia-cuda-nvrtc-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine != 'x86_64' and extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook') or (sys_platform != 'linux' and extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook')" },
+    { name = "nvidia-cuda-runtime-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine != 'x86_64' and extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook') or (sys_platform != 'linux' and extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook')" },
+    { name = "nvidia-cudnn-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine != 'x86_64' and extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook') or (sys_platform != 'linux' and extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook')" },
+    { name = "nvidia-cufft-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine != 'x86_64' and extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook') or (sys_platform != 'linux' and extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook')" },
+    { name = "nvidia-cufile-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine != 'x86_64' and extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook') or (sys_platform != 'linux' and extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook')" },
+    { name = "nvidia-curand-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine != 'x86_64' and extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook') or (sys_platform != 'linux' and extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook')" },
+    { name = "nvidia-cusolver-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine != 'x86_64' and extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook') or (sys_platform != 'linux' and extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook')" },
+    { name = "nvidia-cusparse-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine != 'x86_64' and extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook') or (sys_platform != 'linux' and extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook')" },
+    { name = "nvidia-cusparselt-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine != 'x86_64' and extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook') or (sys_platform != 'linux' and extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook')" },
+    { name = "nvidia-nccl-cu12", version = "2.27.5", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine != 'x86_64' and extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook') or (sys_platform != 'linux' and extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook')" },
+    { name = "nvidia-nvjitlink-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine != 'x86_64' and extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook') or (sys_platform != 'linux' and extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook')" },
+    { name = "nvidia-nvshmem-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine != 'x86_64' and extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook') or (sys_platform != 'linux' and extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook')" },
+    { name = "nvidia-nvtx-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine != 'x86_64' and extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook') or (sys_platform != 'linux' and extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook')" },
     { name = "setuptools" },
     { name = "sympy" },
-    { name = "triton", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine != 'x86_64' and extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook') or (sys_platform != 'linux' and extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook')" },
+    { name = "triton", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine != 'x86_64' and extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook') or (sys_platform != 'linux' and extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook')" },
     { name = "typing-extensions" },
 ]
 wheels = [
@@ -4473,7 +4462,7 @@ name = "tqdm"
 version = "4.67.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook')" },
+    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/09/a9/6ba95a270c6f1fbcd8dac228323f2777d886cb206987444e4bce66338dd4/tqdm-4.67.3.tar.gz", hash = "sha256:7d825f03f89244ef73f1d4ce193cb1774a8179fd96f31d7e1dcde62092b960bb", size = 169598, upload-time = "2026-02-03T17:35:53.048Z" }
 wheels = [
@@ -4672,11 +4661,11 @@ wheels = [
 
 [package.optional-dependencies]
 standard = [
-    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook')" },
+    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook')" },
     { name = "httptools" },
     { name = "python-dotenv" },
     { name = "pyyaml" },
-    { name = "uvloop", marker = "(platform_python_implementation != 'PyPy' and sys_platform != 'cygwin' and sys_platform != 'win32') or (platform_python_implementation == 'PyPy' and extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook') or (sys_platform == 'cygwin' and extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook') or (sys_platform == 'win32' and extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook')" },
+    { name = "uvloop", marker = "(platform_python_implementation != 'PyPy' and sys_platform != 'cygwin' and sys_platform != 'win32') or (platform_python_implementation == 'PyPy' and extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook') or (sys_platform == 'cygwin' and extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook') or (sys_platform == 'win32' and extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook')" },
     { name = "watchfiles" },
     { name = "websockets" },
 ]
@@ -4937,8 +4926,8 @@ version = "3.2.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "numpy" },
-    { name = "nvidia-nccl-cu12", version = "2.27.5", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'linux' or (extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook')" },
-    { name = "nvidia-nccl-cu12", version = "2.29.7", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-13-careerdex-app-dashboard' and extra == 'group-13-careerdex-app-notebook'" },
+    { name = "nvidia-nccl-cu12", version = "2.27.5", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'linux' or (extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook')" },
+    { name = "nvidia-nccl-cu12", version = "2.29.7", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-11-dataenginex-dashboard' and extra == 'group-11-dataenginex-notebook'" },
     { name = "scipy" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/91/bb/1eb0242409d22db725d7a88088e6cfd6556829fb0736f9ff69aa9f1e9455/xgboost-3.2.0.tar.gz", hash = "sha256:99b0e9a2a64896cdaf509c5e46372d336c692406646d20f2af505003c0c5d70d", size = 1263936, upload-time = "2026-02-10T11:03:05.542Z" }

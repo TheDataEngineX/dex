@@ -1,5 +1,5 @@
 ---
-applyTo: "src/careerdex/**/*.py,src/weatherdex/**/*.py,src/**/data/**/*.py,src/**/lakehouse/**/*.py,src/**/warehouse/**/*.py"
+applyTo: "src/**/data/**/*.py,src/**/lakehouse/**/*.py,src/**/warehouse/**/*.py,examples/07_*.py"
 ---
 
 # Data Pipelines — Project Specifics
@@ -9,27 +9,27 @@ applyTo: "src/careerdex/**/*.py,src/weatherdex/**/*.py,src/**/data/**/*.py,src/*
 - Pipelines must be idempotent — log processing counts/IDs
 
 ## Orchestration
-- Airflow DAGs: `src/careerdex/dags/` (use `default_args`, XCom, clear task deps)
-- PySpark: `src/weatherdex/ml/` (large-scale transforms)
+- Airflow DAGs: use `default_args`, XCom, clear task dependencies
+- PySpark: for large-scale transforms (see `examples/08_spark_ml.py`, `examples/09_feature_engineering.py`)
 
 ## Quality & Governance
-- `SchemaRegistry`: `packages/dataenginex/src/dataenginex/data/registry.py` (schema versioning)
-- `DataCatalog`: `packages/dataenginex/src/dataenginex/lakehouse/catalog.py` (dataset discovery)
-- Data contracts: Pydantic schemas in `packages/dataenginex/src/dataenginex/core/schemas.py`
-- Validators: `packages/dataenginex/src/dataenginex/core/validators.py`
+- `SchemaRegistry`: `src/dataenginex/data/registry.py` (schema versioning)
+- `DataCatalog`: `src/dataenginex/lakehouse/catalog.py` (dataset discovery)
+- Data contracts: Pydantic schemas in `src/dataenginex/core/schemas.py`
+- Validators: `src/dataenginex/core/validators.py`
 
 ## Transform & Lineage
-- `TransformPipeline`: composable transforms (`packages/dataenginex/src/dataenginex/warehouse/transforms.py`)
-- `PersistentLineage`: data lineage tracking (`packages/dataenginex/src/dataenginex/warehouse/lineage.py`)
-- Partitioning: `DatePartitioner`, `HashPartitioner` (`packages/dataenginex/src/dataenginex/lakehouse/partitioning.py`)
-- Profiling: `packages/dataenginex/src/dataenginex/data/profiler.py`
+- `TransformPipeline`: composable transforms (`src/dataenginex/warehouse/transforms.py`)
+- `PersistentLineage`: data lineage tracking (`src/dataenginex/warehouse/lineage.py`)
+- Partitioning: `DatePartitioner`, `HashPartitioner` (`src/dataenginex/lakehouse/partitioning.py`)
+- Profiling: `src/dataenginex/data/profiler.py`
 
 ## Project Map
-- `src/careerdex/` — DAGs, models, phases
-- `src/weatherdex/` — config, PySpark ML, notebooks
-- `packages/dataenginex/src/dataenginex/data/` — connectors, profiler, registry
-- `packages/dataenginex/src/dataenginex/lakehouse/` — catalog, partitioning, storage
-- `packages/dataenginex/src/dataenginex/warehouse/` — transforms, lineage, metrics
+- `src/dataenginex/data/` — connectors, profiler, registry
+- `src/dataenginex/lakehouse/` — catalog, partitioning, storage
+- `src/dataenginex/warehouse/` — transforms, lineage, metrics
+- `examples/07_api_ingestion.py` — HTTP API ingestion with medallion architecture
+- `examples/08_spark_ml.py` — PySpark feature engineering + model training
 
 ## Testing
 - See `tests/unit/test_data.py`, `test_medallion.py`, `test_warehouse.py`

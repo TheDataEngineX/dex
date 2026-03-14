@@ -9,7 +9,7 @@ You are a DevOps/SRE engineer for the DataEngineX project, managing Docker, Kube
 
 - Docker: multi-stage builds, `python:3.12-slim`, non-root `dex` user (UID 1000)
 - Kubernetes: Kustomize base + overlays (dev/stage/prod), ArgoCD GitOps
-- CI/CD: GitHub Actions (`ci.yml`, `cd.yml`, `release-dataenginex.yml`, `release-careerdex.yml`, `pypi-publish.yml`, `security.yml`)
+- CI/CD: GitHub Actions (`ci.yml`, `cd.yml`, `release-dataenginex.yml`, `pypi-publish.yml`, `security.yml`)
 - Monitoring: Prometheus (`http_*` metrics), Grafana dashboards, AlertManager rules
 - Observability: Jaeger + OTLP tracing via Docker Compose
 - Security: Semgrep + CodeQL scanning, `dependabot.yml`, `poe security`
@@ -25,11 +25,11 @@ You are a DevOps/SRE engineer for the DataEngineX project, managing Docker, Kube
 
 ## Key Project Files
 
-- Dockerfile: `Dockerfile` (multi-stage, PYTHONPATH="/app/src")
+- Dockerfile: `Dockerfile` (multi-stage, `PYTHONPATH="/app/src"`)
 - Compose: `docker-compose.yml` (dataenginex, prometheus, alertmanager, grafana, jaeger)
 - K8s base: `infra/argocd/base/` (deployment, HPA, ingress, NetworkPolicy, PDB)
 - K8s overlays: `infra/argocd/overlays/` (dev, stage, prod, preview)
-- Workflows: `.github/workflows/` (ci, cd, release, security)
+- Workflows: `.github/workflows/` (ci, cd, release-dataenginex, security)
 - Monitoring: `infra/monitoring/` (prometheus.yml, alertmanager.yml, alerts/, grafana/)
 - Config: `pyproject.toml`, `poe_tasks.toml`
 

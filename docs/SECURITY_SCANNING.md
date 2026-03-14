@@ -25,7 +25,7 @@ DataEngineX uses a multi-layered security scanning pipeline across CI/CD workflo
 
 1. **Trivy container scan** — scans the built Docker image for OS and library vulnerabilities before deployment.
 
-### On Release (release-dataenginex.yml / release-careerdex.yml)
+### On Release (release-dataenginex.yml)
 
 1. **CycloneDX SBOM** — generates a Software Bill of Materials in CycloneDX JSON format.
 1. **SBOM upload** — attaches the SBOM as a release asset on GitHub Releases.

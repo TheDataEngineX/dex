@@ -19,7 +19,7 @@ Maintainer guidance for low-effort, long-term sustainability of DEX as an open-s
 Use this framework for significant pull requests and quarterly cleanup.
 
 ### Keep
-- Clear module boundaries across `packages/dataenginex`, `src/careerdex`, and `src/weatherdex`.
+- Clear module boundaries in `src/dataenginex/`.
 - `uv`-based workflow, Ruff + mypy + pytest quality gates, and existing observability conventions.
 - Medallion architecture and modular docs structure in `docs/`.
 

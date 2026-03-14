@@ -18,14 +18,13 @@ applyTo: "src/**/api/**/*.py"
 - Lazy imports inside route handlers (e.g., `PipelineConfig`) to avoid circular deps
 
 ## Project Map
-- Entry: `src/careerdex/api/main.py` (logging + tracing configured at module level)
-- Auth: `auth.py` — pure-Python HS256 JWT (no pyjwt dependency)
-- Health: `health.py` — TCP checks for DB, cache, external API
-- Routers: `routers/v1.py` | Pagination: `pagination.py` (cursor-based, base64 opaque cursors)
-- Rate limiting: `rate_limit.py` (token-bucket) | Errors: `errors.py`
-- Metrics: `middleware/metrics.py` (`http_requests_total`, `http_request_duration_seconds`)
+- Entry: `examples/02_api_quickstart.py` (minimal working example)
+- Auth: `src/dataenginex/api/auth.py` — pure-Python HS256 JWT (no pyjwt dependency)
+- Health: `src/dataenginex/api/health.py` — TCP checks for DB, cache, external API
+- Pagination: `src/dataenginex/api/pagination.py` (cursor-based, base64 opaque cursors)
+- Rate limiting: `src/dataenginex/api/rate_limit.py` (token-bucket) | Errors: `src/dataenginex/api/errors.py`
+- Metrics: `src/dataenginex/middleware/metrics.py` (`http_requests_total`, `http_request_duration_seconds`)
 
 ## Local Dev
-- `poe dev` → uvicorn on port 8000 with reload
+- `poe dev` → runs `examples/02_api_quickstart.py` on port 8000
 - Docs: `http://localhost:8000/docs`
-- Bruno collection: `api-collection/`

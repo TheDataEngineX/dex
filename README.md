@@ -7,7 +7,7 @@
 [![Coverage](https://img.shields.io/badge/coverage-94%25-brightgreen)](https://github.com/TheDataEngineX/DEX)
 [![Security](https://img.shields.io/badge/security-Trivy%20%7C%20CodeQL%20%7C%20SBOM-blue)](docs/SECURITY_SCANNING.md)
 
-A production-focused data engineering framework with medallion architecture, Airflow orchestration patterns, and enterprise observability foundations. DEX is both a core framework and a mono-repo for sub-projects built on top of it.
+A production-focused data engineering framework with medallion architecture, ML lifecycle management, and enterprise observability foundations.
 
 ______________________________________________________________________
 
@@ -41,21 +41,19 @@ ______________________________________________________________________
 
 ```
 DEX/
-├── packages/
-│   ├── dataenginex/          # Core framework package (canonical source)
-│   │   └── packages/dataenginex/src/dataenginex/  #   API utilities, core, middleware, plugins, dashboard
-│
 ├── src/
-│   ├── careerdex/             # AI job matching & recommendations app
-│   │   ├── core/              #   Notifications (Slack)
-│   │   ├── dags/              #   Airflow DAGs
-│   │   ├── models/            #   ML models
-│   │   └── phases/            #   Implementation phases
-│   │
-│   └── weatherdex/            # Weather prediction pipeline
-│       ├── core/              #   API client & pipeline
-│       ├── ml/                #   PySpark ML utilities
-│       └── notebooks/         #   Jupyter notebooks
+│   └── dataenginex/           # Core framework package
+│       ├── api/               #   FastAPI app, health, auth, pagination
+│       ├── core/              #   Medallion architecture, validators, schemas
+│       ├── data/              #   Connectors, profiler, schema registry
+│       ├── dashboard/         #   Streamlit dashboard
+│       ├── lakehouse/         #   Catalog, partitioning, storage
+│       ├── middleware/        #   Logging, metrics, tracing
+│       ├── ml/                #   Training, registry, serving, drift, LLM, RAG
+│       ├── plugins/           #   Plugin system
+│       └── warehouse/         #   Transforms, lineage
+│
+├── examples/                  # Runnable example scripts (01–10)
 │
 ├── tests/                     # Test suite
 │   ├── unit/                  #   Unit tests
@@ -64,7 +62,7 @@ DEX/
 ├── infra/                     # Infrastructure
 │   ├── argocd/                #   Kubernetes manifests (Kustomize + GitOps)
 │   │   ├── base/              #     Base deployment, service
-│   │   └── overlays/          #     dev, stage, prod overrides
+│   │   └── overlays/          #     dev, prod overrides
 │   └── monitoring/            #   Observability configs
 │       ├── prometheus.yml     #     Metrics scraping
 │       ├── alertmanager.yml   #     Alert routing
@@ -73,11 +71,10 @@ DEX/
 │
 ├── docs/                      # Documentation
 ├── scripts/                   # Utility scripts
-├── learning/                  # Learning experiments
 │
 ├── Dockerfile                 # Multi-stage Docker build
 ├── docker-compose.yml         # Local dev stack
-├── pyproject.toml             # Project config (deps, tools)
+├── pyproject.toml             # Project config (dataenginex 0.6.0)
 ├── poe_tasks.toml             # Task runner (poe)
 └── CODEOWNERS
 ```
@@ -89,7 +86,7 @@ ______________________________________________________________________
 **Medallion Data Pipeline:**
 
 ```
-Raw Sources (LinkedIn, Indeed, Glassdoor, APIs)
+Raw Sources (APIs, files, streams)
              ↓
         BRONZE LAYER — Raw ingestion (Parquet)
              ↓
@@ -151,8 +148,7 @@ ______________________________________________________________________
 | [SDLC](docs/SDLC.md) | Lifecycle stages |
 | [ADRs](docs/adr/) | Architecture decisions |
 | [Roadmap (Canonical CSV)](docs/roadmap/project-roadmap.csv) | Planned and in-progress work |
-| [CareerDEX](docs/careerdex/index.md) | Job matching project |
-| [Weather](docs/weather/index.md) | Weather pipeline |
+| [Examples Guide](examples/GUIDE.md) | Runnable example scripts |
 
 ______________________________________________________________________
 
@@ -236,4 +232,4 @@ ______________________________________________________________________
 
 ______________________________________________________________________
 
-**Version**: v0.5.0 | **License**: MIT
+**Version**: v0.6.0 | **License**: MIT

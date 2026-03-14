@@ -4,12 +4,12 @@ Steps:
 
 1. **Plan** — Write the implementation plan to `tasks/todo.md` with checkable items
 1. **Explore** — Search the codebase for related patterns, existing code to build on
-1. **Design** — Identify which package this belongs to (dataenginex, careerdex, or weatherdex)
-1. **Implement** — Follow existing patterns in the target package:
-   - API endpoint → `src/careerdex/api/routers/` with `response_model=`, type hints
+1. **Design** — Identify which module in `src/dataenginex/` this belongs to:
+   - API endpoint → `src/dataenginex/api/` with `response_model=`, type hints
    - Data pipeline → Medallion pattern (Bronze → Silver → Gold)
    - ML feature → Model lifecycle pattern with `ModelRegistry`
-   - Framework util → `packages/dataenginex/src/dataenginex/`
+   - Framework util → `src/dataenginex/`
+1. **Implement** — Follow existing patterns in the target module
 1. **Test** — Write tests in `tests/unit/` and/or `tests/integration/`
 1. **Validate** — Run `/validate` to verify everything works
 1. **Update** — Mark items complete in `tasks/todo.md`, update `TODO.md` if relevant

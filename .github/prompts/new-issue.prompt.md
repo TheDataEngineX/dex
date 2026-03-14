@@ -24,6 +24,6 @@ Choose the appropriate template:
 ## Guidelines
 - Reference related issues or PRs where applicable
 - Assign appropriate priority: P0 (blocks release) → P3 (future)
-- Assign to the correct package: `dataenginex`, `careerdex`, or `weatherdex`
+- Assign to the correct package: `dataenginex`
 - Add labels: `bug`, `enhancement`, `documentation`, `infrastructure`, `data-pipeline`, `ml`
 - Use conventional commit keywords in branch names: `feature/<desc>` or `fix/<desc>`

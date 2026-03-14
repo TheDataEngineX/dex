@@ -19,7 +19,7 @@ DEX is a unified framework that bridges **Data Engineering, Data Warehousing, Ma
 
 See [README.md](https://github.com/TheDataEngineX/DEX/blob/main/README.md) for the full philosophy and roadmap context.
 
-## Current State (v0.5.0 - Foundation + Data + ML Platform)
+## Current State (v0.6.0 - Foundation + Data + ML Platform)
 
 ### Infrastructure Baseline (implemented)
 
@@ -37,14 +37,13 @@ See [README.md](https://github.com/TheDataEngineX/DEX/blob/main/README.md) for t
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                     DEX Platform (v0.5.0)                   │
+│                     DEX Platform (v0.6.0)                   │
 ├─────────────────────────────────────────────────────────────┤
 │                                                              │
-│  ┌──────────────┐     ┌──────────────┐    ┌──────────────┐│
-│  │  DataEngineX │     │  CareerDEX   │    │  WeatherDEX  ││
-│  │   (API +     │     │  (Job Data   │    │  (Weather    ││
-│  │  Framework)  │     │   Platform)  │    │   Pipeline)  ││
-│  └──────────────┘     └──────────────┘    └──────────────┘│
+│  ┌──────────────────────────────────────────────────────┐   │
+│  │  dataenginex (src/dataenginex/)                      │   │
+│  │  API + middleware + ML + data + lakehouse + plugins  │   │
+│  └──────────────────────────────────────────────────────┘   │
 │  Observability: Prometheus + OpenTelemetry + structlog      │
 │  Quality: Ruff + mypy + pytest (94% cov) + pre-commit      │
 └─────────────────────────────────────────────────────────────┘
@@ -112,24 +111,28 @@ For execution details, see GitHub Issues and [SDLC](SDLC.md).
 ### Current Module Structure
 
 ```
-src/
-├── dataenginex/          # Core framework (API, middleware, validators, schemas)
-│   ├── api/              # FastAPI app, health, errors
-│   ├── core/             # Medallion architecture, validators, schemas
-│   ├── dashboard/        # Streamlit dashboard (panels, config)
-│   ├── ml/               # Training, registry, vectorstore, LLM adapters
-│   ├── plugins/          # Plugin system (ABC, registry, discovery)
-│   └── middleware/       # Logging, metrics, tracing, request handling
-├── careerdex/            # Job data ingestion platform (phases 1-6)
-│   ├── api/              # FastAPI app entry point + routers
-│   ├── core/             # Domain schemas, validators, settings
-│   ├── phases/           # Implementation phases
-│   ├── dags/             # Airflow DAGs
-│   └── models/           # Data models
-└── weatherdex/           # Weather ML pipeline (reference implementation)
-    ├── core/             # Pipeline core
-    ├── ml/               # ML models
-    └── notebooks/        # Notebook-based experimentation assets
+src/dataenginex/          # Core framework
+├── api/                  # FastAPI app, health, auth, errors, pagination
+├── core/                 # Medallion architecture, validators, schemas
+├── dashboard/            # Streamlit dashboard (panels, config)
+├── data/                 # Connectors, profiler, schema registry
+├── lakehouse/            # Catalog, partitioning, storage
+├── ml/                   # Training, registry, serving, drift, LLM, vectorstore
+├── middleware/           # Logging, metrics, tracing, request handling
+├── plugins/              # Plugin system (ABC, registry, discovery)
+└── warehouse/            # Transforms, lineage
+
+examples/                 # Runnable example scripts
+├── 01_hello_pipeline.py  # Minimal medallion pipeline
+├── 02_api_quickstart.py  # FastAPI server
+├── 03_quality_gate.py    # Quality gate checks
+├── 04_ml_training.py     # ML model training + registration
+├── 05_rag_demo.py        # RAG pipeline
+├── 06_llm_quickstart.py  # LLM provider quickstart
+├── 07_api_ingestion.py   # HTTP API ingestion with medallion
+├── 08_spark_ml.py        # PySpark feature engineering + training
+├── 09_feature_engineering.py  # Time/lag/rolling features
+└── 10_model_analysis.py  # Drift detection + prediction analysis
 ```
 
 ### Service Extraction Criteria
@@ -299,6 +302,6 @@ dev (auto) → prod (PR promotion via main branch)
 
 ______________________________________________________________________
 
-**Last Updated**: 2026-03-12
+**Last Updated**: 2026-03-14
 **Document Owner**: Project Lead
 **Review Cadence**: Bi-weekly

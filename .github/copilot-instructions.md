@@ -71,10 +71,8 @@ Domain-specific guidance lives in [instructions/](instructions/) — loaded auto
 
 ## Project Overview
 
-**DEX (DataEngineX)** — data engineering and ML platform with three packages:
-- `dataenginex` — Core API framework (FastAPI, middleware, observability)
-- `careerdex` — Job data platform (Airflow DAGs, data models)
-- `weatherdex` — Weather pipeline (PySpark ML, notebooks)
+**DEX (DataEngineX)** — data engineering and ML platform.
+- `dataenginex` — Core framework (FastAPI optional via `[api]` extra, middleware, observability, quality gates, ML lifecycle)
 
 **Stack:** Python 3.12+ | FastAPI | uv | Ruff | mypy strict | pytest | Docker | Kubernetes (ArgoCD)
 
@@ -115,7 +113,7 @@ Domain-specific guidance lives in [instructions/](instructions/) — loaded auto
 
 ### 5. Type Safety 🏷️
 - Type hints on all public functions (params + return)
-- `mypy --strict` on `packages/dataenginex/src/dataenginex/` only (careerdex/weatherdex not yet covered)
+- `mypy --strict` on `src/dataenginex/` only (all packages use mypy strict)
 - Validate input at API boundaries (Pydantic)
 - Use `from __future__ import annotations` in all source files
 
@@ -162,10 +160,10 @@ Domain-specific guidance lives in [instructions/](instructions/) — loaded auto
 
 **After generating code:** run the full validation pipeline in this exact order:
 
-1. **Lint:** `uv run poe lint` (or `uv run python -m ruff check src/ packages/ tests/`)
-2. **Typecheck:** `uv run poe typecheck` (or `uv run python -m mypy packages/dataenginex/src/dataenginex/ --strict`)
+1. **Lint:** `uv run poe lint` (or `uv run python -m ruff check src/ tests/`)
+2. **Typecheck:** `uv run poe typecheck` (or `uv run python -m mypy src/dataenginex/ --strict`)
 3. **Unit tests:** `uv run poe test` (or `uv run python -m pytest tests/ -x --tb=short -q`)
-4. **Run the real app:** Start the server with `uv run uvicorn careerdex.api.main:app --port 8000` and verify:
+4. **Run the real app:** Start the server with `uv run python examples/02_api_quickstart.py` and verify:
    - Health probes: `curl http://localhost:8000/health`, `/ready`, `/startup`
    - Existing endpoints still work: `/`, `/echo`, `/api/v1/data/sources`, `/api/v1/system/config`
    - New/changed endpoints respond with correct data (not just 200 OK — check response bodies)

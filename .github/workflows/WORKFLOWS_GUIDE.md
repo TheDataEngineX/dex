@@ -25,7 +25,6 @@ graph TB
 
     subgraph "Release Workflows"
         RelDEX[release-dataenginex.yml<br/>DataEngineX Release]
-        RelCDEX[release-careerdex.yml<br/>CareerDEX Release]
         PyPI[pypi-publish.yml<br/>PyPI Publishing]
     end
 
@@ -44,7 +43,6 @@ graph TB
     CI -->|Success| CD
 
     PushMain --> RelDEX
-    PushMain --> RelCDEX
     RelDEX --> PyPI
 
     CD --> GHCR
@@ -57,7 +55,6 @@ graph TB
     style Security fill:#e1f5ff
     style CD fill:#fff3cd
     style RelDEX fill:#f8f5ff
-    style RelCDEX fill:#f8f5ff
     style PyPI fill:#f8f5ff
     style GHCR fill:#d4edda
     style DevK8s fill:#d4edda

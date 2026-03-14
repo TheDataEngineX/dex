@@ -8,7 +8,6 @@ applyTo: ".github/workflows/**/*.yml,.github/workflows/**/*.yaml"
 - `ci.yml` — ruff + mypy + pytest on push/PR to main/dev
 - `cd.yml` — Docker build + push to ghcr.io (after CI success)
 - `release-dataenginex.yml` — DataEngineX package release (tag + GitHub release)
-- `release-careerdex.yml` — CareerDEX app release (tag + GitHub release)
 - `pypi-publish.yml` — DataEngineX PyPI publishing (triggered by DataEngineX release)
 - `package-validation.yml` — Validate DataEngineX wheel build + twine
 - `security.yml` — Semgrep + CodeQL on push/PR to main/dev

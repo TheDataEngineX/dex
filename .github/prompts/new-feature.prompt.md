@@ -7,10 +7,14 @@ Scaffold a new feature for the DataEngineX project.
 
 ## Workflow
 
-1. **Plan** — Identify which package this belongs to:
-   - `packages/dataenginex/src/dataenginex/` — Core API, middleware, data, lakehouse, warehouse, ML
-   - `src/careerdex/` — Airflow DAGs, job data models
-   - `src/weatherdex/` — PySpark ML, weather pipelines
+1. **Plan** — Identify which module this belongs to in `src/dataenginex/`:
+   - `api/` — health, auth, errors, pagination, rate limiting
+   - `core/` — schemas, validators, medallion architecture, quality gates
+   - `data/` — connectors, profiler, schema registry
+   - `lakehouse/` — catalog, partitioning, storage
+   - `middleware/` — logging, metrics, request logging, tracing
+   - `ml/` — registry, training, drift, serving, LLM, vectorstore
+   - `warehouse/` — transforms, lineage
 
 2. **Implement** — Create the feature code:
    - `from __future__ import annotations` at top of every file
@@ -19,7 +23,7 @@ Scaffold a new feature for the DataEngineX project.
    - Error handling with specific exceptions and context
    - Docstrings on public functions/classes
 
-3. **Models** — If API-facing, add Pydantic models in `packages/dataenginex/src/dataenginex/core/schemas.py`
+3. **Models** — If API-facing, add Pydantic models in `src/dataenginex/core/schemas.py`
 
 4. **Tests** — Write tests in `tests/unit/test_<module>.py`:
    - Happy path, error paths, edge cases

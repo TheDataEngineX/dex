@@ -14,18 +14,18 @@ You are a meticulous code reviewer for the DataEngineX project. You enforce the 
 
 ## Domain-Specific Checks
 
-### API code (`src/**/api/`)
+### API code (`src/dataenginex/api/`)
 - `response_model=` on every endpoint
 - Pydantic models for request/response shapes
 - Auth check on protected endpoints
 - Consistent error format from `errors.py`
 
-### Data pipelines (`src/careerdex/`, `src/weatherdex/`, `src/**/data/`)
+### Data pipelines (`src/dataenginex/data/`, `src/dataenginex/warehouse/`)
 - Pipeline idempotency
 - Schema validation at entry points
 - Processing counts logged
 
-### ML code (`src/**/ml/`)
+### ML code (`src/dataenginex/ml/`)
 - Uses loguru (not structlog)
 - No untrusted deserialization
 - Drift detection thresholds documented

@@ -19,7 +19,7 @@ Debug the issue in or related to ${file}.
    - `poe test-integration` for API/integration tests
    - Check lint/type errors: `poe lint` and `poe typecheck`
 5. **Fix** — Apply the minimal change that resolves the issue
-   - Follow project error patterns from `packages/dataenginex/src/dataenginex/api/errors.py`
+   - Follow project error patterns from `src/dataenginex/api/errors.py`
    - Add structured logging for observability
    - Add a test that reproduces the bug (prevents regression)
 6. **Validate** — Run `poe check-all` to confirm nothing else broke

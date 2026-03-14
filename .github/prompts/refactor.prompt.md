@@ -20,4 +20,4 @@ Refactor the code in ${file} to improve quality while preserving behavior.
 - Do NOT change external behavior or API contracts
 - Run `poe check-all` after refactoring to verify lint + typecheck + tests pass
 - If tests break, the refactoring is wrong — revert and try differently
-- Follow existing patterns in `packages/dataenginex/src/dataenginex/` for style reference
+- Follow existing patterns in `src/dataenginex/` for style reference

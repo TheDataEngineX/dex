@@ -18,10 +18,10 @@ applyTo: "src/**/ml/**/*.py"
 - PSI-based distribution drift (`drift.py`) — severity: none → low → medium → high
 - Alert on medium+ severity, log per-feature drift scores
 
-## PySpark ML (WeatherDEX)
+## PySpark ML
 - `Pipeline` + `PipelineModel` for reproducible transforms
 - Feature engineering: lag, rolling, interaction terms
-- Models: RandomForest, GBT via `src/weatherdex/ml/ml_utils.py`
+- Models: RandomForest, GBT — see `examples/08_spark_ml.py`, `examples/09_feature_engineering.py`
 
 ## Security
 - `pickle.loads` only from trusted sources — never deserialize untrusted artifacts

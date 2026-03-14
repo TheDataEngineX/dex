@@ -37,13 +37,13 @@ def main() -> None:
             "and Gold (business-ready aggregations)."
         ),
         (
-            "CareerDEX is the job matching application built on DataEngineX. "
-            "It provides salary prediction, skill gap analysis, "
-            "career path recommendations, and job matching."
+            "DataEngineX examples demonstrate end-to-end pipelines. "
+            "Examples 07-10 cover API ingestion, PySpark ML, "
+            "feature engineering, and model analysis."
         ),
         (
-            "WeatherDEX is the weather pipeline module. It uses PySpark "
-            "for feature engineering and ML model training on weather data."
+            "The DataEngineX ML module provides ModelRegistry, DriftDetector, "
+            "RAGPipeline, and LLM provider adapters for production ML workflows."
         ),
         (
             "Quality gates in DataEngineX enforce data completeness, "

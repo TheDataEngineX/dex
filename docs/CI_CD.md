@@ -9,7 +9,7 @@ ______________________________________________________________________
 ## 📋 Table of Contents
 
 - [Overview](#overview)
-- [Origin: Dual-Project Structure](#project-structure)
+- [Project Structure](#project-structure)
 - [Continuous Integration (CI)](#continuous-integration-ci)
 - [Continuous Deployment (CD)](#continuous-deployment-cd)
 - [Release Automation (Matrix Approach)](#release-automation-matrix-approach)
@@ -62,33 +62,30 @@ ______________________________________________________________________
 
 ## Project Structure
 
-DEX is **dual-project**:
+DEX is a single-package repo:
 
 | Component | Location | Purpose | Release |
 |-----------|----------|---------|---------|
-| **DataEngineX** (core) | `packages/dataenginex/` | Core framework (API, middleware, storage) | PyPI (independently versioned) |
-| **CareerDEX** (app) | `src/careerdex/` | Job matching application | Docker app (versioned with root `pyproject.toml`) |
+| **dataenginex** | `src/dataenginex/` | Core framework (API, middleware, storage, ML) | PyPI (`dataenginex-vX.Y.Z`) |
 
 ### Unified Testing
 
-The **root `pyproject.toml`** orchestrates all tests:
+The **root `pyproject.toml`** defines the package and test config:
 
-- Imports `dataenginex>=0.6.0` as a dependency (editable path: `packages/dataenginex`)
-- Defines app package build target under `[tool.hatch.build.targets.wheel] packages = ["src/careerdex"]`
-- Declares dependency groups: `dev` (required), `data` (PySpark/Airflow), `notebook` (pandas), `ml` (sentence-transformers), `dashboard` (streamlit)
+- `name = "dataenginex"`, `version = "0.6.0"`
+- `[tool.hatch.build.targets.wheel] packages = ["src/dataenginex"]`
+- Dependency groups: `dev` (required), `data` (PySpark/Airflow), `notebook` (pandas), `ml` (sentence-transformers), `dashboard` (streamlit)
 
-**CI workflow** (`ci.yml`) runs both projects together in a single pipeline:
+**CI workflow** (`ci.yml`) runs in a single pipeline:
 
-- `lint-and-test` job: `uv sync` + `poe lint/test-cov` (tests both dataenginex + careerdex with dev deps only)
-- `integration-test` job (optional, label/dispatch): `uv sync --group data --group notebook` (full stack)
+- `lint-and-test` job: `uv sync` + `poe lint/test-cov`
+- `integration-test` job (optional, label/dispatch): `uv sync --group data --group notebook`
 
 ### Separate Validation
 
-- **Package validation** (`package-validation.yml`): Runs on every push to `main`/`dev` and package-related PR changes → builds wheel + twine check (CD dependency gate)
-- **Release automation** (matrix):
-  - `release-dataenginex.yml`: Watches `packages/dataenginex/pyproject.toml` for version changes → creates `dataenginex-vX.Y.Z` tag + release
-  - `release-careerdex.yml`: Watches root `pyproject.toml` for version changes → creates `careerdex-vX.Y.Z` tag + release
-- **PyPI publishing** (`pypi-publish.yml`): Triggered by DataEngineX release → detects changes in `packages/dataenginex/` since last tag → publishes to PyPI
+- **Package validation** (`package-validation.yml`): Runs on every push to `main`/`dev` and `src/dataenginex/**` PR changes → builds wheel + twine check (CD dependency gate)
+- **Release automation**: `release-dataenginex.yml` watches root `pyproject.toml` for version changes → creates `dataenginex-vX.Y.Z` tag + release
+- **PyPI publishing** (`pypi-publish.yml`): Triggered by DataEngineX release → detects changes in `src/dataenginex/` since last tag → publishes to PyPI
 
 ______________________________________________________________________
 
@@ -228,59 +225,31 @@ trivy image ghcr.io/thedataenginex/dex:sha-XXXXXXXX
 - HIGH: Alert but allow deployment
 - MEDIUM/LOW: Informational
 
-## Release Automation (Matrix Approach)
-
-DEX uses **parallel, independent release workflows** for each package:
+## Release Automation
 
 ### DataEngineX Releases
 
 **Workflow**: [`.github/workflows/release-dataenginex.yml`](https://github.com/TheDataEngineX/DEX/blob/main/.github/workflows/release-dataenginex.yml)
-
-**Trigger**: Version change in `packages/dataenginex/pyproject.toml` on `main` branch
-
-**What it does**:
-
-1. Detects version bump in `packages/dataenginex/pyproject.toml`
-1. Extracts version (e.g., `0.5.0`)
-1. Creates git tag: `dataenginex-v0.5.0`
-1. Creates GitHub release → **automatically triggers `pypi-publish.yml`**
-1. Publishes to TestPyPI/PyPI
-
-**How to release DataEngineX**:
-
-```bash
-# Update version in packages/dataenginex/pyproject.toml
-version = "0.5.0"
-
-# Commit and push
-git add packages/dataenginex/pyproject.toml
-git commit -m "chore: bump dataenginex to 0.5.0"
-git push origin main
-```
-
-### CareerDEX Releases
-
-**Workflow**: [`.github/workflows/release-careerdex.yml`](https://github.com/TheDataEngineX/DEX/blob/main/.github/workflows/release-careerdex.yml)
 
 **Trigger**: Version change in root `pyproject.toml` on `main` branch
 
 **What it does**:
 
 1. Detects version bump in root `pyproject.toml`
-1. Extracts version (e.g., `0.5.0`)
-1. Creates git tag: `careerdex-v0.5.0`
-1. Creates GitHub release for the app
-1. No PyPI publish (app is Docker-based, not a library)
+1. Extracts version (e.g., `0.6.0`)
+1. Creates git tag: `dataenginex-v0.6.0`
+1. Creates GitHub release → **automatically triggers `pypi-publish.yml`**
+1. Publishes to TestPyPI/PyPI
 
-**How to release CareerDEX**:
+**How to release DataEngineX**:
 
 ```bash
 # Update version in root pyproject.toml
-version = "0.5.0"
+version = "0.6.0"
 
 # Commit and push
 git add pyproject.toml
-git commit -m "chore: bump careerdex to 0.5.0"
+git commit -m "chore: bump dataenginex to 0.6.0"
 git push origin main
 ```
 
@@ -293,7 +262,7 @@ git push origin main
 **What it does**:
 
 1. Receives GitHub release event from DataEngineX release
-1. Detects if files under `packages/dataenginex/` actually changed since previous `dataenginex-vX.Y.Z` tag
+1. Detects if files under `src/dataenginex/` actually changed since previous `dataenginex-vX.Y.Z` tag
 1. If changes found:
    - Builds wheel distributions
    - Publishes to TestPyPI (dry-run)
@@ -707,10 +676,9 @@ ______________________________________________________________________
 | **CI** (Primary) | `push main/dev`, PRs to main/dev | Lint, test, type-check (dev deps) | [.github/workflows/ci.yml](https://github.com/TheDataEngineX/DEX/blob/main/.github/workflows/ci.yml) |
 | **CI** (Integration) | PR label `full-test` or manual dispatch | Full test (data + notebook groups) | [.github/workflows/ci.yml](https://github.com/TheDataEngineX/DEX/blob/main/.github/workflows/ci.yml) |
 | **Security** | `push main/dev`, PRs to main/dev | CodeQL + Semgrep scans | [.github/workflows/security.yml](https://github.com/TheDataEngineX/DEX/blob/main/.github/workflows/security.yml) |
-| **Package** | Changes to `packages/dataenginex/**` | Build wheel + twine check (dataenginex only) | [.github/workflows/package-validation.yml](https://github.com/TheDataEngineX/DEX/blob/main/.github/workflows/package-validation.yml) |
+| **Package** | Changes to `src/dataenginex/**` or `pyproject.toml` | Build wheel + twine check | [.github/workflows/package-validation.yml](https://github.com/TheDataEngineX/DEX/blob/main/.github/workflows/package-validation.yml) |
 | **CD** | `workflow_run` after CI + Security + Package Validation succeed on main/dev | Build Docker image, update GitOps manifests, verify deployment | [.github/workflows/cd.yml](https://github.com/TheDataEngineX/DEX/blob/main/.github/workflows/cd.yml) |
-| **Release DataEngineX** | Version change in `packages/dataenginex/pyproject.toml` on main | Extract version, create `dataenginex-vX.Y.Z` tag + release | [.github/workflows/release-dataenginex.yml](https://github.com/TheDataEngineX/DEX/blob/main/.github/workflows/release-dataenginex.yml) |
-| **Release CareerDEX** | Version change in root `pyproject.toml` on main | Extract version, create `careerdex-vX.Y.Z` tag + release | [.github/workflows/release-careerdex.yml](https://github.com/TheDataEngineX/DEX/blob/main/.github/workflows/release-careerdex.yml) |
+| **Release DataEngineX** | Version change in root `pyproject.toml` on main | Extract version, create `dataenginex-vX.Y.Z` tag + release | [.github/workflows/release-dataenginex.yml](https://github.com/TheDataEngineX/DEX/blob/main/.github/workflows/release-dataenginex.yml) |
 | **PyPI Publish** | GitHub release (DataEngineX) published | Detect changes + publish dataenginex to TestPyPI/PyPI | [.github/workflows/pypi-publish.yml](https://github.com/TheDataEngineX/DEX/blob/main/.github/workflows/pypi-publish.yml) |
 
 ### Local Commands
