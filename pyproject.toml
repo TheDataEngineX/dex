@@ -82,6 +82,7 @@ select = ["E", "F", "I", "B", "UP", "SIM", "C90"]
 [tool.ruff.lint.per-file-ignores]
 "src/weatherdex/notebooks/*.py" = ["F821"]    # Databricks globals: spark, display, dbutils
 "src/weatherdex/notebooks/*.ipynb" = ["F821", "E501"] # Databricks globals + notebook formatting
+"tests/unit/test_plugins.py" = ["I001"]  # Import order inconsistency with CI environment
 
 [tool.ruff.lint.mccabe]
 max-complexity = 8
@@ -129,3 +130,4 @@ omit = [
 [tool.coverage.report]
 show_missing = true
 skip_covered = true
+# test

@@ -21,11 +21,12 @@ Then visit:
 from __future__ import annotations
 
 import uvicorn
-from dataenginex.api import HealthChecker, HealthStatus
-from careerdex.api.routers.v1 import v1_router
 from dataenginex.middleware.logging_config import configure_logging
 from dataenginex.middleware.metrics import PrometheusMetrics
 from fastapi import FastAPI
+
+from careerdex.api.routers.v1 import v1_router
+from dataenginex.api import HealthChecker, HealthStatus
 
 
 def create_app() -> FastAPI:

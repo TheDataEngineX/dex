@@ -6,6 +6,7 @@ from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
+
 from dataenginex.plugins import DataEngineXPlugin, PluginRegistry, discover
 
 # ======================================================================
@@ -38,7 +39,7 @@ class _UnhealthyPlugin(DataEngineXPlugin):
 
     @property
     def version(self) -> str:
-        return "0.0.1"
+        return "0.1.0"
 
     def health_check(self) -> dict[str, Any]:
         msg = "database down"
