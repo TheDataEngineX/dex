@@ -47,6 +47,7 @@ dev = [
     "zensical>=0.0.24",
     "mkdocs-material>=9.6.0",
     "mkdocstrings[python]>=0.28.0",
+    "pre-commit>=4.5.1",
 ]
 data = [
     "pyspark>=4.1.1",
