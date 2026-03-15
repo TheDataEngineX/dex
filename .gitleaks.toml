@@ -2,3 +2,10 @@
 # https://github.com/gitleaks/gitleaks#configuration
 
 title = "DataEngineX Gitleaks Config"
+
+[allowlist]
+description = "Global allowlist"
+paths = [
+    # Test fixtures intentionally contain fake secrets for security testing
+    '''test_careerdex_phases\.py$''',
+]
