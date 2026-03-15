@@ -333,7 +333,7 @@ ______________________________________________________________________
 
 ## Grafana Dashboards
 
-Prebuilt dashboards are available in [infra/grafana](https://github.com/TheDataEngineX/DEX/blob/main/infra/monitoring/grafana/GUIDE.md):
+Prebuilt dashboards are available in [monitoring/grafana](https://github.com/TheDataEngineX/DEX/blob/main/monitoring/grafana/GUIDE.md):
 
 - **DEX Metrics**: request rate, latency, error rate, in-flight.
 - **DEX Logs**: log volume, error spikes, recent logs, and request IDs (Loki).
@@ -342,7 +342,7 @@ Prebuilt dashboards are available in [infra/grafana](https://github.com/TheDataE
 ### Import Steps
 
 1. Open Grafana → **Dashboards** → **New** → **Import**.
-1. Upload the JSON from infra/grafana/dashboards.
+1. Upload the JSON from `monitoring/grafana/dashboards/`.
 1. Select Prometheus/Loki/Tempo data sources when prompted.
 
 ### Notes
@@ -523,7 +523,7 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - ./infra/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
 
   jaeger:
     image: jaegertracing/all-in-one:1.60
@@ -581,7 +581,7 @@ ______________________________________________________________________
 
 ### Prometheus alert rules (SLO-aligned)
 
-The actual rule definitions live in `infra/monitoring/alerts/dataenginex-alerts.yml`. They expose three alerts—latency, error rate, and saturation—each scoped by `environment` so the thresholds can reflect the traffic patterns for dev, stage, and prod. Every alert annotation links to the [deployment runbook](https://github.com/TheDataEngineX/DEX/blob/main/docs/DEPLOY_RUNBOOK.md).
+The actual rule definitions live in `monitoring/alerts/dataenginex-alerts.yml`. They expose three alerts—latency, error rate, and saturation—each scoped by `environment` so the thresholds can reflect the traffic patterns for dev, stage, and prod. Every alert annotation links to the [deployment runbook](https://github.com/TheDataEngineX/DEX/blob/main/docs/DEPLOY_RUNBOOK.md).
 
 | Alert | Environment | Threshold | Severity | Receiver |
 |-------|-------------|-----------|----------|----------|
@@ -595,7 +595,7 @@ The actual rule definitions live in `infra/monitoring/alerts/dataenginex-alerts.
 | | stage | In-flight > 15 | `warning` | email |
 | | dev | In-flight > 10 | `warning` | email |
 
-The production `alertmanager` configuration in `infra/monitoring/alertmanager.yml` routes all `severity=page` alerts to a Slack webhook (`#dex-alerts`) while `severity=warning` alerts go to the ops email alias. Alerts sharing the same `alertname` and `environment` are deduplicated via inhibit rules so warnings do not trigger when a page is active.
+The production `alertmanager` configuration in `monitoring/alertmanager.yml` routes all `severity=page` alerts to a Slack webhook (`#dex-alerts`) while `severity=warning` alerts go to the ops email alias. Alerts sharing the same `alertname` and `environment` are deduplicated via inhibit rules so warnings do not trigger when a page is active.
 
 ### Reloading Alert Rules
 
@@ -604,14 +604,14 @@ Whenever the alert rules or Alertmanager config changes, reapply the manifests s
 1. Reapply the Prometheus rule set managed in GitOps:
 
 ```bash
-kubectl apply -f infra/monitoring/alerts/dataenginex-alerts.yml
+kubectl apply -f monitoring/alerts/dataenginex-alerts.yml
 kubectl rollout restart deployment/prometheus
 ```
 
 2. Reconfigure Alertmanager so receivers and runbooks stay up to date:
 
 ```bash
-kubectl apply -f infra/monitoring/alertmanager.yml
+kubectl apply -f monitoring/alertmanager.yml
 kubectl rollout restart deployment/alertmanager
 ```
 
@@ -785,8 +785,8 @@ ______________________________________________________________________
 **Deployment & Operations:**
 
 - **[CI/CD Pipeline](CI_CD.md)** - Automated deployments
-- **[Deployment Runbook](DEPLOY_RUNBOOK.md)** - Deploy procedures
-- **[Local K8s Setup](LOCAL_K8S_SETUP.md)** - Kubernetes setup
+- **Deployment Runbook** (in `infradex` repo) - Deploy procedures
+- **Local K8s Setup** (in `infradex` repo) - Kubernetes setup
 
 **Development:**
 

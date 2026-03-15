@@ -19,7 +19,7 @@ Verify it works:
 
 ```bash
 curl http://localhost:8000/health          # → {"status":"healthy"}
-curl http://localhost:8000/api/v1/careerdex/market/trends | python3 -m json.tool
+curl http://localhost:8000/api/v1/data/sources | python3 -m json.tool
 ```
 
 ## 3. Try an Example
@@ -59,4 +59,4 @@ uv run poe check-all  # All of the above in one command
 - [Development Guide](DEVELOPMENT.md) — full setup, editor config, and workflow
 - [Architecture](ARCHITECTURE.md) — medallion layers, API design, ML lifecycle
 - [API Reference](api-reference/index.md) — auto-generated module docs
-- [CareerDEX](careerdex/index.md) — job matching platform built on DEX
+- `examples/` directory — full list of runnable examples (01–10)

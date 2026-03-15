@@ -28,7 +28,7 @@ services:
       # Create the test bucket on startup
       - LOCALSTACK_INIT_SCRIPTS_PATH=/etc/localstack/init/ready.d
     volumes:
-      - ./infra/localstack:/etc/localstack/init/ready.d:ro
+      - ./scripts/localstack:/etc/localstack/init/ready.d:ro
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
       interval: 5s
