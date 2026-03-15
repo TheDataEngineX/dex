@@ -2,6 +2,9 @@
 
 import contextlib
 
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+
 from dataenginex.middleware.metrics import (
     get_metrics,
     http_exceptions_total,
@@ -10,8 +13,6 @@ from dataenginex.middleware.metrics import (
     http_requests_total,
 )
 from dataenginex.middleware.metrics_middleware import PrometheusMetricsMiddleware
-from fastapi import FastAPI
-from fastapi.testclient import TestClient
 
 
 def test_get_metrics() -> None:

@@ -1,8 +1,0 @@
-# Example: override defaults for your environment
-# Copy to terraform.tfvars and fill in your values.
-
-# aws_region             = "us-east-1"
-# gcp_project            = "my-gcp-project-id"
-# gcp_region             = "us-central1"
-# object_expiration_days = 1
-# force_destroy          = true

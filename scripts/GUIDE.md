@@ -4,30 +4,9 @@ Utility scripts for DEX development and deployment.
 
 ## Scripts
 
-### `setup-system.sh`
-
-Installs all Linux/macOS system-level packages required to develop, test, and run the DEX project locally.
-
-**Usage:**
-
-```bash
-bash scripts/setup-system.sh     # direct
-uv run poe setup-system          # via poe task
-```
-
-**Installs:**
-
-- Core: git, curl, build-essential, Python 3.12+, Java 17 JRE, uv
-- Recommended: Docker + Docker Compose
-- Optional: Trivy (security scanning), actionlint (workflow linting)
-
-**Supports:** Ubuntu/Debian, Fedora/RHEL, Arch Linux, macOS (Homebrew)
-
-______________________________________________________________________
-
 ### `promote.sh`
 
-Promotes from dev to prod by creating a PR from `dev` → `main`, or by updating the prod overlay with a specific image tag.
+Promotes from dev to prod by creating a PR from `dev` → `main`.
 
 **Usage:**
 
@@ -37,15 +16,11 @@ Promotes from dev to prod by creating a PR from `dev` → `main`, or by updating
 
 # Branch promotion with auto-merge
 ./scripts/promote.sh --auto-merge
-
-# Promote specific image tag to prod overlay
-./scripts/promote.sh --image-tag sha-abc12345
 ```
 
 **Features:**
 
 - Creates PR from `dev` → `main` for branch promotion
-- Optionally updates prod overlay kustomization.yaml with a specific image tag
 - Creates GitHub PR with deployment checklist (requires `gh` CLI)
 - Supports auto-merge with `--auto-merge` flag
 
@@ -54,7 +29,6 @@ Promotes from dev to prod by creating a PR from `dev` → `main`, or by updating
 - bash
 - GitHub CLI (`gh`) installed and authenticated
 - Git configured with push access to repository
-- On `main` branch with no uncommitted changes (for image tag mode)
 
 Make the scripts executable once:
 
@@ -62,125 +36,45 @@ Make the scripts executable once:
 chmod +x ./scripts/*.sh
 ```
 
-### `get-tags.sh`
-
-Displays current deployed image tags across all environments.
-
-**Usage:**
-
-```bash
-./scripts/get-tags.sh
-```
-
-**Output Example:**
-
-```
-Current Image Tags
-============================================================
-  dev         sha-abc12345
-  prod        sha-xyz67890
-============================================================
-
-Environment Status:
-  Dev and Prod are out of sync
-    Run: ./scripts/promote.sh
-```
+______________________________________________________________________
 
 ## Promotion Workflow
 
-### Standard Flow: Dev → Prod
+### Standard Flow: Dev → Prod (PyPI Release)
 
 ```bash
-# 1. Check current tags
-./scripts/get-tags.sh
+# 1. Ensure dev is stable
+uv run poe test
 
-# 2. Promote dev → prod (creates PR from dev to main)
+# 2. Bump version in pyproject.toml (e.g., version = "0.7.0")
+# 3. Update CHANGELOG.md
+
+# 4. Commit and push to dev
+git add pyproject.toml CHANGELOG.md
+git commit -m "chore: bump dataenginex to 0.7.0"
+git push origin dev
+
+# 5. Create PR: dev → main
 ./scripts/promote.sh
 
-# 3. Wait for PR review + merge
-# 4. CD builds image and updates prod overlay
-# 5. ArgoCD auto-syncs dex namespace (~3 minutes)
-
-# 6. Verify prod deployment
-kubectl rollout status deployment/dex -n dex
-kubectl get pods -n dex
+# 6. Merge PR after CI passes
+# → release-dataenginex.yml auto-creates tag + GitHub release
+# → pypi-publish.yml auto-publishes to PyPI
 ```
 
-### Emergency Hotfix: Direct to Prod
+### Verify Release
 
 ```bash
-# NOT RECOMMENDED - only for critical security patches
+# Check PyPI
+pip install dataenginex==0.7.0 --dry-run
 
-# 1. Get tested SHA from dev
-hotfixTag="sha-emergency"
-
-# 2. Promote directly to prod overlay
-./scripts/promote.sh --image-tag "$hotfixTag"
-
-# 3. Fast-track PR approval
-# 4. Manual ArgoCD sync
-argocd app sync dex --force
+# Confirm import
+python -c "import dataenginex; print(dataenginex.__version__)"
 ```
 
-### Rollback
-
-```bash
-# Option 1: Git revert (recommended)
-git log infra/argocd/overlays/prod/kustomization.yaml
-git revert <commit-sha>
-git push origin main
-
-# Option 2: ArgoCD rollback
-argocd app history dex
-argocd app rollback dex <revision>
-
-# Option 3: Manual promotion to previous tag
-./scripts/promote.sh --image-tag sha-previous123
-```
-
-## Integration with CI/CD
-
-### Automated Deployment
-
-GitHub Actions automatically updates GitOps overlays based on branch:
-
-- `dev` branch CI success → updates `infra/argocd/overlays/dev/kustomization.yaml`
-- `main` branch CI success → updates `infra/argocd/overlays/prod/kustomization.yaml`
-
-Example from CD workflow:
-
-```yaml
-# .github/workflows/cd.yml
-- name: Update overlay image tags
-  run: |
-    # dev branch updates dev overlay
-    # main branch updates prod overlay
-    git commit -m "chore: update ${BRANCH} image to sha-$SHORT_SHA [skip ci]"
-    git push origin "HEAD:${BRANCH}"
-```
-
-### Manual Prod Promotion
-
-Use the promotion script for controlled prod deployments:
-
-```bash
-# After dev is stable, promote to prod
-./scripts/promote.sh
-```
+______________________________________________________________________
 
 ## Troubleshooting
-
-### "Could not find image tag"
-
-```bash
-# Check kustomization.yaml format
-cat infra/argocd/overlays/dev/kustomization.yaml
-
-# Should contain:
-# images:
-#   - name: thedataenginex/dex
-#     newTag: sha-XXXXXXXX
-```
 
 ### "You have uncommitted changes"
 
@@ -216,21 +110,19 @@ gh auth status
 gh repo view TheDataEngineX/DEX
 
 # Manual PR creation
-git push origin promote-prod-sha-abc12345
-# Then create PR via GitHub UI
+git push origin dev
+# Then create PR via GitHub UI: dev → main
 ```
+
+______________________________________________________________________
 
 ## Best Practices
 
 1. **Always promote via PR**: dev → main for traceability
 1. **Use PR reviews**: Require approvals before merging
-1. **Monitor deployments**: Check logs and metrics after promotion
-1. **Document promotions**: Use PR descriptions for audit trail
-1. **Keep environments in sync**: Regularly check with `get-tags.sh`
-1. **Use SHA tags**: Immutable, traceable, promotable
+1. **Keep CHANGELOG up to date**: Update before releasing
+1. **Use conventional commits**: `feat:`, `fix:`, `chore:` for clear history
 
 ## References
 
-- [Infrastructure Promotion Workflow](../docs/DEPLOY_RUNBOOK.md)
-- [ArgoCD Sync Documentation](https://argo-cd.readthedocs.io/en/stable/user-guide/sync-options/)
-- [Kustomize Documentation](https://kustomize.io/)
+- [CI/CD Pipeline](../docs/CI_CD.md)

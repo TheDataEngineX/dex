@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+
 from dataenginex.lakehouse.catalog import CatalogEntry, DataCatalog
 from dataenginex.lakehouse.partitioning import DatePartitioner, HashPartitioner
 from dataenginex.lakehouse.storage import JsonStorage, ParquetStorage

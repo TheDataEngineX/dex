@@ -10,14 +10,10 @@ help = "Install dependencies and pre-commit hooks"
 shell = "uv sync --all-groups && uvx pre-commit install"
 help = "One-step setup: install all dependency groups and pre-commit hooks"
 
-[tool.poe.tasks.setup-system]
-shell = "bash scripts/setup-system.sh"
-help = "Install Linux/macOS system packages (git, java, docker, uv, trivy)"
-
 # Development
 [tool.poe.tasks.dev]
-cmd = "uvicorn careerdex.api.main:app --reload --port 8000"
-help = "Run development server on localhost:8000"
+cmd = "python examples/02_api_quickstart.py"
+help = "Run development server on localhost:8000 (quickstart example)"
 
 # Testing
 [tool.poe.tasks.test-core]
@@ -33,7 +29,7 @@ cmd = "pytest tests/integration/ -v --tb=short"
 help = "Internal: run integration tests without dependency sync"
 
 [tool.poe.tasks.test-cov-core]
-cmd = "pytest tests/ -v --cov=dataenginex --cov=careerdex --cov=weatherdex --cov-report=html --cov-report=xml:coverage.xml --cov-report=term-missing --cov-fail-under=80"
+cmd = "pytest tests/ -v --cov=dataenginex --cov-report=html --cov-report=xml:coverage.xml --cov-report=term-missing --cov-fail-under=80"
 help = "Internal: run coverage tests without dependency sync (fails below 80%)"
 
 [tool.poe.tasks.test]
@@ -52,26 +48,21 @@ help = "Run integration tests only"
 shell = "poe uv-sync && poe test-cov-core"
 help = "Run tests with coverage report (HTML + XML + terminal)"
 
-# Load Testing
-[tool.poe.tasks.loadtest]
-cmd = "locust -f tests/load/locustfile.py --headless -u 10 -r 2 -t 30s --host http://localhost:8000"
-help = "Run Locust load tests (headless, 10 users, 30s) against localhost:8000"
-
 # Code Quality
 [tool.poe.tasks.lint]
-shell = "ruff check src/ packages/dataenginex/src/ tests/"
+shell = "ruff check src/ tests/"
 help = "Run ruff lint on source and test files"
 
 [tool.poe.tasks.imports-check]
-shell = "ruff check --select I src/ packages/dataenginex/src/ tests/"
+shell = "ruff check --select I src/ tests/"
 help = "Enforce import sorting/formatting (Ruff I rules)"
 
 [tool.poe.tasks.lint-fix]
-shell = "ruff check --fix src/ packages/dataenginex/src/ tests/ && ruff format src/ packages/dataenginex/src/ tests/"
+shell = "ruff check --fix src/ tests/ && ruff format src/ tests/"
 help = "Auto-fix lint issues and format code"
 
 [tool.poe.tasks.format]
-shell = "ruff format src/ packages/dataenginex/src/ tests/"
+shell = "ruff format src/ tests/"
 help = "Format code with ruff"
 
 [tool.poe.tasks.docs-check]
@@ -83,7 +74,7 @@ shell = "find . -name '*.md' -not -path './site/*' -not -path './.venv/*' -not -
 help = "Auto-fix markdown formatting across all docs"
 
 [tool.poe.tasks.typecheck]
-cmd = "mypy packages/dataenginex/src/dataenginex/ --config-file=pyproject.toml --no-incremental"
+cmd = "mypy src/dataenginex/ --config-file=pyproject.toml --no-incremental"
 help = "Run mypy type checking with project config"
 env = { UV_PYTHON = "3.12", UV_PROJECT_ENVIRONMENT = ".venv" }
 
@@ -128,15 +119,6 @@ help = "Stop Docker Compose services"
 cmd = "docker compose logs -f"
 help = "View Docker Compose logs"
 
-# Kubernetes
-[tool.poe.tasks.k8s-deploy]
-cmd = "kubectl apply -k infra/argocd/base/"
-help = "Deploy to Kubernetes via Kustomize"
-
-[tool.poe.tasks.k8s-delete]
-cmd = "kubectl delete -k infra/argocd/base/"
-help = "Delete Kubernetes resources"
-
 # Documentation
 [tool.poe.tasks.docs]
 shell = "zensical build --clean && echo 'Documentation built. Open site/index.html'"
@@ -146,19 +128,6 @@ help = "Build documentation site with Zensical"
 [tool.poe.tasks.version]
 shell = "grep version pyproject.toml | head -1"
 help = "Show project version"
-
-# Weather Pipeline Tasks
-[tool.poe.tasks.weather-feature]
-cmd = "python src/weatherdex/notebooks/feature_engineering.py"
-help = "Run weather feature engineering pipeline"
-
-[tool.poe.tasks.weather-train]
-cmd = "python src/weatherdex/notebooks/train_model.py"
-help = "Train weather models"
-
-[tool.poe.tasks.weather-analyze]
-cmd = "python src/weatherdex/notebooks/analyze_predictions.py"
-help = "Analyze weather model predictions"
 
 # UV Package Manager
 [tool.poe.tasks.uv]

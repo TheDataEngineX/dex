@@ -92,7 +92,6 @@ uv run poe check-all   # Run all checks
 - `enhancement` - New feature or improvement
 - `good first issue` - Good for newcomers
 - `P1-high` / `P2-medium` - Priority levels
-- `careerdex` - Related to CareerDEX
 - `dex-module` - Core DEX infrastructure
 
 ## Questions?

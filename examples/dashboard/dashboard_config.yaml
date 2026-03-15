@@ -1,5 +1,5 @@
 # DataEngineX Dashboard Configuration
-# See: packages/dataenginex/src/dataenginex/dashboard/app.py
+# See: src/dataenginex/dashboard/app.py
 
 title: "DataEngineX Pipeline Monitor"
 

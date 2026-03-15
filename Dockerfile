@@ -21,7 +21,6 @@ RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 # Copy dependency manifest and source tree
 COPY pyproject.toml uv.lock README.md LICENSE ./
 COPY src/ src/
-COPY packages/dataenginex/ packages/dataenginex/
 
 # Build a frozen venv with production dependencies only (no dev)
 ENV UV_PROJECT_ENVIRONMENT=/build/.venv \
@@ -41,15 +40,13 @@ RUN groupadd --gid 1000 dex \
 # Copy virtual environment from builder stage
 COPY --from=builder /build/.venv /app/.venv
 
-# Copy dataenginex core package
-COPY --from=builder /build/packages /app/packages
-
-# Copy application source code
+# Copy application source code and examples
 COPY src/ /app/src/
+COPY examples/ /app/examples/
 
 # Configure runtime paths
 ENV PATH="/app/.venv/bin:$PATH" \
-    PYTHONPATH="/app/src:/app/packages/dataenginex/src" \
+    PYTHONPATH="/app/src" \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
 
@@ -59,5 +56,5 @@ USER dex
 # Expose FastAPI default port
 EXPOSE 8000
 
-# Start the FastAPI application via Uvicorn
-CMD ["python", "-m", "uvicorn", "careerdex.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Start the example API server (override CMD to use your own app entry point)
+CMD ["python", "examples/02_api_quickstart.py"]

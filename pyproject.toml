@@ -1,16 +1,36 @@
-
 [project]
-name = "careerdex-app"
-version = "0.5.0"
-description = "CareerDEX application built on the DataEngineX core package"
+name = "dataenginex"
+version = "0.6.0"
+description = "DataEngineX - Core framework for data engineering projects"
 authors = [
     {name = "Jay", email = "jayapal.myaka99@gmail.com"}
 ]
-readme = "README.md"
+readme = "src/dataenginex/README.md"
 requires-python = ">=3.12"
 license = {file = "LICENSE"}
 dependencies = [
-    "dataenginex>=0.6.0",
+    "pydantic>=2.0.0",
+    "python-dotenv>=1.2.0",
+    "pyyaml>=6.0.2",
+    "loguru>=0.7.3",
+    "httpx>=0.28.0",
+    "prometheus-client>=0.24.0",
+    # API framework
+    "fastapi>=0.128.4",
+    "uvicorn>=0.40.0",
+    "structlog>=25.5.0",
+    "python-json-logger>=4.0.0",
+    "opentelemetry-api>=1.39.0",
+    "opentelemetry-sdk>=1.39.0",
+    "opentelemetry-instrumentation-fastapi>=0.60b1",
+    "opentelemetry-exporter-otlp>=1.39.0",
+    "email-validator>=2.0.0",
+    # Cloud storage
+    "boto3>=1.35.0",
+    "google-cloud-storage>=2.18.0",
+    "google-cloud-bigquery>=3.30.0",
+    # Data formats
+    "pyarrow>=18.0.0",
 ]
 
 [dependency-groups]
@@ -49,15 +69,12 @@ dashboard = [
     "streamlit>=1.40.0",
 ]
 
-[project.entry-points."dataenginex.plugins"]
-careerdex = "careerdex.plugin:CareerDEXPlugin"
-
 [build-system]
 requires = ["hatchling>=1.25.0"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/careerdex"]
+packages = ["src/dataenginex"]
 
 [tool.uv]
 python-preference = "only-managed"
@@ -69,20 +86,12 @@ conflicts = [
     ],
 ]
 
-[tool.uv.sources]
-dataenginex = { path = "packages/dataenginex", editable = true }
-
 [tool.ruff]
 line-length = 100
 target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "SIM", "C90"]
-
-[tool.ruff.lint.per-file-ignores]
-"src/weatherdex/notebooks/*.py" = ["F821"]    # Databricks globals: spark, display, dbutils
-"src/weatherdex/notebooks/*.ipynb" = ["F821", "E501"] # Databricks globals + notebook formatting
-"tests/unit/test_plugins.py" = ["I001"]  # Import order inconsistency with CI environment
 
 [tool.ruff.lint.mccabe]
 max-complexity = 8
@@ -109,10 +118,14 @@ ignore_missing_imports = true
 module = ["dataenginex.lakehouse.storage"]
 warn_unused_ignores = false  # pre-commit installs google-cloud-storage (ignore used), CI does not (ignore unused)
 
+[[tool.mypy.overrides]]
+module = ["dataenginex.ml.training"]
+warn_unused_ignores = false  # sklearn may be installed (import-untyped) or not (import-not-found) depending on env
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
-pythonpath = ["src", "packages/dataenginex/src"]
+pythonpath = ["src"]
 filterwarnings = [
     "error",                                          # Treat all warnings as errors by default
     "ignore::DeprecationWarning:websockets\\.legacy",  # uvicorn uses deprecated websockets.legacy API
@@ -121,13 +134,12 @@ filterwarnings = [
 
 [tool.coverage.run]
 branch = true
-source = ["dataenginex", "careerdex"]
+source = ["dataenginex"]
 omit = [
-    "*/packages/dataenginex/src/dataenginex/api/routers/ml.py",
-    "*/packages/dataenginex/src/dataenginex/dashboard/*",
+    "*/src/dataenginex/api/routers/ml.py",
+    "*/src/dataenginex/dashboard/*",
 ]
 
 [tool.coverage.report]
 show_missing = true
 skip_covered = true
-# test

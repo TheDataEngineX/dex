@@ -21,46 +21,41 @@ Then visit:
 from __future__ import annotations
 
 import uvicorn
-from dataenginex.middleware.logging_config import configure_logging
-from dataenginex.middleware.metrics import PrometheusMetrics
 from fastapi import FastAPI
+from fastapi.responses import Response
 
-from careerdex.api.routers.v1 import v1_router
-from dataenginex.api import HealthChecker, HealthStatus
+from dataenginex.api import HealthChecker
+from dataenginex.middleware.logging_config import configure_logging
+from dataenginex.middleware.metrics import get_metrics
 
 
 def create_app() -> FastAPI:
     """Build and configure the DEX FastAPI application."""
-    configure_logging(log_level="INFO", json_format=False)
+    configure_logging(log_level="INFO", json_logs=False)
 
     app = FastAPI(
         title="DataEngineX",
-        version="0.5.0",
+        version="0.6.0",
         description="Example DEX API instance",
     )
 
-    # Mount versioned API router
-    app.include_router(v1_router)
-
     # Health endpoint
     checker = HealthChecker()
-    checker.add_check("api", lambda: HealthStatus.HEALTHY)
 
     @app.get("/")
     def root() -> dict[str, str]:
         return {"service": "dataenginex", "status": "running"}
 
     @app.get("/health")
-    def health() -> dict[str, str]:
-        result = checker.check()
-        return {
-            "status": result.status.value,
-            "components": {name: comp.status.value for name, comp in result.components.items()},
-        }
+    async def health() -> dict[str, object]:
+        components = await checker.check_all()
+        status = checker.overall_status(components)
+        return {"status": status.value}
 
-    # Prometheus metrics
-    metrics = PrometheusMetrics("dex_example")
-    metrics.register_default_metrics()
+    @app.get("/metrics")
+    def metrics() -> Response:
+        data, content_type = get_metrics()
+        return Response(content=data, media_type=content_type)
 
     return app
 

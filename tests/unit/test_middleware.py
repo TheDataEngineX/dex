@@ -1,9 +1,10 @@
 """Tests for request logging middleware."""
 
 import pytest
-from dataenginex.middleware.request_logging import RequestLoggingMiddleware
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+
+from dataenginex.middleware.request_logging import RequestLoggingMiddleware
 
 
 @pytest.fixture

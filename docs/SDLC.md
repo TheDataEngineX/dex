@@ -198,7 +198,7 @@ ______________________________________________________________________
 
 **Operations:**
 
-- **[Deployment Runbook](DEPLOY_RUNBOOK.md)** - Release procedures
+- **Deployment Runbook** (in `infradex` repo) - Release procedures
 - **[Project Roadmap](roadmap/project-roadmap.csv)** - Issue tracking and milestone source
 
 ______________________________________________________________________
