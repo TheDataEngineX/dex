@@ -1,4 +1,5 @@
 {
+  "autoUpdatesChannel": "latest",
   "permissions": {
     "allow": [
       "Bash(git add:*)"
