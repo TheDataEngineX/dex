@@ -26,9 +26,12 @@ import abc
 import math
 import uuid
 from dataclasses import dataclass, field
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from loguru import logger
+
+if TYPE_CHECKING:
+    from dataenginex.ml.llm import LLMProvider, LLMResponse
 
 __all__ = [
     "ChromaDBBackend",
@@ -36,6 +39,7 @@ __all__ = [
     "InMemoryBackend",
     "RAGPipeline",
     "SearchResult",
+    "SentenceTransformerEmbedder",
     "VectorStoreBackend",
 ]
 
@@ -329,6 +333,44 @@ class ChromaDBBackend(VectorStoreBackend):
 
 
 # ======================================================================
+# Sentence-transformer embedding provider
+# ======================================================================
+
+
+class SentenceTransformerEmbedder:
+    """Callable embedding provider backed by ``sentence-transformers``.
+
+    Install the optional dependency group::
+
+        uv add 'dataenginex[ml]'
+
+    Then pass an instance as ``embed_fn`` to :class:`RAGPipeline`::
+
+        from dataenginex.ml.vectorstore import RAGPipeline, SentenceTransformerEmbedder
+
+        embedder = SentenceTransformerEmbedder()          # all-MiniLM-L6-v2
+        rag = RAGPipeline(embed_fn=embedder, dimension=384)
+
+    Args:
+        model_name: HuggingFace model identifier. Defaults to
+            ``"all-MiniLM-L6-v2"`` (384-dim, fast, good quality).
+    """
+
+    def __init__(self, model_name: str = "all-MiniLM-L6-v2") -> None:
+        try:
+            from sentence_transformers import SentenceTransformer  # type: ignore[import-not-found]
+
+            self._model = SentenceTransformer(model_name)
+            logger.info("SentenceTransformerEmbedder model={}", model_name)
+        except ImportError as exc:
+            msg = "sentence-transformers is required: uv add 'dataenginex[ml]'"
+            raise ImportError(msg) from exc
+
+    def __call__(self, text: str) -> list[float]:
+        return self._model.encode(text).tolist()  # type: ignore[no-any-return]
+
+
+# ======================================================================
 # RAG pipeline orchestrator
 # ======================================================================
 
@@ -424,6 +466,34 @@ class RAGPipeline:
             parts.append(chunk)
             total += len(chunk)
         return "\n\n".join(parts)
+
+    def answer(
+        self,
+        question: str,
+        llm: LLMProvider,
+        top_k: int = 5,
+        max_context_chars: int = 4000,
+        system_prompt: str | None = None,
+    ) -> LLMResponse:
+        """Full RAG loop: retrieve → augment → generate.
+
+        Combines :meth:`build_context` with
+        :meth:`~dataenginex.ml.llm.LLMProvider.generate_with_context`
+        into a single call.
+
+        Args:
+            question: User question.
+            llm: Any :class:`~dataenginex.ml.llm.LLMProvider` instance.
+            top_k: Documents to retrieve.
+            max_context_chars: Context length cap in characters.
+            system_prompt: Optional system-prompt override for the LLM.
+
+        Returns:
+            :class:`~dataenginex.ml.llm.LLMResponse` from the provider.
+        """
+        context = self.build_context(question, top_k=top_k, max_context_chars=max_context_chars)
+        logger.info("RAG answer question_len={} context_len={}", len(question), len(context))
+        return llm.generate_with_context(question, context, system_prompt=system_prompt)
 
     # ------------------------------------------------------------------
     # Fallback embedding
