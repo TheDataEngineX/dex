@@ -2,83 +2,110 @@
 
 Demonstrates:
     1. Creating an in-memory vector store backend
-    2. Ingesting sample documents into a RAG pipeline
-    3. Querying the pipeline to retrieve relevant context
-    4. Using the MockProvider to generate an LLM response with context
+    2. Embedding documents with SentenceTransformerEmbedder (or hash fallback)
+    3. Ingesting documents into the RAG pipeline
+    4. Using RAGPipeline.answer() for the full retrieve → augment → generate loop
+    5. Swapping providers: MockProvider for tests, OllamaProvider for production
 
-Run::
+Run with hash-based embeddings (no extra deps)::
 
     uv run python examples/05_rag_demo.py
+
+Run with real sentence-transformer embeddings::
+
+    uv sync --extra ml
+    uv run python examples/05_rag_demo.py --embed sentence-transformers
+
+Run against a live Ollama instance::
+
+    uv run python examples/05_rag_demo.py --llm ollama --model qwen3-coder:30b-a3b-q4_K_M
 """
 
 from __future__ import annotations
 
-from dataenginex.ml.llm import MockProvider
-from dataenginex.ml.vectorstore import InMemoryBackend, RAGPipeline
+import argparse
+
+from dataenginex.ml.llm import MockProvider, OllamaProvider
+from dataenginex.ml.vectorstore import InMemoryBackend, RAGPipeline, SentenceTransformerEmbedder
+
+DOCS = [
+    (
+        "DataEngineX is a data engineering and ML platform. "
+        "It provides quality gates, medallion architecture, "
+        "and model lifecycle management."
+    ),
+    (
+        "The medallion architecture organises data into three layers: "
+        "Bronze (raw ingestion), Silver (cleaned and validated), "
+        "and Gold (business-ready aggregations)."
+    ),
+    (
+        "DataEngineX examples demonstrate end-to-end pipelines. "
+        "Examples 07-10 cover API ingestion, PySpark ML, "
+        "feature engineering, and model analysis."
+    ),
+    (
+        "The DataEngineX ML module provides ModelRegistry, DriftDetector, "
+        "RAGPipeline, and LLM provider adapters for production ML workflows."
+    ),
+    (
+        "Quality gates in DataEngineX enforce data completeness, "
+        "consistency, and freshness checks before data moves "
+        "between medallion layers."
+    ),
+]
+
+QUERIES = [
+    "What is the medallion architecture?",
+    "How does the model registry work?",
+    "What are quality gates?",
+]
+
+
+def build_pipeline(use_sentence_transformers: bool) -> RAGPipeline:
+    if use_sentence_transformers:
+        embedder = SentenceTransformerEmbedder()
+        return RAGPipeline(store=InMemoryBackend(dimension=384), embed_fn=embedder, dimension=384)
+    print("Using hash-based embeddings (install dataenginex[ml] for real embeddings)\n")
+    return RAGPipeline(store=InMemoryBackend(dimension=64), dimension=64)
 
 
 def main() -> None:
-    """Run the RAG demo pipeline."""
-    # 1. Set up components
-    backend = InMemoryBackend(dimension=64)
-    pipeline = RAGPipeline(store=backend, dimension=64)
-    llm = MockProvider(default_response="Based on the provided context, here is my answer.")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--embed", choices=["hash", "sentence-transformers"], default="hash")
+    parser.add_argument("--llm", choices=["mock", "ollama"], default="mock")
+    parser.add_argument("--model", default="qwen3-coder:30b-a3b-q4_K_M")
+    args = parser.parse_args()
 
-    # 2. Prepare sample documents
-    texts = [
-        (
-            "DataEngineX is a data engineering and ML platform. "
-            "It provides quality gates, medallion architecture, "
-            "and model lifecycle management."
-        ),
-        (
-            "The medallion architecture organises data into three layers: "
-            "Bronze (raw ingestion), Silver (cleaned and validated), "
-            "and Gold (business-ready aggregations)."
-        ),
-        (
-            "DataEngineX examples demonstrate end-to-end pipelines. "
-            "Examples 07-10 cover API ingestion, PySpark ML, "
-            "feature engineering, and model analysis."
-        ),
-        (
-            "The DataEngineX ML module provides ModelRegistry, DriftDetector, "
-            "RAGPipeline, and LLM provider adapters for production ML workflows."
-        ),
-        (
-            "Quality gates in DataEngineX enforce data completeness, "
-            "consistency, and freshness checks before data moves "
-            "between medallion layers."
-        ),
-    ]
-    doc_ids = ["doc-1", "doc-2", "doc-3", "doc-4", "doc-5"]
+    # 1. Build pipeline
+    pipeline = build_pipeline(use_sentence_transformers=args.embed == "sentence-transformers")
 
-    # 3. Ingest documents into the RAG pipeline
+    # 2. Ingest
     print("=== Ingesting documents ===")
-    count = pipeline.ingest(texts, ids=doc_ids)
-    print(f"Ingested {count} documents into the vector store.\n")
+    count = pipeline.ingest(DOCS)
+    print(f"Stored {count} documents\n")
 
-    # 4. Query the pipeline
-    queries = [
-        "What is the medallion architecture?",
-        "How does CareerDEX work?",
-        "What are quality gates?",
-    ]
+    # 3. Choose LLM provider
+    if args.llm == "ollama":
+        llm = OllamaProvider(model=args.model)
+        if not llm.is_available():
+            print(
+                f"Ollama not reachable or model '{args.model}' not loaded — falling back to mock\n"
+            )
+            llm = MockProvider()  # type: ignore[assignment]
+    else:
+        llm = MockProvider()  # type: ignore[assignment]
 
-    for query in queries:
-        print(f"--- Query: {query} ---")
+    print(f"LLM provider: {llm.__class__.__name__}\n")
 
-        # Retrieve relevant context
-        context = pipeline.build_context(query, top_k=2)
-        print(f"Retrieved context ({len(context)} chars):\n{context[:200]}...\n")
+    # 4. Full RAG loop via RAGPipeline.answer()
+    for query in QUERIES:
+        print(f"Q: {query}")
+        response = pipeline.answer(query, llm, top_k=2)
+        print(f"A: {response.text[:300]}")
+        print(f"   tokens={response.total_tokens} finish={response.finish_reason}\n")
 
-        # Generate response using the LLM with retrieved context
-        response = llm.generate_with_context(question=query, context=context)
-        print(f"LLM Response: {response.text}\n")
-
-    # 5. Show call history
-    print(f"=== LLM was called {len(llm.call_history)} times ===")
-    print("Done!")
+    print("Done.")
 
 
 if __name__ == "__main__":
