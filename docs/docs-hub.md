@@ -36,23 +36,21 @@ Core documentation for all DEX developers:
 - **[Architecture Decision Records (ADRs)](./adr/0001-medallion-architecture.md)** - Rationale for major technical decisions
   - [ADR-0001: Medallion Architecture](./adr/0001-medallion-architecture.md)
 - **[CI/CD Pipeline](./CI_CD.md)** - GitHub Actions automation
-- **[Deployment Runbook](./DEPLOY_RUNBOOK.md)** - Release procedures
 - **[Observability](./OBSERVABILITY.md)** - Monitoring, logging, tracing
 - **[SDLC](./SDLC.md)** - Software development lifecycle
 - **[Release Notes](./RELEASE_NOTES.md)** - Version history
-- **[Org + Domain Rollout](./DEPLOY_RUNBOOK.md)** - GitHub Organization and Cloudflare setup checklist
-- **[Kubernetes Setup](./LOCAL_K8S_SETUP.md)** - Local K8s configuration
+- **Deployment Runbook** (in `infradex` repo) - Release and K8s deploy procedures
+- **Local K8s Setup** (in `infradex` repo) - Kubernetes configuration
 
 ### Examples
 
 Runnable pipeline and ML examples:
 
-- **[Examples Guide](../examples/GUIDE.md)** - Full index of all examples (01–10)
-- **[API Quickstart](../examples/02_api_quickstart.py)** - FastAPI server with dataenginex middleware
-- **[API Ingestion](../examples/07_api_ingestion.py)** - Bronze→Silver→Gold medallion pipeline
-- **[PySpark ML](../examples/08_spark_ml.py)** - Feature engineering + model training
-- **[Feature Engineering](../examples/09_feature_engineering.py)** - Time/lag/rolling features
-- **[Model Analysis](../examples/10_model_analysis.py)** - Drift detection + prediction analysis
+- `examples/02_api_quickstart.py` - FastAPI server with dataenginex middleware
+- `examples/07_api_ingestion.py` - Bronze→Silver→Gold medallion pipeline
+- `examples/08_spark_ml.py` - Feature engineering + model training
+- `examples/09_feature_engineering.py` - Time/lag/rolling features
+- `examples/10_model_analysis.py` - Drift detection + prediction analysis
 
 ### Planning
 
@@ -68,13 +66,13 @@ ______________________________________________________________________
 |------|------|
 | Set up local development | [Development Setup](./DEVELOPMENT.md) |
 | Understand the architecture | [Architecture](./ARCHITECTURE.md) |
-| Deploy to production | [Deployment Runbook](./DEPLOY_RUNBOOK.md) |
+| Deploy to production | Deployment Runbook (in `infradex` repo) |
 | Set up monitoring | [Observability](./OBSERVABILITY.md) |
 | Contribute code | [Contributing](./CONTRIBUTING.md) |
 | Understand CI/CD | [CI/CD Pipeline](./CI_CD.md) |
 | Track work | [SDLC](./SDLC.md) |
-| Configure org + domain | [Org + Domain Rollout](./DEPLOY_RUNBOOK.md) |
-| Explore runnable examples | [Examples Guide](../examples/GUIDE.md) |
+| Configure org + domain | Deployment Runbook (in `infradex` repo) |
+| Explore runnable examples | `examples/` directory |
 
 ______________________________________________________________________
 
@@ -87,11 +85,9 @@ docs/
 ├── CONTRIBUTING.md
 ├── ARCHITECTURE.md
 ├── CI_CD.md
-├── DEPLOY_RUNBOOK.md
 ├── OBSERVABILITY.md
 ├── SDLC.md
 ├── RELEASE_NOTES.md
-├── LOCAL_K8S_SETUP.md
 ├── adr/                        # Architecture decisions
 │   ├── 0000-template.md
 │   ├── 0001-medallion-architecture.md

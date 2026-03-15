@@ -1,39 +1,36 @@
 # DataEngineX (DEX)
 
-[![CI/CD](https://github.com/TheDataEngineX/DEX/actions/workflows/ci.yml/badge.svg?branch=dev)](https://github.com/TheDataEngineX/DEX/actions/workflows/ci.yml)
+[![CI](https://github.com/TheDataEngineX/DEX/actions/workflows/ci.yml/badge.svg?branch=dev)](https://github.com/TheDataEngineX/DEX/actions/workflows/ci.yml)
 [![PyPI](https://img.shields.io/pypi/v/dataenginex)](https://pypi.org/project/dataenginex/)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Coverage](https://img.shields.io/badge/coverage-94%25-brightgreen)](https://github.com/TheDataEngineX/DEX)
-[![Security](https://img.shields.io/badge/security-Trivy%20%7C%20CodeQL%20%7C%20SBOM-blue)](docs/SECURITY_SCANNING.md)
+[![Security](https://img.shields.io/badge/security-Trivy%20%7C%20CodeQL-blue)](docs/SECURITY_SCANNING.md)
 
-A production-focused data engineering framework with medallion architecture, ML lifecycle management, and enterprise observability foundations.
+A production-focused Python framework for data engineering — medallion architecture, ML lifecycle management, and enterprise observability out of the box.
 
 ______________________________________________________________________
 
 ## Quick Start
 
 ```bash
-bash scripts/setup-system.sh  # Install system deps (git, java, docker, uv) — first time only
-git clone https://github.com/TheDataEngineX/DEX && cd DEX
-uv run poe setup              # Install Python deps + pre-commit hooks
-uv run poe dev                # Run dev server → http://localhost:8000
-uv run poe test               # Run tests
-```
+# Install
+uv add dataenginex           # core only
+uv add dataenginex[api]      # + FastAPI, uvicorn, structlog, OpenTelemetry
 
-### Full Stack (API + Observability)
+# Or pip
+pip install dataenginex[api]
+```
 
 ```bash
-docker compose up -d
+# Clone and develop
+git clone https://github.com/TheDataEngineX/DEX && cd DEX
+uv run poe setup             # install deps + pre-commit hooks
+uv run poe dev               # dev server → http://localhost:8000
+uv run poe test              # run tests
 ```
 
-| Service | URL |
-|--------------|-----------------------------|
-| API | http://localhost:8000 |
-| Prometheus | http://localhost:9090 |
-| AlertManager | http://localhost:9093 |
-| Grafana | http://localhost:3000 |
-| Jaeger | http://localhost:16686 |
+> **Full observability stack** (Prometheus + Grafana + Jaeger): see [infradex](https://github.com/TheDataEngineX/infradex) `docker-compose.yml`.
 
 ______________________________________________________________________
 
@@ -43,36 +40,30 @@ ______________________________________________________________________
 DEX/
 ├── src/
 │   └── dataenginex/           # Core framework package
-│       ├── api/               #   FastAPI app, health, auth, pagination
+│       ├── api/               #   FastAPI app, health, auth, pagination, rate limiting
 │       ├── core/              #   Medallion architecture, validators, schemas
 │       ├── data/              #   Connectors, profiler, schema registry
 │       ├── dashboard/         #   Streamlit dashboard
-│       ├── lakehouse/         #   Catalog, partitioning, storage
-│       ├── middleware/        #   Logging, metrics, tracing
+│       ├── lakehouse/         #   Catalog, partitioning, storage (S3, GCS, local)
+│       ├── middleware/        #   Structured logging, Prometheus metrics, tracing
 │       ├── ml/                #   Training, registry, serving, drift, LLM, RAG
-│       ├── plugins/           #   Plugin system
-│       └── warehouse/         #   Transforms, lineage
+│       ├── plugins/           #   Plugin system (entry-point based discovery)
+│       └── warehouse/         #   SQL/Spark transforms, column-level lineage
 │
-├── examples/                  # Runnable example scripts (01–10)
+├── examples/                  # Runnable scripts (01–10)
 │
-├── tests/                     # Test suite
-│   ├── unit/                  #   Unit tests
-│   └── integration/           #   End-to-end tests
+├── tests/
+│   ├── unit/                  # Unit tests
+│   ├── integration/           # End-to-end tests (requires docker-compose.test.yml)
+│   └── fixtures/              # Sample data
 │
-├── monitoring/                # Local observability stack configs
-│   ├── prometheus.yml         #   Metrics scraping
-│   ├── alertmanager.yml       #   Alert routing
-│   ├── alerts/                #   Alert rules
-│   └── grafana/               #   Grafana dashboards + provisioning
+├── docs/                      # Documentation (mkdocs)
+├── scripts/                   # promote.sh (PyPI release), localstack/
 │
-├── docs/                      # Documentation
-├── scripts/                   # Utility scripts
-│
-├── Dockerfile                 # Multi-stage Docker build
-├── docker-compose.yml         # Local dev stack
-├── pyproject.toml             # Project config (dataenginex 0.6.0)
-├── poe_tasks.toml             # Task runner (poe)
-└── CODEOWNERS
+├── Dockerfile                 # Multi-stage, non-root, port 8000
+├── docker-compose.test.yml    # S3 + GCS emulators for integration tests
+├── pyproject.toml             # Package config (dataenginex 0.6.0)
+└── poe_tasks.toml             # Task runner (poe)
 ```
 
 ______________________________________________________________________
@@ -83,43 +74,51 @@ ______________________________________________________________________
 
 ```
 Raw Sources (APIs, files, streams)
-             ↓
-        BRONZE LAYER — Raw ingestion (Parquet)
-             ↓
-        SILVER LAYER — Cleaned & validated (quality ≥ 75%)
-             ↓
-        GOLD LAYER — Enriched & aggregated (quality ≥ 90%)
-             ↓
-      API / ML / Analytics
+         ↓
+    BRONZE LAYER — Raw ingestion (Parquet)
+         ↓
+    SILVER LAYER — Cleaned & validated (quality ≥ 75%)
+         ↓
+    GOLD LAYER — Enriched & aggregated (quality ≥ 90%)
+         ↓
+  API / ML / Analytics
 ```
 
 **Tech Stack:**
 
 | Layer | Technology |
-|------------------|-------------------------------------------------|
+|---|---|
 | Language | Python 3.12+ |
-| Package Manager | uv (dependencies/env) + Hatchling (build backend) |
+| Package Manager | uv + Hatchling |
 | Web Framework | FastAPI + Uvicorn |
 | Orchestration | Apache Airflow |
-| ML | PySpark |
-| Code Quality | Ruff, mypy (strict) |
-| Testing | pytest + coverage |
+| Big Data | PySpark |
+| Code Quality | Ruff + mypy (strict) |
+| Testing | pytest + coverage (94%) |
 | Observability | Prometheus, Grafana, Jaeger (OpenTelemetry) |
-| Containers | Docker + docker compose |
-| Kubernetes | Kustomize + ArgoCD (GitOps) |
+| Containers | Docker (multi-stage, non-root) |
+| Kubernetes | K3s + ArgoCD (GitOps) |
 | CI/CD | GitHub Actions |
-| Dashboard | Streamlit (optional `dashboard` dep group) |
 
 ______________________________________________________________________
 
 ## Development
 
-See the canonical setup and full command reference in [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
+See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for full setup.
 
 ```bash
-uv run poe check-all         # Lint + typecheck + tests
-uv run poe dev               # Dev server with hot-reload
-uv run poe docker-up         # Start local stack
+uv run poe check-all         # lint + typecheck + tests
+uv run poe lint-fix          # auto-fix lint issues
+uv run poe dev               # dev server with hot-reload
+uv run poe test-cov          # tests + coverage report
+```
+
+**Integration tests** (requires running storage emulators):
+
+```bash
+docker compose -f docker-compose.test.yml up -d
+uv run poe test-integration
+docker compose -f docker-compose.test.yml down
 ```
 
 ______________________________________________________________________
@@ -127,76 +126,68 @@ ______________________________________________________________________
 ## Documentation
 
 | Guide | Description |
-|---------------------------------------------------|--------------------------|
-| [Documentation Hub](docs/docs-hub.md) | Complete index |
-| [Architecture](docs/ARCHITECTURE.md) | System design |
-| [Development](docs/DEVELOPMENT.md) | Local setup |
-| [Contributing](docs/CONTRIBUTING.md) | Code style, PR process |
-| [Contribution Guide](CONTRIBUTING.md) | Root contributor entry |
-| [Code of Conduct](CODE_OF_CONDUCT.md) | Community standards |
-| [Governance & Legal](GOVERNANCE.md) | Governance model |
+|---|---|
+| [Docs Hub](docs/docs-hub.md) | Complete index |
+| [Architecture](docs/ARCHITECTURE.md) | System design and roadmap |
+| [Development](docs/DEVELOPMENT.md) | Local setup and workflow |
+| [Contributing](docs/CONTRIBUTING.md) | Code style and PR process |
 | [CI/CD Pipeline](docs/CI_CD.md) | Automation workflows |
-| [Security Policy](SECURITY.md) | Vulnerability reporting |
-| [Support Guide](SUPPORT.md) | Help & support channels |
-| [Deployment Runbook](docs/DEPLOY_RUNBOOK.md) | Deploy & rollback |
 | [Observability](docs/OBSERVABILITY.md) | Metrics, logs, traces |
-| [Local K8s Setup](docs/LOCAL_K8S_SETUP.md) | Test ArgoCD locally |
-| [SDLC](docs/SDLC.md) | Lifecycle stages |
-| [ADRs](docs/adr/) | Architecture decisions |
-| [Roadmap (Canonical CSV)](docs/roadmap/project-roadmap.csv) | Planned and in-progress work |
-| [Examples Guide](examples/GUIDE.md) | Runnable example scripts |
+| [SDLC](docs/SDLC.md) | Development lifecycle stages |
+| [Security Scanning](docs/SECURITY_SCANNING.md) | Trivy, CodeQL, SBOM |
+| [API Reference](docs/api-reference/index.md) | Auto-generated module docs |
+| [ADRs](docs/adr/) | Architecture decision records |
+| [Roadmap](docs/roadmap/project-roadmap.csv) | Milestones and status |
+
+> Community standards (Contributing, Code of Conduct, Security Policy, Support) are maintained at the [org level](https://github.com/TheDataEngineX/.github).
 
 ______________________________________________________________________
 
 ## Plugin System
 
-DEX includes a plugin system for extending the framework:
-
-```python
-from dataenginex.plugins import discover, PluginRegistry
-
-# Auto-discover installed plugins via entry_points
-plugins = discover()
-registry = PluginRegistry()
-for plugin in plugins:
-    registry.register(plugin)
-
-# Health check all plugins
-status = registry.health_check_all()
-```
-
-Create a plugin by implementing `DataEngineXPlugin` and adding an entry point in `pyproject.toml`:
+Extend the framework by implementing `DataEngineXPlugin` and registering an entry point:
 
 ```toml
+# pyproject.toml
 [project.entry-points."dataenginex.plugins"]
 my_plugin = "my_package.plugin:MyPlugin"
 ```
 
-## Streamlit Dashboard
+```python
+from dataenginex.plugins import discover, PluginRegistry
 
-DEX ships a configurable Streamlit dashboard for monitoring pipelines:
+plugins = discover()          # auto-loads all installed plugins
+registry = PluginRegistry()
+for plugin in plugins:
+    registry.register(plugin)
 
-```bash
-uv sync --group dashboard
-streamlit run examples/dashboard/run_dashboard.py
+status = registry.health_check_all()
 ```
 
-See [`examples/dashboard/`](examples/dashboard/) for configuration and usage.
+Official plugins: [datadex](https://github.com/TheDataEngineX/datadex) · [agentdex](https://github.com/TheDataEngineX/agentdex) · [careerdex](https://github.com/TheDataEngineX/careerdex)
 
 ______________________________________________________________________
 
-## The DEX Philosophy
+## The DEX Ecosystem
 
-DEX bridges **Data Engineering, Warehousing, ML, AI Agents, MLOps, and DevOps** into a unified, AI-ready platform. It is the technical infrastructure that moves AI from a research notebook to production.
+```
+dataenginex (core framework)
+    ├── datadex      — YAML-driven pipeline engine
+    ├── agentdex     — AI agent orchestration
+    ├── careerdex    — Career intelligence platform
+    └── dex-studio   — Desktop control plane UI
+
+infradex             — Terraform + Helm + Ansible (deploy everything)
+```
 
 ```mermaid
 flowchart LR
-    Ingest[Ingest] --> Process[Spark/Flink]
+    Ingest[Ingest] --> Process[Spark / Flink]
     Process --> Lakehouse[Lakehouse]
     Lakehouse --> Warehouse[Warehouse]
     Warehouse --> Features[Feature Store]
     Features --> Serve[Model Serving]
-    Serve --> Apps[AI Apps]
+    Serve --> Apps[AI Apps & Agents]
     subgraph Ops
         Terraform --> K8s --> GitOps
     end
@@ -206,26 +197,12 @@ flowchart LR
 
 ______________________________________________________________________
 
-## Quick Audit Prompt
+## License
 
-Audit this repository for deprecated, duplicated, or unnecessary code and documentation.
-Apply Up to Date System design, documentation.
-Apply DRY principles, remove outdated references, and ensure future‑proof, cloud‑agnostic design.
-Recommend only low‑cost, open‑source, maintainable solutions.
-Base all feedback strictly on the current repo structure.
-
-Generate a PyPI‑ready Markdown long_description for the next release of DEX.
-Follow PyPI best practices, keep it concise.
+DEX source code is open and free under the [MIT License](LICENSE).
+If you fork this project, keep attribution and license notices intact.
+The project identity is protected — see the [org Trademark Policy](https://github.com/TheDataEngineX/.github/blob/main/TRADEMARK_POLICY.md).
 
 ______________________________________________________________________
 
-## License and Brand Use
-
-- DEX source code is open and free to use under the [MIT License](LICENSE).
-- If you distribute forks, keep attribution and license notices intact.
-- The project name/identity is protected by policy: see [Trademark Policy](TRADEMARK_POLICY.md).
-- Please do not publish modified forks as if they are the official DataEngineX/DEX project.
-
-______________________________________________________________________
-
-**Version**: v0.6.0 | **License**: MIT
+**Version**: v0.6.0 | **License**: MIT | **Python**: 3.12+

@@ -1,42 +1,7 @@
 {
-  "autoUpdatesChannel": "latest",
   "permissions": {
     "allow": [
-      "Read",
-      "Edit",
-      "Bash(uv run poe *)",
-      "Bash(uv run uvicorn *)",
-      "Bash(uv lock *)",
-      "Bash(uv sync *)",
-      "Bash(curl *)",
-      "Bash(git status)",
-      "Bash(git diff *)",
-      "Bash(git log *)",
-      "Bash(git branch *)",
-      "Bash(git add *)",
-      "Bash(git commit *)",
-      "Bash(grep *)",
-      "Bash(find *)",
-      "Bash(cat *)",
-      "Bash(head *)",
-      "Bash(tail *)",
-      "Bash(wc *)",
-      "Bash(ls *)",
-      "Bash(pwd)",
-      "Bash(which *)",
-      "Bash(python -c *)",
-      "Bash(uv run python *)",
-      "Bash(llmfit *)",
-      "Bash(npx -y @upstash/context7-mcp*)"
-    ],
-    "deny": [
-      "Bash(rm -rf *)",
-      "Bash(git push --force*)",
-      "Bash(git reset --hard*)",
-      "Bash(pip install*)",
-      "Bash(sudo *)",
-      "Bash(chmod 777*)",
-      "Bash(curl * | bash*)"
+      "Bash(git add:*)"
     ]
   }
 }

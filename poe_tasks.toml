@@ -10,10 +10,6 @@ help = "Install dependencies and pre-commit hooks"
 shell = "uv sync --all-groups && uvx pre-commit install"
 help = "One-step setup: install all dependency groups and pre-commit hooks"
 
-[tool.poe.tasks.setup-system]
-shell = "bash scripts/setup-system.sh"
-help = "Install Linux/macOS system packages (git, java, docker, uv, trivy)"
-
 # Development
 [tool.poe.tasks.dev]
 cmd = "python examples/02_api_quickstart.py"

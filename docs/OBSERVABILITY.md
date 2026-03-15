@@ -785,8 +785,8 @@ ______________________________________________________________________
 **Deployment & Operations:**
 
 - **[CI/CD Pipeline](CI_CD.md)** - Automated deployments
-- **[Deployment Runbook](DEPLOY_RUNBOOK.md)** - Deploy procedures
-- **[Local K8s Setup](LOCAL_K8S_SETUP.md)** - Kubernetes setup
+- **Deployment Runbook** (in `infradex` repo) - Deploy procedures
+- **Local K8s Setup** (in `infradex` repo) - Kubernetes setup
 
 **Development:**
 

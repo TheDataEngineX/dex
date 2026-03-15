@@ -59,4 +59,4 @@ uv run poe check-all  # All of the above in one command
 - [Development Guide](DEVELOPMENT.md) — full setup, editor config, and workflow
 - [Architecture](ARCHITECTURE.md) — medallion layers, API design, ML lifecycle
 - [API Reference](api-reference/index.md) — auto-generated module docs
-- [Examples Guide](../examples/GUIDE.md) — full list of runnable examples
+- `examples/` directory — full list of runnable examples (01–10)

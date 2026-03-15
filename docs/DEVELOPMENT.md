@@ -213,6 +213,6 @@ uv run poe clean              # Remove caches and build artifacts
 - **Code Style**: See [CONTRIBUTING.md](./CONTRIBUTING.md)
 - **Architecture**: See [ARCHITECTURE.md](./ARCHITECTURE.md)
 - **ADRs**: See [ADR-0001](./adr/0001-medallion-architecture.md) for architectural decisions
-- **Deployment**: See [DEPLOY_RUNBOOK.md](./DEPLOY_RUNBOOK.md)
+- **Deployment**: See Deployment Runbook in the `infradex` repo
 - **Issues**: [GitHub Issues](https://github.com/TheDataEngineX/DEX/issues)
 - **Chat**: #dex-dev Slack channel
