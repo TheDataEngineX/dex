@@ -7,11 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-03-15
+
 ### Added
 
-- **Plugin system** — `DataEngineXPlugin` ABC, `PluginRegistry` with register/get/all/health_check_all, `discover()` for auto-loading plugins via `importlib.metadata` entry_points (`dataenginex.plugins` group)
-- **Streamlit dashboard** — `BaseDashboard` and `DashboardConfig` (Pydantic) with 4 reusable panels: pipeline status, quality scores, model drift, alerts. Optional `dashboard` dependency group (`streamlit>=1.40.0`)
-- **Coverage gate** — `--cov-fail-under=80` enforced in `test-cov-core` poe task
+- **`SentenceTransformerEmbedder`** — thin wrapper over `sentence-transformers` (`all-MiniLM-L6-v2` default). Install via `uv add 'dataenginex[ml]'`. Implements the `embed_fn` protocol for `RAGPipeline`.
+- **`RAGPipeline.answer(question, llm, ...)`** — full retrieve → augment → generate loop in one call. Combines `build_context` with any `LLMProvider.generate_with_context`.
+- **GitHub Actions upgraded to Node.js 24** — `ci.yml`, `pypi-publish.yml`, `release-dataenginex.yml`, `security.yml` now use `actions/checkout@v6`, `actions/setup-python@v6`, `astral-sh/setup-uv@v7`.
+- **`examples/05_rag_demo.py`** — end-to-end RAG demo with `--embed`, `--llm`, `--model` CLI flags; Ollama fallback to MockProvider; uses `RAGPipeline.answer()`.
 
 ## [0.6.0] - 2026-03-03
 
