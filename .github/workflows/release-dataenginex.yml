@@ -10,6 +10,12 @@ on:
       - main
     paths:
       - 'pyproject.toml'
+  workflow_dispatch:
+    inputs:
+      version_override:
+        description: "Override version (leave empty to use pyproject.toml)"
+        required: false
+        type: string
 
 permissions:
   contents: write
