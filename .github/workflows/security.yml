@@ -47,7 +47,7 @@ jobs:
           SLACK_WEBHOOK: ${{ env.SLACK_WEBHOOK }}
           REF: ${{ github.ref_name }}
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Run Trivy repo security scan
         uses: aquasecurity/trivy-action@0.35.0
         with:
@@ -82,7 +82,7 @@ jobs:
       matrix:
         language: [ python, actions ]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
         with:

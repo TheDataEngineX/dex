@@ -116,6 +116,14 @@ module = ["boto3.*", "google.auth.*", "google.cloud.*", "pyarrow.*"]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
+module = ["sentence_transformers.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["dataenginex.ml.vectorstore"]
+warn_unused_ignores = false  # sentence-transformers optional: ignore used in CI, unused when installed
+
+[[tool.mypy.overrides]]
 module = ["dataenginex.lakehouse.storage"]
 warn_unused_ignores = false  # pre-commit installs google-cloud-storage (ignore used), CI does not (ignore unused)
 
