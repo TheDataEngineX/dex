@@ -1,6 +1,6 @@
 # Development Setup Guide
 
-**Version**: v0.6.0 | **Updated**: March 14, 2026
+**Version**: `uv run poe version` | see `pyproject.toml`
 
 ## Prerequisites
 
@@ -23,10 +23,10 @@
 **One-command install** (Ubuntu/Debian, Fedora, Arch, macOS):
 
 ```bash
-bash scripts/setup-system.sh        # or: uv run poe setup-system
+uv run poe setup                    # install deps and pre-commit hooks
 ```
 
-This installs all system packages, uv, Docker, and optional tools, then verifies the setup.
+This installs all Python dependencies and configures pre-commit hooks.
 
 ### Cloud Credentials (Optional)
 
@@ -36,10 +36,7 @@ This installs all system packages, uv, Docker, and optional tools, then verifies
 ## Quick Start
 
 ```bash
-# 1. Install system dependencies (first time only)
-bash scripts/setup-system.sh
-
-# 2. Clone repo and create feature branch
+# 1. Clone repo and create feature branch
 git clone https://github.com/TheDataEngineX/DEX.git
 cd DEX
 git checkout -b feat/issue-XXX-description dev
@@ -63,7 +60,7 @@ DEX/
 ├── docs/                   # Documentation
 ├── monitoring/             # Local observability stack configs
 ├── .github/workflows/      # CI/CD pipelines
-├── pyproject.toml          # Project config (dataenginex 0.6.0)
+├── pyproject.toml          # Project config
 └── poe_tasks.toml          # Task definitions
 ```
 

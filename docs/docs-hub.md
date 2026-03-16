@@ -100,4 +100,4 @@ docs/
 
 ______________________________________________________________________
 
-**Version**: v0.6.0 | **Updated**: March 14, 2026
+**Version**: `uv run poe version` | see `pyproject.toml`

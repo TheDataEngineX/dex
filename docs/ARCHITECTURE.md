@@ -19,7 +19,7 @@ DEX is a unified framework that bridges **Data Engineering, Data Warehousing, Ma
 
 See [README.md](https://github.com/TheDataEngineX/DEX/blob/main/README.md) for the full philosophy and roadmap context.
 
-## Current State (v0.6.0 - Foundation + Data + ML Platform)
+## Current State (see `pyproject.toml` for version — Foundation + Data + ML Platform)
 
 ### Infrastructure Baseline (implemented)
 
@@ -37,7 +37,7 @@ See [README.md](https://github.com/TheDataEngineX/DEX/blob/main/README.md) for t
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                     DEX Platform (v0.6.0)                   │
+│                     DEX Platform                            │
 ├─────────────────────────────────────────────────────────────┤
 │                                                              │
 │  ┌──────────────────────────────────────────────────────┐   │
@@ -97,12 +97,10 @@ Organization project hub: `https://github.com/orgs/TheDataEngineX/projects`
 
 ### Phases (High Level)
 
-- **Phase 1: Foundation (v0.1.0)** ✅ — CI/CD, GitOps, multi‑env deployments
-- **Phase 2: Production Hardening (v0.2.0)** ✅ — observability, health probes, API quality
-- **Phase 3: Data Platform (v0.3.0)** ✅ — medallion architecture foundation, incremental data quality/schema implementation
-- **Phase 4: ML Platform (v0.4.0)** ✅ — training, registry, serving, monitoring
-- **Phase 5: Advanced Features (v0.5.0)** — auth, caching, analytics
-- **Phase 6: Production Ready (v1.0.0)** — DR, security, performance
+- **Phase 1: Foundation (v0.1–v0.2)** ✅ — CI/CD, GitOps, multi‑env deployments, observability, health probes
+- **Phase 2: Data + ML Platform (v0.3–v0.4)** ✅ — medallion architecture, data quality, training, registry, serving, monitoring
+- **Phase 3: Advanced ML + Ecosystem (v0.5–v0.6)** ✅ — RAG, LLM integration, drift detection, embeddings, plugin system, workspace expansion (datadex, agentdex, careerdex, dex-studio)
+- **Phase 4: Production Hardening (v0.7+)** — auth, caching, analytics, DR, security hardening, performance at scale
 
 For execution details, see GitHub Issues and [SDLC](SDLC.md).
 

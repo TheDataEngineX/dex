@@ -1,7 +1,7 @@
 # dataenginex Release Notes
 
 This document tracks published package releases for `dataenginex` only.
-Only include changes that modify files under `packages/dataenginex/src/dataenginex/**`.
+Only include changes that modify files under `src/dataenginex/**`.
 
 ## v0.3.5 - 2026-02-20
 
@@ -29,7 +29,7 @@ Only include changes that modify files under `packages/dataenginex/src/dataengin
 - Released package version `0.3.3`.
 - Tag: `v0.3.3`
 - Release title: `Release v0.3.3`
-- Changes in this release (`packages/dataenginex/src/dataenginex` only):
+- Changes in this release (`src/dataenginex` only):
   - Significant package expansion and refactor across API, core, data, lakehouse, middleware, ML, and warehouse modules.
   - Added/expanded API modules including auth, pagination, rate limiting, and v1 router wiring.
   - Consolidated middleware layout (logging, metrics, tracing) and moved logging config under middleware.
@@ -40,7 +40,7 @@ Only include changes that modify files under `packages/dataenginex/src/dataengin
 - Released package version `0.2.0`.
 - Tag: `v0.2.0`
 - Release title: `Release v0.2.0 - Production Hardening`
-- Changes in this release (`packages/dataenginex/src/dataenginex` only):
+- Changes in this release (`src/dataenginex` only):
   - Established core package structure and initial module organization.
   - Added API readiness/health behavior and improved probe handling.
   - Added structured request logging with request ID tracking.

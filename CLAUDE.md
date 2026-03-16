@@ -12,7 +12,7 @@
 
 **Stack:** Python 3.12+ · FastAPI · uv · Ruff · mypy strict · pytest · Docker · Kubernetes (ArgoCD)
 
-**Version:** dataenginex 0.6.0
+**Version:** `uv run poe version`
 
 ______________________________________________________________________
 
@@ -96,7 +96,7 @@ ______________________________________________________________________
 
 | File | Purpose |
 |------|---------|
-| `pyproject.toml` | Package config (dataenginex 0.6.0) |
+| `pyproject.toml` | Package config (version source of truth) |
 | `poe_tasks.toml` | All poe task definitions |
 | `src/dataenginex/` | Framework source |
 | `examples/` | Runnable examples (01–10) |

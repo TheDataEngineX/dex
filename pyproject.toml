@@ -145,7 +145,6 @@ filterwarnings = [
 branch = true
 source = ["dataenginex"]
 omit = [
-    "*/src/dataenginex/api/routers/ml.py",
     "*/src/dataenginex/dashboard/*",
 ]
 
