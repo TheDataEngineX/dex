@@ -8,8 +8,6 @@ on:
   push:
     branches:
       - main
-    paths:
-      - 'pyproject.toml'
   workflow_dispatch:
     inputs:
       version_override:

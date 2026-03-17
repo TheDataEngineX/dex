@@ -1,6 +1,6 @@
 [project]
 name = "dataenginex"
-version = "0.7.0"
+version = "0.7.1"
 description = "DataEngineX - Core framework for data engineering projects"
 authors = [
     {name = "Jay", email = "jayapal.myaka99@gmail.com"}
@@ -126,10 +126,6 @@ ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 module = ["boto3.*", "google.auth.*", "google.cloud.*", "google.api_core.*", "pyarrow.*"]
-ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = ["mlflow.*"]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
