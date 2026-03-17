@@ -112,7 +112,7 @@ jobs:
 
     steps:
       - name: Notify Package Build Start
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             if (!process.env.SLACK_WEBHOOK) return;
@@ -207,7 +207,7 @@ jobs:
 
       - name: Notify PyPI Publish Success
         if: success()
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             if (!process.env.SLACK_WEBHOOK) return;
@@ -240,7 +240,7 @@ jobs:
 
     steps:
       - name: Notify Publish Skipped
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             if (!process.env.SLACK_WEBHOOK) return;
