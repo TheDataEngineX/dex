@@ -5,6 +5,7 @@ Public API::
     from dataenginex.ml import (
         BaseTrainer, SklearnTrainer, TrainingResult,
         ModelRegistry, ModelArtifact, ModelStage,
+        MLflowModelRegistry, MLflowRegistryError,
         DriftDetector, DriftReport,
         DriftScheduler, DriftMonitorConfig, DriftCheckResult,
         ModelServer, PredictionRequest, PredictionResponse,
@@ -42,6 +43,7 @@ from .metrics import (
     model_prediction_latency_seconds,
     model_prediction_total,
 )
+from .mlflow_registry import MLflowModelRegistry, MLflowRegistryError
 from .registry import ModelArtifact, ModelRegistry, ModelStage
 from .scheduler import DriftCheckResult, DriftMonitorConfig, DriftScheduler
 from .serving import ModelServer, PredictionRequest, PredictionResponse
@@ -64,6 +66,8 @@ __all__ = [
     "ModelArtifact",
     "ModelRegistry",
     "ModelStage",
+    "MLflowModelRegistry",
+    "MLflowRegistryError",
     # Drift
     "DriftDetector",
     "DriftReport",
