@@ -8,13 +8,6 @@ on:
   release:
     types:
       - published
-  workflow_run:
-    workflows:
-      - Release DataEngineX
-    types:
-      - completed
-    branches:
-      - main
   workflow_dispatch:
     inputs:
       tag:
@@ -32,7 +25,6 @@ jobs:
   detect-dataenginex-changes:
     name: Detect DataEngineX Changes
     runs-on: ubuntu-latest
-    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     outputs:
       dataenginex_changed: ${{ steps.detect.outputs.dataenginex_changed }}
       previous_tag: ${{ steps.detect.outputs.previous_tag }}
@@ -177,7 +169,7 @@ jobs:
     name: Publish to TestPyPI
     runs-on: ubuntu-latest
     needs: [detect-dataenginex-changes, build-distributions]
-    if: contains(fromJson('["release","workflow_run","workflow_dispatch"]'), github.event_name) && needs.detect-dataenginex-changes.outputs.dataenginex_changed == 'true' && vars.TESTPYPI_ENVIRONMENT != ''
+    if: contains(fromJson('["release","workflow_dispatch"]'), github.event_name) && needs.detect-dataenginex-changes.outputs.dataenginex_changed == 'true' && vars.TESTPYPI_ENVIRONMENT != ''
     environment: ${{ vars.TESTPYPI_ENVIRONMENT }}
     permissions:
       id-token: write
@@ -198,7 +190,7 @@ jobs:
     name: Promote to PyPI
     runs-on: ubuntu-latest
     needs: [detect-dataenginex-changes, publish-testpypi]
-    if: contains(fromJson('["release","workflow_run","workflow_dispatch"]'), github.event_name) && needs.detect-dataenginex-changes.outputs.dataenginex_changed == 'true' && needs.detect-dataenginex-changes.outputs.approved_tag == 'true' && vars.PYPI_ENVIRONMENT != ''
+    if: contains(fromJson('["release","workflow_dispatch"]'), github.event_name) && needs.detect-dataenginex-changes.outputs.dataenginex_changed == 'true' && needs.detect-dataenginex-changes.outputs.approved_tag == 'true' && vars.PYPI_ENVIRONMENT != ''
     environment: ${{ vars.PYPI_ENVIRONMENT }}
     permissions:
       id-token: write
@@ -244,7 +236,7 @@ jobs:
     name: Skip PyPI Publish
     runs-on: ubuntu-latest
     needs: [detect-dataenginex-changes, publish-testpypi, publish-pypi]
-    if: always() && (!contains(fromJson('["release","workflow_run","workflow_dispatch"]'), github.event_name) || needs.detect-dataenginex-changes.outputs.dataenginex_changed == 'false' || needs.detect-dataenginex-changes.outputs.approved_tag == 'false')
+    if: always() && (!contains(fromJson('["release","workflow_dispatch"]'), github.event_name) || needs.detect-dataenginex-changes.outputs.dataenginex_changed == 'false' || needs.detect-dataenginex-changes.outputs.approved_tag == 'false')
 
     steps:
       - name: Notify Publish Skipped
@@ -259,8 +251,8 @@ jobs:
             const previousTag = process.env.PREVIOUS_TAG;
 
             let reason = '';
-            if (eventName !== 'release' && eventName !== 'workflow_run' && eventName !== 'workflow_dispatch') {
-              reason = 'Build validation only (no release/workflow_run/manual publish event)';
+            if (eventName !== 'release' && eventName !== 'workflow_dispatch') {
+              reason = 'Build validation only (no release/workflow_dispatch event)';
             } else if (dataenginexChanged === 'false') {
               reason = `No changes in src/dataenginex/ since ${previousTag}`;
             } else if (approvedTag === 'false') {
@@ -293,8 +285,8 @@ jobs:
 
       - name: Skip publish
         run: |
-          if [[ "${{ github.event_name }}" != "release" && "${{ github.event_name }}" != "workflow_run" && "${{ github.event_name }}" != "workflow_dispatch" ]]; then
-            echo "Build validation only: publish jobs run only for release:published, workflow_run, or workflow_dispatch events."
+          if [[ "${{ github.event_name }}" != "release" && "${{ github.event_name }}" != "workflow_dispatch" ]]; then
+            echo "Build validation only: publish jobs run only for release:published or workflow_dispatch events."
           elif [[ "${{ needs.detect-dataenginex-changes.outputs.dataenginex_changed }}" == "false" ]]; then
             echo "Skipping TestPyPI/PyPI publish: no changes in src/dataenginex/ since previous tag ${{ needs.detect-dataenginex-changes.outputs.previous_tag }}."
           elif [[ "${{ needs.detect-dataenginex-changes.outputs.approved_tag }}" == "false" ]]; then
