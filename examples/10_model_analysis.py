@@ -110,11 +110,13 @@ def drift_check(df: pyspark.sql.DataFrame) -> None:  # type: ignore[name-defined
     reference = [row.temperature for row in df.collect()]
     current = [row.prediction for row in df.collect()]
 
-    result = detector.detect(reference=reference, current=current, feature_name="temperature")
+    result = detector.check_feature(
+        reference=reference, current=current, feature_name="temperature"
+    )
     logger.info(
         "Drift detection: feature=temperature psi=%.4f drifted=%s",
-        result.psi if hasattr(result, "psi") else 0.0,
-        result.drifted if hasattr(result, "drifted") else False,
+        result.psi,
+        result.drift_detected,
     )
 
 
