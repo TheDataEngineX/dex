@@ -1210,7 +1210,7 @@ dev = [
 ml = [
     { name = "numpy", specifier = ">=2.4" },
     { name = "scikit-learn", specifier = ">=1.8.0" },
-    { name = "sentence-transformers", specifier = ">=2.0.0" },
+    { name = "sentence-transformers", specifier = ">=5.0.0" },
     { name = "xgboost", specifier = ">=3.2.0" },
 ]
 notebook = [

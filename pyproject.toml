@@ -64,7 +64,7 @@ ml = [
     "scikit-learn>=1.8.0",
     "xgboost>=3.2.0",
     "numpy>=2.4",
-    "sentence-transformers>=2.0.0",
+    "sentence-transformers>=5.0.0",
 ]
 # mlflow is in its own group — it pins pandas<3 which conflicts with notebook>=3.0
 # Install with: uv sync --group ml --group tracking
