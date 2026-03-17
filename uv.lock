@@ -1192,10 +1192,10 @@ provides-extras = ["cloud"]
 [package.metadata.requires-dev]
 dashboard = [{ name = "streamlit", specifier = ">=1.55.0" }]
 data = [
-    { name = "apache-airflow", specifier = ">=2.8.0,<3.0.0" },
+    { name = "apache-airflow", specifier = ">=2.8.0,<4.0.0" },
     { name = "databricks-cli" },
     { name = "pyspark", specifier = ">=4.1.1" },
-    { name = "requests", specifier = ">=2.32.5" },
+    { name = "requests", specifier = ">=2.32.0" },
 ]
 dev = [
     { name = "mkdocs-material", specifier = ">=9.7.0" },

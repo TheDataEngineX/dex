@@ -1,13 +1,17 @@
-"""MLflow-backed model registry (MLflow 3.x alias-based API).
+"""MLflow-backed model registry.
 
-MLflow 3.x replaced stage-based model management with aliases. Promotion
-is handled by assigning well-known aliases to specific model versions:
+Wraps MLflow's tracking and model registry APIs using the same
+``ModelRegistry`` interface.  Falls back gracefully when the MLflow
+server is unreachable — callers should catch ``MLflowRegistryError``
+and switch to ``ModelRegistry`` (JSON-backed) if needed.
 
-  DEX ModelStage  →  MLflow alias
-  DEVELOPMENT     →  (no alias — freshly registered versions)
-  STAGING         →  ``staging``
-  PRODUCTION      →  ``production``
-  ARCHIVED        →  ``archived``
+Stage mapping
+-------------
+DEX ``ModelStage``  →  MLflow stage
+DEVELOPMENT         →  None  (no MLflow stage; models start unregistered)
+STAGING             →  ``Staging``
+PRODUCTION          →  ``Production``
+ARCHIVED            →  ``Archived``
 """
 
 from __future__ import annotations
@@ -25,13 +29,14 @@ __all__ = [
     "MLflowRegistryError",
 ]
 
-# Alias names used for each non-development stage
-_ALIAS_MAP: dict[ModelStage, str] = {
-    ModelStage.STAGING: "staging",
-    ModelStage.PRODUCTION: "production",
-    ModelStage.ARCHIVED: "archived",
+# MLflow canonical stage strings
+_STAGE_MAP: dict[ModelStage, str] = {
+    ModelStage.DEVELOPMENT: "None",
+    ModelStage.STAGING: "Staging",
+    ModelStage.PRODUCTION: "Production",
+    ModelStage.ARCHIVED: "Archived",
 }
-_REVERSE_ALIAS_MAP: dict[str, ModelStage] = {v: k for k, v in _ALIAS_MAP.items()}
+_REVERSE_STAGE_MAP: dict[str, ModelStage] = {v: k for k, v in _STAGE_MAP.items()}
 
 _DEFAULT_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI", "http://localhost:5000")
 
@@ -52,9 +57,6 @@ def _get_client(tracking_uri: str) -> Any:
 
 class MLflowModelRegistry:
     """MLflow-backed model registry compatible with ``ModelRegistry``.
-
-    Uses MLflow 3.x alias-based model promotion. Promotion stages map to
-    well-known aliases (``staging``, ``production``, ``archived``).
 
     Parameters
     ----------
@@ -88,6 +90,7 @@ class MLflowModelRegistry:
                     }
                 )
 
+                # Register the model URI (use artifact_path if it's a local path)
                 model_uri = (
                     f"runs:/{run.info.run_id}/model"
                     if not artifact.artifact_path
@@ -120,7 +123,7 @@ class MLflowModelRegistry:
         return self._mv_to_artifact(mv)
 
     def get_latest(self, name: str) -> ModelArtifact | None:
-        """Return the highest version number for *name* regardless of alias."""
+        """Return the highest version number for *name* regardless of stage."""
         try:
             versions = self._client.search_model_versions(f"name='{name}'")
         except Exception:  # noqa: BLE001
@@ -133,13 +136,16 @@ class MLflowModelRegistry:
         return self._mv_to_artifact(latest)
 
     def get_production(self, name: str) -> ModelArtifact | None:
-        """Return the model version carrying the ``production`` alias."""
+        """Return the model currently in ``Production`` stage."""
         try:
-            mv = self._client.get_model_version_by_alias(name, "production")
+            versions = self._client.get_latest_versions(name, stages=["Production"])
         except Exception:  # noqa: BLE001
             return None
 
-        return self._mv_to_artifact(mv)
+        if not versions:
+            return None
+
+        return self._mv_to_artifact(versions[0])
 
     def list_models(self) -> list[str]:
         """Return all registered model names."""
@@ -160,51 +166,31 @@ class MLflowModelRegistry:
     # -- promotion -----------------------------------------------------------
 
     def promote(self, name: str, version: str, target_stage: ModelStage) -> ModelArtifact:
-        """Assign or remove the stage alias for a model version.
-
-        * ``STAGING`` / ``PRODUCTION`` / ``ARCHIVED`` — sets the corresponding
-          alias on *version* (MLflow moves the alias if it was on another version).
-        * ``DEVELOPMENT`` — removes all known stage aliases from *version*,
-          effectively demoting it back to an untagged state.
-        """
+        """Transition a model version to the target stage in MLflow."""
+        mlflow_stage = _STAGE_MAP[target_stage]
         try:
-            if target_stage == ModelStage.DEVELOPMENT:
-                # Demote: strip all known stage aliases from this version
-                mv = self._client.get_model_version(name, version)
-                for alias in getattr(mv, "aliases", []):
-                    if alias in _REVERSE_ALIAS_MAP:
-                        self._client.delete_registered_model_alias(name, alias)
-            else:
-                alias = _ALIAS_MAP[target_stage]
-                self._client.set_registered_model_alias(name, alias, version)
+            mv = self._client.transition_model_version_stage(
+                name=name,
+                version=version,
+                stage=mlflow_stage,
+                archive_existing_versions=(target_stage == ModelStage.PRODUCTION),
+            )
         except Exception as exc:
             raise MLflowRegistryError(
-                f"Failed to promote {name!r} v{version} to {target_stage}: {exc}"
+                f"Failed to promote {name!r} v{version} to {mlflow_stage}: {exc}"
             ) from exc
 
-        logger.info("Promoted %s v%s → %s", name, version, target_stage)
-        mv = self._client.get_model_version(name, version)
+        logger.info(
+            "Promoted %s v%s → %s (MLflow stage=%s)", name, version, target_stage, mlflow_stage
+        )
         return self._mv_to_artifact(mv)
 
     # -- helpers -------------------------------------------------------------
 
     def _mv_to_artifact(self, mv: Any) -> ModelArtifact:
-        """Convert an MLflow ModelVersion to a ``ModelArtifact``.
-
-        Stage is inferred from the version's aliases:
-        ``production`` > ``staging`` > ``archived`` > ``DEVELOPMENT``.
-        """
-        aliases: list[str] = list(getattr(mv, "aliases", []))
-        stage = ModelStage.DEVELOPMENT
-        for alias in aliases:
-            candidate = _REVERSE_ALIAS_MAP.get(alias)
-            if candidate == ModelStage.PRODUCTION:
-                stage = ModelStage.PRODUCTION
-                break
-            if candidate == ModelStage.STAGING:
-                stage = ModelStage.STAGING
-            elif candidate == ModelStage.ARCHIVED and stage == ModelStage.DEVELOPMENT:
-                stage = ModelStage.ARCHIVED
+        """Convert an MLflow ModelVersion object to a ``ModelArtifact``."""
+        stage_str = getattr(mv, "current_stage", "None") or "None"
+        stage = _REVERSE_STAGE_MAP.get(stage_str, ModelStage.DEVELOPMENT)
 
         creation_ts = getattr(mv, "creation_timestamp", None)
         created_at = (

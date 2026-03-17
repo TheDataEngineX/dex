@@ -55,8 +55,8 @@ dev = [
 data = [
     "pyspark>=4.1.1",
     "databricks-cli",
-    "apache-airflow>=2.8.0,<3.0.0",
-    "requests>=2.32.5",
+    "apache-airflow>=2.8.0,<4.0.0",
+    "requests>=2.32.0",
 ]
 notebook = [
     "ipykernel>=7.2.0",
@@ -126,6 +126,10 @@ ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 module = ["boto3.*", "google.auth.*", "google.cloud.*", "google.api_core.*", "pyarrow.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["mlflow.*"]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
