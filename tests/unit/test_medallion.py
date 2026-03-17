@@ -201,6 +201,7 @@ class TestDualStorage:
         assert ds.read_gold("ent", "ts") is None
 
     def test_bigquery_mode_creates_storage(self) -> None:
+        pytest.importorskip("google.cloud.bigquery", reason="google-cloud-bigquery required")
         with pytest.MonkeyPatch.context() as mp:
             mp.setattr(
                 "dataenginex.lakehouse.storage.bq_client.Client",

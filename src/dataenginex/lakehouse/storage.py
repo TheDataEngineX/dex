@@ -427,14 +427,12 @@ class BigQueryStorage(StorageBackend):
         self.dataset = dataset
         self.location = location
 
-        if not _HAS_BIGQUERY:
-            logger.warning(
-                "google-cloud-bigquery not installed — BigQueryStorage operations will fail"
-            )
-            self._client = None
-        elif client is not None:
+        if client is not None:
             self._client = client
             logger.info("BigQueryStorage initialised with injected client for %s", project_id)
+        elif not _HAS_BIGQUERY:
+            logger.warning("google-cloud-bigquery not installed — install dataenginex[cloud]")
+            self._client = None
         else:
             self._client = bq_client.Client(project=project_id, location=location)
             logger.info("BigQueryStorage initialised for project %s", project_id)
@@ -460,11 +458,17 @@ class BigQueryStorage(StorageBackend):
         try:
             records = data if isinstance(data, list) else [data]
             table_ref = self._table_ref(path)
-            job_config = bq_client.LoadJobConfig(
-                source_format=bq_client.SourceFormat.NEWLINE_DELIMITED_JSON,
-                autodetect=True,
-                write_disposition=bq_client.WriteDisposition.WRITE_APPEND,
-            )
+            job_config: Any = None
+            try:
+                from google.cloud import bigquery as bq  # noqa: PLC0415
+
+                job_config = bq.LoadJobConfig(
+                    source_format=bq.SourceFormat.NEWLINE_DELIMITED_JSON,
+                    autodetect=True,
+                    write_disposition=bq.WriteDisposition.WRITE_APPEND,
+                )
+            except ImportError:
+                pass  # injected client (tests) — job_config left as None
             job = self._client.load_table_from_json(
                 records,
                 table_ref,
@@ -569,16 +573,18 @@ class GCSStorage(StorageBackend):
             logger.warning("google-cloud-storage not installed — GCSStorage operations will fail")
             self._bucket = None
         else:
-            from google.auth import credentials as ga_credentials
-
             if api_endpoint:
-                # Use anonymous credentials for local emulators
-                anon = ga_credentials.AnonymousCredentials()  # type: ignore[no-untyped-call]
+                # Use anonymous credentials + ClientOptions for local emulators
+                from google.api_core.client_options import ClientOptions  # noqa: PLC0415
+                from google.auth.credentials import (
+                    AnonymousCredentials,  # type: ignore[import-untyped]  # noqa: PLC0415, E501
+                )
+
                 client = gcs_storage.Client(
                     project=project or "test-project",
-                    credentials=anon,
+                    credentials=AnonymousCredentials(),  # type: ignore[no-untyped-call]
+                    client_options=ClientOptions(api_endpoint=api_endpoint),
                 )
-                client._connection.API_BASE_URL = api_endpoint
             else:
                 client = gcs_storage.Client(project=project)
             self._bucket = client.bucket(bucket)

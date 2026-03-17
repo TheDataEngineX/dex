@@ -1,6 +1,6 @@
 [project]
 name = "dataenginex"
-version = "0.6.1"
+version = "0.7.0"
 description = "DataEngineX - Core framework for data engineering projects"
 authors = [
     {name = "Jay", email = "jayapal.myaka99@gmail.com"}
@@ -9,28 +9,31 @@ readme = "src/dataenginex/README.md"
 requires-python = ">=3.12"
 license = {file = "LICENSE"}
 dependencies = [
-    "pydantic>=2.0.0",
-    "python-dotenv>=1.2.0",
-    "pyyaml>=6.0.2",
+    "pydantic>=2.10.0",
+    "python-dotenv>=1.2.1",
+    "pyyaml>=6.0.3",
     "loguru>=0.7.3",
     "httpx>=0.28.0",
-    "prometheus-client>=0.24.0",
+    "prometheus-client>=0.24.1",
     # API framework
-    "fastapi>=0.128.4",
-    "uvicorn>=0.40.0",
+    "fastapi>=0.135.1",
+    "uvicorn>=0.42.0",
     "structlog>=25.5.0",
     "python-json-logger>=4.0.0",
-    "opentelemetry-api>=1.39.0",
-    "opentelemetry-sdk>=1.39.0",
-    "opentelemetry-instrumentation-fastapi>=0.60b1",
-    "opentelemetry-exporter-otlp>=1.39.0",
-    "email-validator>=2.0.0",
-    # Cloud storage
-    "boto3>=1.35.0",
-    "google-cloud-storage>=2.18.0",
-    "google-cloud-bigquery>=3.30.0",
+    "opentelemetry-api>=1.40.0",
+    "opentelemetry-sdk>=1.40.0",
+    "opentelemetry-instrumentation-fastapi>=0.61b0",
+    "opentelemetry-exporter-otlp>=1.40.0",
+    "email-validator>=2.3.0",
     # Data formats
-    "pyarrow>=18.0.0",
+    "pyarrow>=23.0.1",
+]
+
+[project.optional-dependencies]
+cloud = [
+    "boto3>=1.42.0",
+    "google-cloud-storage>=3.0.0",
+    "google-cloud-bigquery>=3.40.0",
 ]
 
 [dependency-groups]
@@ -38,15 +41,15 @@ dev = [
     "pytest>=9.0.2",
     "pytest-cov>=7.0.0",
     "pytest-asyncio>=1.3.0",
-    "ruff>=0.15.0",
-    "mypy>=1.19.0",
+    "ruff>=0.15.6",
+    "mypy>=1.19.1",
     "types-pyyaml>=6.0.12.20250822",
     "types-requests>=2.32.4.20260107",
-    "poethepoet>=0.40.0",
+    "poethepoet>=0.42.0",
     "uv>=0.10.0",
     "zensical>=0.0.24",
-    "mkdocs-material>=9.6.0",
-    "mkdocstrings[python]>=0.28.0",
+    "mkdocs-material>=9.7.0",
+    "mkdocstrings[python]>=1.0.0",
     "pre-commit>=4.5.1",
 ]
 data = [
@@ -61,22 +64,22 @@ notebook = [
     "pandas>=3.0",
 ]
 ml = [
-    "scikit-learn>=1.6.0",
-    "xgboost>=3.0.0",
+    "scikit-learn>=1.8.0",
+    "xgboost>=3.2.0",
     "numpy>=2.4",
-    "sentence-transformers>=2.0.0",
+    "sentence-transformers>=5.3.0",
 ]
 # mlflow is in its own group — it pins pandas<3 which conflicts with notebook>=3.0
 # Install with: uv sync --group ml --group tracking
 tracking = [
-    "mlflow>=2.19",
+    "mlflow>=3.0",
 ]
 dashboard = [
-    "streamlit>=1.40.0",
+    "streamlit>=1.55.0",
 ]
 
 [build-system]
-requires = ["hatchling>=1.25.0"]
+requires = ["hatchling>=1.29.0"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
@@ -122,7 +125,11 @@ module = ["structlog.*", "loguru.*", "prometheus_client.*", "opentelemetry.*", "
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
-module = ["boto3.*", "google.auth.*", "google.cloud.*", "pyarrow.*"]
+module = ["boto3.*", "google.auth.*", "google.cloud.*", "google.api_core.*", "pyarrow.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["mlflow.*"]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
