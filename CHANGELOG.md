@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-03-17
+
+### Fixed
+
+- **MLflow 3.x alias API** — `MLflowModelRegistry` now uses the alias-based API (`get_model_version_by_alias`, `set_registered_model_alias`, `delete_registered_model_alias`). MLflow 3.x removed all stage-based model management (`get_latest_versions`, `transition_model_version_stage`, `current_stage`).
+- **Release workflow reliability** — removed `paths: - 'pyproject.toml'` filter from `release-dataenginex.yml`. GitHub suppresses all push-event workflow triggers when a commit modifies `.github/workflows/`; the tag-exists check inside the workflow handles no-ops.
+- **Duplicate mypy override** — removed duplicate `[[tool.mypy.overrides]] module = ["mlflow.*"]` in `pyproject.toml` left by merge conflict.
+
+### Changed
+
+- **Cloud SDKs now optional** — `boto3`, `google-cloud-storage`, `google-cloud-bigquery` moved from core dependencies to `[project.optional-dependencies] cloud = [...]`. Install via `pip install dataenginex[cloud]`. Core install no longer requires any cloud SDK.
+- **GCS emulator updated for 3.x** — `GCSStorage` now uses `ClientOptions(api_endpoint=...)` instead of the removed private `client._connection.API_BASE_URL`.
+- **Dependency floors bumped** — pydantic 2.10, fastapi 0.135.1, pyarrow 23.0.1, sentence-transformers 5.3, mlflow 3.0, hatchling 1.29, mkdocstrings 1.0.
+
 ## [0.6.1] - 2026-03-15
 
 ### Added
