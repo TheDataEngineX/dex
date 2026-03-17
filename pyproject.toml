@@ -47,9 +47,9 @@ dev = [
     "types-requests>=2.32.4.20260107",
     "poethepoet>=0.42.0",
     "uv>=0.10.0",
-    "zensical>=0.0.24",
+    "zensical>=0.0.19",
     "mkdocs-material>=9.7.0",
-    "mkdocstrings[python]>=1.0.0",
+    "mkdocstrings[python]>=0.29.0",
     "pre-commit>=4.5.1",
 ]
 data = [
