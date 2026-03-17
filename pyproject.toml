@@ -66,6 +66,11 @@ ml = [
     "numpy>=2.4",
     "sentence-transformers>=2.0.0",
 ]
+# mlflow is in its own group — it pins pandas<3 which conflicts with notebook>=3.0
+# Install with: uv sync --group ml --group tracking
+tracking = [
+    "mlflow>=2.19",
+]
 dashboard = [
     "streamlit>=1.40.0",
 ]
@@ -83,6 +88,11 @@ default-groups = ["dev"]
 conflicts = [
     [
         { group = "dashboard" },
+        { group = "notebook" },
+    ],
+    # mlflow requires pandas<3; notebook requires pandas>=3.0
+    [
+        { group = "tracking" },
         { group = "notebook" },
     ],
 ]
@@ -116,6 +126,10 @@ module = ["boto3.*", "google.auth.*", "google.cloud.*", "pyarrow.*"]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
+module = ["mlflow.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
 module = ["sentence_transformers.*"]
 ignore_missing_imports = true
 
@@ -145,7 +159,6 @@ filterwarnings = [
 branch = true
 source = ["dataenginex"]
 omit = [
-    "*/src/dataenginex/api/routers/ml.py",
     "*/src/dataenginex/dashboard/*",
 ]
 

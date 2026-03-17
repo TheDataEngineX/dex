@@ -62,7 +62,7 @@ DEX/
 │
 ├── Dockerfile                 # Multi-stage, non-root, port 8000
 ├── docker-compose.test.yml    # S3 + GCS emulators for integration tests
-├── pyproject.toml             # Package config (dataenginex 0.6.0)
+├── pyproject.toml             # Package config
 └── poe_tasks.toml             # Task runner (poe)
 ```
 
@@ -205,4 +205,4 @@ The project identity is protected — see the [org Trademark Policy](https://git
 
 ______________________________________________________________________
 
-**Version**: v0.6.0 | **License**: MIT | **Python**: 3.12+
+**Version**: [![PyPI](https://img.shields.io/pypi/v/dataenginex)](https://pypi.org/project/dataenginex/) | **License**: MIT | **Python**: 3.12+

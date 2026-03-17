@@ -61,18 +61,18 @@ DEX is a single-package repo:
 
 The **root `pyproject.toml`** defines the package and test config:
 
-- `name = "dataenginex"`, `version = "0.6.0"`
+- `name = "dataenginex"`, `version = "<current>"` (see `pyproject.toml`)
 - `[tool.hatch.build.targets.wheel] packages = ["src/dataenginex"]`
 - Dependency groups: `dev` (required), `data` (PySpark/Airflow), `notebook` (pandas), `ml` (sentence-transformers), `dashboard` (streamlit)
 
-**CI workflow** (`ci.yml`) runs in a single pipeline:
+**CI workflow** (`ci.yml`) runs in a single job (`poe lint` → `poe typecheck` → `pytest`):
 
-- `lint-and-test` job: `uv sync` + `poe lint/test-cov`
-- `integration-test` job (optional, label/dispatch): `uv sync --group data --group notebook`
+- Single `ci` job: `uv sync --all-extras` + `poe lint` + `poe typecheck` + `pytest --cov`
+- `concurrency: cancel-in-progress: true` — stale runs cancelled on new push
+- `paths-ignore` — skips CI on doc-only changes
 
-### Separate Validation
+### Release Automation
 
-- **Package validation** (`package-validation.yml`): Runs on every push to `main`/`dev` and `src/dataenginex/**` PR changes → builds wheel + twine check
 - **Release automation**: `release-dataenginex.yml` watches root `pyproject.toml` for version changes → creates `dataenginex-vX.Y.Z` tag + release
 - **PyPI publishing** (`pypi-publish.yml`): Triggered by DataEngineX release → detects changes in `src/dataenginex/` since last tag → publishes to PyPI
 
@@ -146,19 +146,19 @@ ______________________________________________________________________
 **What it does**:
 
 1. Detects version bump in root `pyproject.toml`
-1. Extracts version (e.g., `0.6.0`)
-1. Creates git tag: `dataenginex-v0.6.0`
+1. Extracts version (e.g., `1.2.3`)
+1. Creates git tag: `dataenginex-v<version>`
 1. Creates GitHub release → **automatically triggers `pypi-publish.yml`**
 
 **How to release DataEngineX**:
 
 ```bash
-# Update version in root pyproject.toml
-version = "0.6.0"
+# Bump version (patch/minor/major)
+uv run poe version-patch  # or version-minor / version-major
 
 # Commit and push
-git add pyproject.toml
-git commit -m "chore: bump dataenginex to 0.6.0"
+git add pyproject.toml uv.lock
+git commit -m "chore: bump dataenginex to $(uv run poe version)"
 git push origin main
 ```
 
@@ -196,7 +196,7 @@ DataEngineX version bump → release-dataenginex.yml → GitHub release → pypi
 **Manual trigger** (if needed):
 
 ```bash
-gh workflow run pypi-publish.yml -f tag=dataenginex-v0.6.0
+gh workflow run pypi-publish.yml -f tag=dataenginex-v<version>
 ```
 
 ______________________________________________________________________
@@ -226,11 +226,11 @@ PyPI does not support deleting releases, but you can:
 
 ```bash
 # Delete tag locally and remotely
-git tag -d dataenginex-v0.6.0
-git push origin :refs/tags/dataenginex-v0.6.0
+git tag -d dataenginex-v<version>
+git push origin :refs/tags/dataenginex-v<version>
 
 # Delete the GitHub release via gh CLI
-gh release delete dataenginex-v0.6.0 --yes
+gh release delete dataenginex-v<version> --yes
 ```
 
 ______________________________________________________________________
@@ -400,7 +400,7 @@ gh run list --workflow ci.yml
 gh run view <run-id> --log
 
 # Manual PyPI publish
-gh workflow run pypi-publish.yml -f tag=dataenginex-v0.6.0
+gh workflow run pypi-publish.yml -f tag=dataenginex-v<version>
 
 # Promote to production (dev → main PR)
 ./scripts/promote.sh

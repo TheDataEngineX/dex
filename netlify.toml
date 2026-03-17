@@ -1,0 +1,11 @@
+[build]
+  command   = "pip install uv && uv sync --group dev && uv run mkdocs build"
+  publish   = "site"
+
+[build.environment]
+  PYTHON_VERSION = "3.12"
+
+[[redirects]]
+  from   = "/*"
+  to     = "/index.html"
+  status = 200
