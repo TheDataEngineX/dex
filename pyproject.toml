@@ -52,7 +52,7 @@ dev = [
 data = [
     "pyspark>=4.1.1",
     "databricks-cli",
-    "apache-airflow>=2.8.0,<3.0.0",
+    "apache-airflow>=2.8.0,<4.0.0",
     "requests>=2.32.0",
 ]
 notebook = [
