@@ -161,7 +161,7 @@ examples/                 # Runnable example scripts
 ### Core Stack (Confirmed)
 
 - **API**: FastAPI + Uvicorn
-- **Language**: Python 3.12+
+- **Language**: Python 3.13+
 - **Package Management**: uv (dependencies/env) + Hatchling (build backend)
 - **Container**: Docker
 - **Orchestration**: Kubernetes + ArgoCD
