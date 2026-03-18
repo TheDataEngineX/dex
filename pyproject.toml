@@ -1,6 +1,6 @@
 [project]
 name = "dataenginex"
-version = "0.8.1"
+version = "0.8.2"
 description = "DataEngineX - Core framework for data engineering projects"
 authors = [
     {name = "Jay", email = "jayapal.myaka99@gmail.com"}
