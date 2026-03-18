@@ -30,7 +30,7 @@ jobs:
 
     steps:
       - name: Notify Release Start
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         if: always()
         with:
           script: |
@@ -125,19 +125,13 @@ jobs:
             --generate-notes \
             --draft=false
 
-      - name: Set up Python for SBOM generation
-        if: steps.check_tag.outputs.tag_exists == 'false'
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.12"
-
       - name: Generate CycloneDX SBOM
         if: steps.check_tag.outputs.tag_exists == 'false'
         run: |
-          pip install cyclonedx-bom
-          cyclonedx-py environment \
-            --output sbom-dataenginex-${{ steps.version.outputs.version }}.json \
-            --output-format json
+          # --output/-o and --of replace the old --output/--output-format flags (cyclonedx-bom 7+)
+          uvx --from cyclonedx-bom cyclonedx-py environment \
+            -o sbom-dataenginex-${{ steps.version.outputs.version }}.json \
+            --of json
           echo "SBOM generated: sbom-dataenginex-${{ steps.version.outputs.version }}.json"
 
       - name: Upload SBOM to release
@@ -151,7 +145,7 @@ jobs:
 
       - name: Notify Release Success
         if: success() && steps.check_tag.outputs.tag_exists == 'false'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             if (!process.env.SLACK_WEBHOOK) return;
@@ -179,7 +173,7 @@ jobs:
 
       - name: Notify Release Failure
         if: failure()
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             if (!process.env.SLACK_WEBHOOK) return;
