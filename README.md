@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/TheDataEngineX/DEX/actions/workflows/ci.yml/badge.svg?branch=dev)](https://github.com/TheDataEngineX/DEX/actions/workflows/ci.yml)
 [![PyPI](https://img.shields.io/pypi/v/dataenginex)](https://pypi.org/project/dataenginex/)
-[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Coverage](https://img.shields.io/badge/coverage-94%25-brightgreen)](https://github.com/TheDataEngineX/DEX)
 [![Security](https://img.shields.io/badge/security-Trivy%20%7C%20CodeQL-blue)](docs/SECURITY_SCANNING.md)
@@ -88,7 +88,7 @@ Raw Sources (APIs, files, streams)
 
 | Layer | Technology |
 |---|---|
-| Language | Python 3.12+ |
+| Language | Python 3.13+ |
 | Package Manager | uv + Hatchling |
 | Web Framework | FastAPI + Uvicorn |
 | Orchestration | Apache Airflow |
@@ -205,4 +205,4 @@ The project identity is protected — see the [org Trademark Policy](https://git
 
 ______________________________________________________________________
 
-**Version**: [![PyPI](https://img.shields.io/pypi/v/dataenginex)](https://pypi.org/project/dataenginex/) | **License**: MIT | **Python**: 3.12+
+**Version**: [![PyPI](https://img.shields.io/pypi/v/dataenginex)](https://pypi.org/project/dataenginex/) | **License**: MIT | **Python**: 3.13+
