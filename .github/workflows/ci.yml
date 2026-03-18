@@ -17,8 +17,6 @@ jobs:
       - uses: astral-sh/setup-uv@v7
         with:
           version: "latest"
-      - uses: actions/setup-python@v6
-        with:
           python-version: "3.13"
       - run: uv sync --all-extras
       - run: uv run poe lint
@@ -50,8 +48,6 @@ jobs:
       - uses: astral-sh/setup-uv@v7
         with:
           version: "latest"
-      - uses: actions/setup-python@v6
-        with:
           python-version: "3.13"
       - run: uv sync --all-extras
       - run: uv run poe typecheck
@@ -64,8 +60,6 @@ jobs:
       - uses: astral-sh/setup-uv@v7
         with:
           version: "latest"
-      - uses: actions/setup-python@v6
-        with:
           python-version: "3.13"
       - run: uv sync --all-extras
       - run: uv run pytest tests/ -x --tb=short -q --cov=dataenginex --cov-report=xml
