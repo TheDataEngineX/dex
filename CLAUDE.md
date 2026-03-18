@@ -10,7 +10,7 @@
 |---------|----------|---------|
 | `dataenginex` | `src/dataenginex/` | Core framework (FastAPI, middleware, observability, quality gates, ML registry) |
 
-**Stack:** Python 3.12+ · FastAPI · uv · Ruff · mypy strict · pytest · Docker · Kubernetes (ArgoCD)
+**Stack:** Python 3.13+ · FastAPI · uv · Ruff · mypy strict · pytest · Docker · Kubernetes (ArgoCD)
 
 **Version:** `uv run poe version`
 
@@ -86,7 +86,7 @@ ______________________________________________________________________
 
 ### Infrastructure
 
-- Docker: multi-stage, Python 3.12-slim, non-root `dex` user
+- Docker: multi-stage, Python 3.13-slim, non-root `dex` user
 - Kubernetes: Kustomize base + overlays (dev, prod)
 - ArgoCD GitOps: `dev` → dex-dev, `main` → dex
 

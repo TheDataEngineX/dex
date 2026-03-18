@@ -46,7 +46,7 @@ streamlit run examples/dashboard/run_dashboard.py
 
 ## Prerequisites
 
-- Python ≥ 3.12
+- Python ≥ 3.13
 - `uv` installed (`pip install uv`)
 - For ML examples (01–06): `uv sync` (scikit-learn included via dev deps)
 - For PySpark examples (07–10): `uv sync --group data` + Java runtime (set `JAVA_HOME`)
