@@ -18,6 +18,7 @@ on:
 permissions:
   contents: write
   packages: read
+  actions: write
 
 env:
   SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
@@ -142,6 +143,17 @@ jobs:
           gh release upload "${{ steps.version.outputs.tag }}" \
             "sbom-dataenginex-${{ steps.version.outputs.version }}.json" \
             --clobber
+
+      - name: Trigger PyPI Publish
+        if: steps.check_tag.outputs.tag_exists == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # GITHUB_TOKEN cannot trigger release:published from a workflow, but
+          # it can dispatch workflow_dispatch — so we call pypi-publish directly.
+          gh workflow run pypi-publish.yml \
+            --ref main \
+            --field tag=${{ steps.version.outputs.tag }}
 
       - name: Notify Release Success
         if: success() && steps.check_tag.outputs.tag_exists == 'false'

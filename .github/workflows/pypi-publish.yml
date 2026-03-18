@@ -139,15 +139,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v6
+      - name: Set up uv + Python 3.13
+        uses: astral-sh/setup-uv@v7
         with:
-          python-version: "3.12"
-
-      - name: Install uv
-        run: |
-          curl -LsSf https://astral.sh/uv/install.sh | sh
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          version: "latest"
+          python-version: "3.13"
 
       - name: Build package
         run: |
