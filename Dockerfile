@@ -6,7 +6,7 @@
 # ===============================================================
 
 # --- Stage 1: Build dependencies ---
-FROM python:3.12-slim AS builder
+FROM python:3.13-slim AS builder
 
 WORKDIR /build
 
@@ -29,7 +29,7 @@ ENV UV_PROJECT_ENVIRONMENT=/build/.venv \
 RUN /root/.local/bin/uv sync --frozen --no-dev
 
 # --- Stage 2: Minimal runtime image ---
-FROM python:3.12-slim
+FROM python:3.13-slim
 
 WORKDIR /app
 
