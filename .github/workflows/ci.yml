@@ -23,11 +23,18 @@ jobs:
       - run: uv sync --all-extras
       - run: uv run poe lint
       - name: Check workspace.env version matches pyproject.toml
-        if: ${{ hashFiles('../.github/workspace.env') != '' }}
+        # workspace.env is gitignored — never present in CI. Use a shell -f check
+        # instead of hashFiles(), which is sandboxed to the checkout dir and
+        # cannot resolve ../ paths, causing the job to crash at evaluation time.
         run: |
           set -euo pipefail
+          WORKSPACE_ENV="../.github/workspace.env"
+          if [[ ! -f "$WORKSPACE_ENV" ]]; then
+            echo "workspace.env not found — skipping version drift check"
+            exit 0
+          fi
           PYPROJECT_VERSION=$(python3 -c "import tomllib; t=tomllib.load(open('pyproject.toml','rb')); print(t['project']['version'])")
-          WORKSPACE_VERSION=$(grep '^VERSION_DEX=' ../.github/workspace.env | cut -d= -f2)
+          WORKSPACE_VERSION=$(grep '^VERSION_DEX=' "$WORKSPACE_ENV" | cut -d= -f2)
           if [[ "$PYPROJECT_VERSION" != "$WORKSPACE_VERSION" ]]; then
             echo "Version drift: pyproject.toml=$PYPROJECT_VERSION but workspace.env=$WORKSPACE_VERSION"
             echo "Re-run .github/scripts/setup-workspace.sh to fix."
