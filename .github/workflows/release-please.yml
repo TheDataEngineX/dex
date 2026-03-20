@@ -1,0 +1,11 @@
+name: Release Please
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  release:
+    uses: TheDataEngineX/.github/.github/workflows/release-please.yml@main
+    secrets: inherit

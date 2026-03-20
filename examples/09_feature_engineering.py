@@ -36,6 +36,7 @@ def create_spark() -> SparkSession:
         .appName("DEX-FeatureEngineering")
         .config("spark.ui.enabled", "false")
         .config("spark.driver.bindAddress", "127.0.0.1")
+        .config("spark.sql.ansi.enabled", "true")
         .getOrCreate()
     )
 

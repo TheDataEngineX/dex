@@ -3,10 +3,20 @@
 from __future__ import annotations
 
 import abc
-from importlib.metadata import entry_points
+from importlib.metadata import PackageNotFoundError, entry_points
+from importlib.metadata import version as _pkg_version
 from typing import Any
 
 from loguru import logger
+
+
+def get_package_version(package_name: str) -> str:
+    """Return the installed version of *package_name*, or ``"0.0.0"`` if not found."""
+    try:
+        return str(_pkg_version(package_name))
+    except PackageNotFoundError:
+        return "0.0.0"
+
 
 __all__ = [
     "DataEngineXPlugin",

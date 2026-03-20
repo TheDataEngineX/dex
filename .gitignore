@@ -82,3 +82,6 @@ site/
 
 # Notes
 Notes.txt
+
+# Claude Code — local overrides (personal, never commit)
+.claude/settings.local.json
