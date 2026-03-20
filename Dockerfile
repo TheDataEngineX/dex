@@ -54,7 +54,7 @@ ENV PATH="/app/.venv/bin:$PATH" \
 USER dex
 
 # Expose FastAPI default port
-EXPOSE 8000
+EXPOSE 17000
 
 # Start the example API server (override CMD to use your own app entry point)
 CMD ["python", "examples/02_api_quickstart.py"]

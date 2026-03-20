@@ -1,33 +1,30 @@
-# DataEngineX Release Automation
-# Triggered when pyproject.toml version changes on main.
-# Creates git tag + GitHub release, which triggers pypi-publish.yml.
+# DataEngineX Release Post-Processing
+# Triggered when release-please creates a GitHub Release (release:published).
+# Generates a CycloneDX SBOM and attaches it to the release.
+# PyPI publishing is handled by pypi-publish.yml (also triggers on release:published).
 
 name: Release DataEngineX
 
 on:
-  push:
-    branches:
-      - main
+  release:
+    types: [published]
   workflow_dispatch:
     inputs:
-      version_override:
-        description: "Override version (leave empty to use pyproject.toml)"
+      tag:
+        description: "Release tag to attach SBOM to (e.g., v0.8.7)"
         required: false
         type: string
 
 permissions:
   contents: write
-  packages: read
-  actions: write
 
 env:
   SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
 
 jobs:
   release-dataenginex:
-    name: Release DataEngineX Package
+    name: Attach SBOM to Release
     runs-on: ubuntu-latest
-    if: github.event.repository.default_branch == github.ref_name
 
     steps:
       - name: Notify Release Start
@@ -41,12 +38,12 @@ jobs:
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                  text: '💎 DataEngineX Core Package Release Started',
+                  text: '💎 DataEngineX Release Post-Processing Started',
                   blocks: [{
                     type: 'section',
                     text: {
                       type: 'mrkdwn',
-                      text: `*💎 DataEngineX Release Process Started*\n*Core Package Library for PyPI*\n*Branch:* main`
+                      text: `*💎 DataEngineX Release Post-Processing*\n*Tag:* ${process.env.TAG}\n*Generating SBOM...*`
                     }
                   }]
                 })
@@ -54,114 +51,44 @@ jobs:
             } catch (e) { console.log('Slack notification failed'); }
         env:
           SLACK_WEBHOOK: ${{ env.SLACK_WEBHOOK }}
+          TAG: ${{ github.event.release.tag_name || inputs.tag }}
 
       - name: Checkout code
         uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up uv
         uses: astral-sh/setup-uv@v7
         with:
           version: "latest"
 
-      - name: Extract DataEngineX version
+      - name: Extract version from pyproject.toml
         id: version
         run: |
           VERSION=$(grep -m 1 "^version = " pyproject.toml | sed 's/version = "//;s/".*//')
           if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
-            echo "Invalid DataEngineX version in pyproject.toml: $VERSION"
+            echo "Invalid version in pyproject.toml: $VERSION"
             exit 1
           fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "tag=dataenginex-v$VERSION" >> "$GITHUB_OUTPUT"
-          echo "Extracted DataEngineX version: $VERSION"
-
-      - name: Extract DataEngineX changelog notes
-        id: changelog
-        run: |
-          CHANGELOG="CHANGELOG.md"
-          if [[ -f "$CHANGELOG" ]]; then
-            NOTES=$(awk "/^## \\[${{ steps.version.outputs.version }}\\]/{found=1; next} /^## \\[/{if(found) exit} found" "$CHANGELOG")
-            if [[ -z "$NOTES" ]]; then
-              NOTES="DataEngineX v${{ steps.version.outputs.version }} — see CHANGELOG.md for details."
-            fi
-          else
-            NOTES="DataEngineX v${{ steps.version.outputs.version }} — see RELEASE_NOTES.md for details."
-          fi
-          {
-            echo "notes<<CHANGELOG_EOF"
-            echo "$NOTES"
-            echo "CHANGELOG_EOF"
-          } >> "$GITHUB_OUTPUT"
-
-      - name: Check if tag already exists
-        id: check_tag
-        run: |
-          if git rev-parse "${{ steps.version.outputs.tag }}" >/dev/null 2>&1; then
-            echo "tag_exists=true" >> "$GITHUB_OUTPUT"
-            echo "Tag ${{ steps.version.outputs.tag }} already exists"
-          else
-            echo "tag_exists=false" >> "$GITHUB_OUTPUT"
-            echo "Tag ${{ steps.version.outputs.tag }} is new"
-          fi
-
-      - name: Configure git
-        if: steps.check_tag.outputs.tag_exists == 'false'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-      - name: Create git tag
-        if: steps.check_tag.outputs.tag_exists == 'false'
-        run: |
-          git tag -a "${{ steps.version.outputs.tag }}" -m "Release DataEngineX ${{ steps.version.outputs.tag }}"
-          git push origin "${{ steps.version.outputs.tag }}"
-
-      - name: Create GitHub Release
-        if: steps.check_tag.outputs.tag_exists == 'false'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release create "${{ steps.version.outputs.tag }}" \
-            --target main \
-            --title "DataEngineX ${{ steps.version.outputs.tag }}" \
-            --notes "${{ steps.changelog.outputs.notes }}" \
-            --generate-notes \
-            --draft=false
 
       - name: Generate CycloneDX SBOM
-        if: steps.check_tag.outputs.tag_exists == 'false'
         run: |
-          # --output/-o and --of replace the old --output/--output-format flags (cyclonedx-bom 7+)
           uvx --from cyclonedx-bom cyclonedx-py environment \
             -o sbom-dataenginex-${{ steps.version.outputs.version }}.json \
             --of json
           echo "SBOM generated: sbom-dataenginex-${{ steps.version.outputs.version }}.json"
 
-      - name: Upload SBOM to release
-        if: steps.check_tag.outputs.tag_exists == 'false'
+      - name: Attach SBOM to release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload "${{ steps.version.outputs.tag }}" \
+          RELEASE_TAG="${{ github.event.release.tag_name || inputs.tag }}"
+          gh release upload "$RELEASE_TAG" \
             "sbom-dataenginex-${{ steps.version.outputs.version }}.json" \
             --clobber
 
-      - name: Trigger PyPI Publish
-        if: steps.check_tag.outputs.tag_exists == 'false'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          # GITHUB_TOKEN cannot trigger release:published from a workflow, but
-          # it can dispatch workflow_dispatch — so we call pypi-publish directly.
-          gh workflow run pypi-publish.yml \
-            --ref main \
-            --field tag=${{ steps.version.outputs.tag }}
-
       - name: Notify Release Success
-        if: success() && steps.check_tag.outputs.tag_exists == 'false'
+        if: success()
         uses: actions/github-script@v8
         with:
           script: |
@@ -171,22 +98,21 @@ jobs:
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                  text: '✅ DataEngineX Core Package Released',
+                  text: '✅ DataEngineX Release Ready',
                   blocks: [{
                     type: 'section',
                     text: {
                       type: 'mrkdwn',
-                      text: `*✅ DataEngineX Release Created*\n*Core Package Library*\n*Version:* ${process.env.VERSION}\n*Tag:* ${process.env.TAG}\n*Release:* <${process.env.URL}|View Release>`
+                      text: `*✅ DataEngineX Release Ready*\n*Version:* ${process.env.VERSION}\n*SBOM attached*\n*Release:* <${process.env.URL}|View Release>`
                     }
                   }]
                 })
               });
-            } catch (e) { console.log('Slack notification failed'); }
+            } catch (e) { console.log('Slack notification failed:', e.message); }
         env:
           SLACK_WEBHOOK: ${{ env.SLACK_WEBHOOK }}
           VERSION: ${{ steps.version.outputs.version }}
-          TAG: ${{ steps.version.outputs.tag }}
-          URL: ${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ steps.version.outputs.tag }}
+          URL: ${{ github.event.release.html_url }}
 
       - name: Notify Release Failure
         if: failure()
@@ -199,28 +125,19 @@ jobs:
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                  text: '❌ DataEngineX Release Failed',
+                  text: '❌ DataEngineX Release Post-Processing Failed',
                   blocks: [
                     {
                       type: 'section',
-                      text: {
-                        type: 'mrkdwn',
-                        text: `*❌ DataEngineX Release Failed*`
-                      }
+                      text: { type: 'mrkdwn', text: `*❌ DataEngineX Release Post-Processing Failed*` }
                     },
                     {
                       type: 'section',
                       fields: [
-                        { type: 'mrkdwn', text: `*Workflow:*\nDataEngineX Release` },
-                        { type: 'mrkdwn', text: `*Branch:*\nmain` },
+                        { type: 'mrkdwn', text: `*Tag:*\n${process.env.TAG}` },
                         { type: 'mrkdwn', text: `*Commit:*\n\`${process.env.SHA?.substring(0, 8)}\`` },
-                        { type: 'mrkdwn', text: `*Triggered by:*\n${process.env.ACTOR}` },
                         { type: 'mrkdwn', text: `*Run:*\n<${process.env.URL}|View Details>` }
                       ]
-                    },
-                    {
-                      type: 'context',
-                      elements: [{ type: 'mrkdwn', text: `🏷️ DataEngineX release tag creation failed — check logs` }]
                     }
                   ]
                 })
@@ -228,6 +145,6 @@ jobs:
             } catch (e) { console.log('Slack notification failed:', e.message); }
         env:
           SLACK_WEBHOOK: ${{ env.SLACK_WEBHOOK }}
+          TAG: ${{ github.event.release.tag_name || inputs.tag }}
           SHA: ${{ github.sha }}
-          ACTOR: ${{ github.actor }}
           URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}

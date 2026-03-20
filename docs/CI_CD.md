@@ -54,8 +54,8 @@ ______________________________________________________________________
 DEX is a single-package repo:
 
 | Component | Location | Purpose | Release |
-|-----------|----------|---------|---------|
-| **dataenginex** | `src/dataenginex/` | Core framework (API, middleware, storage, ML) | PyPI (`dataenginex-vX.Y.Z`) |
+| --- | --- | --- | --- |
+| **dataenginex** | `src/dataenginex/` | Core framework (API, middleware, storage, ML) | PyPI (`v{version}`) |
 
 ### Unified Testing
 
@@ -73,8 +73,9 @@ The **root `pyproject.toml`** defines the package and test config:
 
 ### Release Automation
 
-- **Release automation**: `release-dataenginex.yml` watches root `pyproject.toml` for version changes → creates `dataenginex-vX.Y.Z` tag + release
-- **PyPI publishing** (`pypi-publish.yml`): Triggered by DataEngineX release → detects changes in `src/dataenginex/` since last tag → publishes to PyPI
+- **Release automation**: `release-please.yml` reads conventional commits → creates Release PR (bumps `pyproject.toml` + `CHANGELOG.md` + `uv.lock`) → on merge creates `v{version}` tag + GitHub Release
+- **Post-release**: `release-dataenginex.yml` generates CycloneDX SBOM and attaches it to the release
+- **PyPI publishing** (`pypi-publish.yml`): Triggered by GitHub release published → detects changes in `src/dataenginex/` since last `v*` tag → publishes to TestPyPI then PyPI
 
 ______________________________________________________________________
 
@@ -141,25 +142,24 @@ ______________________________________________________________________
 
 **Workflow**: [`.github/workflows/release-dataenginex.yml`](https://github.com/TheDataEngineX/DEX/blob/main/.github/workflows/release-dataenginex.yml)
 
-**Trigger**: Version change in root `pyproject.toml` on `main` branch
+**Trigger**: `release: types: [published]` — fires when release-please creates a GitHub Release
 
 **What it does**:
 
-1. Detects version bump in root `pyproject.toml`
-1. Extracts version (e.g., `1.2.3`)
-1. Creates git tag: `dataenginex-v<version>`
-1. Creates GitHub release → **automatically triggers `pypi-publish.yml`**
+1. Generates CycloneDX SBOM for the release
+1. Attaches `sbom-dataenginex-{version}.json` to the GitHub Release
 
 **How to release DataEngineX**:
 
-```bash
-# Bump version (patch/minor/major)
-uv run poe version-patch  # or version-minor / version-major
+Releases are fully automated via release-please. Push conventional commits to `main`; release-please creates the Release PR and tag.
 
-# Commit and push
-git add pyproject.toml uv.lock
-git commit -m "chore: bump dataenginex to $(uv run poe version)"
-git push origin main
+```bash
+# Monitor release-please PR
+gh pr list --label "autorelease: pending"
+
+# After merging the Release PR, monitor post-release workflows
+gh run list --workflow=pypi-publish.yml --limit 5
+gh run list --workflow=release-dataenginex.yml --limit 5
 ```
 
 ______________________________________________________________________
@@ -173,7 +173,7 @@ ______________________________________________________________________
 **What it does**:
 
 1. Receives GitHub release event from DataEngineX release
-1. Detects if files under `src/dataenginex/` actually changed since previous `dataenginex-vX.Y.Z` tag
+1. Detects if files under `src/dataenginex/` actually changed since previous `v{version}` tag
 1. If changes found:
    - Builds wheel distributions
    - Publishes to TestPyPI (dry-run)
@@ -184,19 +184,19 @@ ______________________________________________________________________
 
 - Only publishes if code actually changed (not just version bump in other files)
 - TestPyPI first for dry-run verification
-- PyPI promotion requires stable semver tag: `dataenginex-vMAJOR.MINOR.PATCH` (not `dataenginex-v1.2.3-rc1`)
+- PyPI promotion requires stable semver tag: `vMAJOR.MINOR.PATCH` (not `v1.2.3-rc1`)
 - Pre-release tags: publish to TestPyPI only
 
 **Automatic flow**:
 
-```
-DataEngineX version bump → release-dataenginex.yml → GitHub release → pypi-publish.yml → PyPI
+```text
+conventional commits → main → release-please Release PR → merge → v{version} tag + GitHub Release → pypi-publish.yml → PyPI
 ```
 
 **Manual trigger** (if needed):
 
 ```bash
-gh workflow run pypi-publish.yml -f tag=dataenginex-v<version>
+gh workflow run pypi-publish.yml -f tag=v<version>
 ```
 
 ______________________________________________________________________
@@ -226,11 +226,11 @@ PyPI does not support deleting releases, but you can:
 
 ```bash
 # Delete tag locally and remotely
-git tag -d dataenginex-v<version>
-git push origin :refs/tags/dataenginex-v<version>
+git tag -d v<version>
+git push origin :refs/tags/v<version>
 
 # Delete the GitHub release via gh CLI
-gh release delete dataenginex-v<version> --yes
+gh release delete v<version> --yes
 ```
 
 ______________________________________________________________________
@@ -365,13 +365,12 @@ ______________________________________________________________________
 ### Workflows Overview
 
 | Workflow | Trigger | Purpose | File |
-|----------|---------|---------|------|
-| **CI** (Primary) | `push main/dev`, PRs to main/dev | Lint, test, type-check (dev deps) | [.github/workflows/ci.yml](https://github.com/TheDataEngineX/DEX/blob/main/.github/workflows/ci.yml) |
-| **CI** (Integration) | PR label `full-test` or manual dispatch | Full test (data + notebook groups) | [.github/workflows/ci.yml](https://github.com/TheDataEngineX/DEX/blob/main/.github/workflows/ci.yml) |
-| **Security** | `push main/dev`, PRs to main/dev | CodeQL + Semgrep scans | [.github/workflows/security.yml](https://github.com/TheDataEngineX/DEX/blob/main/.github/workflows/security.yml) |
-| **Package** | Changes to `src/dataenginex/**` or `pyproject.toml` | Build wheel + twine check | [.github/workflows/package-validation.yml](https://github.com/TheDataEngineX/DEX/blob/main/.github/workflows/package-validation.yml) |
-| **Release DataEngineX** | Version change in root `pyproject.toml` on main | Extract version, create `dataenginex-vX.Y.Z` tag + release | [.github/workflows/release-dataenginex.yml](https://github.com/TheDataEngineX/DEX/blob/main/.github/workflows/release-dataenginex.yml) |
-| **PyPI Publish** | GitHub release (DataEngineX) published | Detect changes + publish dataenginex to TestPyPI/PyPI | [.github/workflows/pypi-publish.yml](https://github.com/TheDataEngineX/DEX/blob/main/.github/workflows/pypi-publish.yml) |
+| --- | --- | --- | --- |
+| **CI** | `push main/dev`, PRs to main/dev | Lint, test, type-check | [ci.yml](.github/workflows/ci.yml) |
+| **Security** | `push main/dev`, PRs to main/dev | CodeQL + Semgrep scans | [security.yml](.github/workflows/security.yml) |
+| **Release Please** | `push main` | Create/update Release PR with version bump + CHANGELOG | [release-please.yml](.github/workflows/release-please.yml) |
+| **Release DataEngineX** | GitHub release published | Generate + attach CycloneDX SBOM | [release-dataenginex.yml](.github/workflows/release-dataenginex.yml) |
+| **PyPI Publish** | GitHub release published | Detect changes + publish to TestPyPI/PyPI | [pypi-publish.yml](.github/workflows/pypi-publish.yml) |
 
 ### Local Commands
 
@@ -400,7 +399,7 @@ gh run list --workflow ci.yml
 gh run view <run-id> --log
 
 # Manual PyPI publish
-gh workflow run pypi-publish.yml -f tag=dataenginex-v<version>
+gh workflow run pypi-publish.yml -f tag=v<version>
 
 # Promote to production (dev → main PR)
 ./scripts/promote.sh
