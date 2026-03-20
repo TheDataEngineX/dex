@@ -20,10 +20,16 @@ Usage::
 
 from __future__ import annotations
 
-from dataenginex.plugins.registry import DataEngineXPlugin, PluginRegistry, discover
+from dataenginex.plugins.registry import (
+    DataEngineXPlugin,
+    PluginRegistry,
+    discover,
+    get_package_version,
+)
 
 __all__ = [
     "DataEngineXPlugin",
     "PluginRegistry",
     "discover",
+    "get_package_version",
 ]
