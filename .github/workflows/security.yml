@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main, dev]
 
+permissions:
+  contents: read
+  security-events: write
+
 jobs:
   security:
     uses: TheDataEngineX/.github/.github/workflows/security.yml@main
