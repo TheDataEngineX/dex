@@ -1,6 +1,6 @@
 [project]
 name = "dataenginex"
-version = "0.8.8"
+version = "0.8.9"
 description = "DataEngineX - Core framework for data engineering projects"
 authors = [
     {name = "Jay", email = "jayapal.myaka99@gmail.com"}
@@ -163,6 +163,8 @@ branch = true
 source = ["dataenginex"]
 omit = [
     "*/src/dataenginex/dashboard/*",
+    # Requires a live MLflow server — not available in CI (same as S3/GCS integration tests)
+    "*/src/dataenginex/ml/mlflow_registry.py",
 ]
 
 [tool.coverage.report]
