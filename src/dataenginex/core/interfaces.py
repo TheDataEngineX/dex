@@ -35,11 +35,11 @@ class BaseConnector(ABC):
         """Close connection."""
 
     @abstractmethod
-    def read(self, **kwargs: Any) -> Any:
+    def read(self, *, table: str, **kwargs: Any) -> Any:
         """Read data from the source."""
 
     @abstractmethod
-    def write(self, data: Any, **kwargs: Any) -> None:
+    def write(self, data: Any, *, table: str, **kwargs: Any) -> None:
         """Write data to the sink."""
 
     @abstractmethod
@@ -48,16 +48,24 @@ class BaseConnector(ABC):
 
 
 class BaseTransform(ABC):
-    """Interface for data transformation steps."""
+    """Interface for data transformation steps.
+
+    Transforms operate on DuckDB tables: given a connection and input table
+    name, they produce an output table and return its name.
+    """
 
     @property
-    @abstractmethod
     def name(self) -> str:
         """Human-readable transform name."""
+        return type(self).__name__
 
     @abstractmethod
-    def apply(self, data: Any) -> Any:
-        """Apply transformation and return result."""
+    def apply(self, conn: Any, input_table: str) -> str:
+        """Apply transformation to *input_table* and return output table name."""
+
+    def validate(self) -> list[str]:
+        """Return validation errors (empty list if valid)."""
+        return []
 
 
 # --- ML Layer ---

@@ -140,7 +140,7 @@ TheDataEngineX/
 | AD4 | SQLite for tracker, DuckDB for data | Different access patterns need different engines |
 | AD5 | Embeddings require explicit opt-in | sentence-transformers + ONNX are 500MB+; never auto-download |
 | AD6 | Project isolation via separate DuckDB files | Each `dex init` project gets its own `.dex/` directory |
-| AD7 | Python 3.12+ (not 3.14) | 3.12 is oldest supported with full type parameter syntax |
+| AD7 | Python 3.13+ | 3.13 is minimum supported; full type parameter syntax + improved error messages |
 | AD8 | Graceful degradation | Missing extras produce clear error messages, not crashes |
 
 ______________________________________________________________________

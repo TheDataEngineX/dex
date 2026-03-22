@@ -1,12 +1,12 @@
 [project]
 name = "dataenginex"
-version = "0.8.10"
+version = "0.8.11"
 description = "DataEngineX - Core framework for AI/ML/Data engineering projects"
 authors = [
     {name = "Jay", email = "jayapal.myaka99@gmail.com"}
 ]
 readme = "src/dataenginex/README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.13"
 license = {file = "LICENSE"}
 dependencies = [
     "pydantic>=2.10.0",

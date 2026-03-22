@@ -43,10 +43,19 @@ class PipelineError(DataEngineXError):
 class PipelineStepError(PipelineError):
     """A specific pipeline step failed."""
 
-    def __init__(self, step: str, cause: str) -> None:
+    def __init__(
+        self,
+        step: str,
+        cause: str = "",
+        *,
+        pipeline: str = "",
+        message: str = "",
+    ) -> None:
         self.step = step
-        self.cause = cause
-        super().__init__(f"Pipeline step '{step}' failed: {cause}")
+        self.pipeline = pipeline
+        self.cause = cause or message
+        prefix = f"[{pipeline}] " if pipeline else ""
+        super().__init__(f"{prefix}Pipeline step '{step}' failed: {self.cause}")
 
 
 # --- Registry ---

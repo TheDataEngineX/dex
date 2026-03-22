@@ -81,5 +81,9 @@ def version() -> None:
     console.print(f"Platform {platform.platform()}")
 
 
+from dataenginex.cli.run import run  # noqa: E402
+
+dex.add_command(run)
+
 if __name__ == "__main__":
     dex()
