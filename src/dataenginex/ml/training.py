@@ -21,8 +21,9 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from loguru import logger
+import structlog
 
+logger = structlog.get_logger()
 __all__ = [
     "BaseTrainer",
     "SklearnTrainer",
@@ -319,7 +320,7 @@ class SklearnTrainer(BaseTrainer):
             )
         )
 
-        logger.info("Saved model %s to %s", self.model_name, out)
+        logger.info("model saved", name=self.model_name, path=str(out))
         return str(out)
 
     def load(
@@ -361,4 +362,4 @@ class SklearnTrainer(BaseTrainer):
             extra_modules=extra_modules,
         ).load()
         self._is_fitted = True
-        logger.info("Loaded model %s from %s", self.model_name, path)
+        logger.info("model loaded", name=self.model_name, path=str(path))

@@ -20,9 +20,11 @@ import os
 from datetime import UTC, datetime
 from typing import Any
 
-from loguru import logger
+import structlog
 
 from .registry import ModelArtifact, ModelStage
+
+logger = structlog.get_logger()
 
 __all__ = [
     "MLflowModelRegistry",
@@ -67,7 +69,7 @@ class MLflowModelRegistry:
     def __init__(self, tracking_uri: str = _DEFAULT_TRACKING_URI) -> None:
         self._tracking_uri = tracking_uri
         self._client = _get_client(tracking_uri)
-        logger.info("MLflowModelRegistry connected to %s", tracking_uri)
+        logger.info("mlflow registry connected", uri=tracking_uri)
 
     # -- registration --------------------------------------------------------
 
@@ -179,7 +181,7 @@ class MLflowModelRegistry:
             ) from exc
 
         mv = self._client.get_model_version(name, version)
-        logger.info("Promoted %s v%s → %s", name, version, target_stage)
+        logger.info("model promoted", name=name, version=version, stage=str(target_stage))
         return self._mv_to_artifact(mv)
 
     # -- helpers -------------------------------------------------------------

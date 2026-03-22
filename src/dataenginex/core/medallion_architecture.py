@@ -24,8 +24,9 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
-from loguru import logger
+import structlog
 
+logger = structlog.get_logger()
 __all__ = [
     "BigQueryStorage",
     "DataLayer",
@@ -196,7 +197,7 @@ class LocalParquetStorage(StorageBackend):
 
     def __init__(self, base_path: str = "data") -> None:
         self.base_path = base_path
-        logger.info("Initialized local Parquet storage at %s", base_path)
+        logger.info("local parquet storage initialised", path=base_path)
 
     @staticmethod
     def _require_pyarrow() -> Any:  # noqa: ANN401
@@ -257,10 +258,10 @@ class LocalParquetStorage(StorageBackend):
                 raise TypeError(msg)
 
             pq.write_table(table, str(full_path), compression="snappy")
-            logger.info("Wrote %d rows to %s", len(table), full_path)
+            logger.info("wrote rows", count=len(table), path=str(full_path))
             return True
         except (TypeError, pa.ArrowInvalid) as exc:
-            logger.error("Failed to write to %s: %s", path, exc)
+            logger.error("write failed", path=path, exc=str(exc))
             return False
 
     def read(
@@ -277,30 +278,30 @@ class LocalParquetStorage(StorageBackend):
         full_path = Path(self.base_path) / path
 
         if not full_path.exists():
-            logger.warning("File not found: %s", full_path)
+            logger.warning("file not found", path=str(full_path))
             return None
 
         try:
             table = pq.read_table(str(full_path))
             records: list[dict[str, Any]] = table.to_pylist()
-            logger.info("Read %d rows from %s", len(records), full_path)
+            logger.info("read rows", count=len(records), path=str(full_path))
             return records
         except Exception as exc:
-            logger.error("Failed to read from %s: %s", path, exc)
+            logger.error("read failed", path=path, exc=str(exc))
             return None
 
     def delete(self, path: str) -> bool:
         """Delete a Parquet file from disk."""
         full_path = Path(self.base_path) / path
         if not full_path.exists():
-            logger.warning("Cannot delete — file not found: %s", full_path)
+            logger.warning("cannot delete — file not found", path=str(full_path))
             return False
         try:
             full_path.unlink()
-            logger.info("Deleted %s", full_path)
+            logger.info("deleted file", path=str(full_path))
             return True
         except OSError as exc:
-            logger.error("Failed to delete %s: %s", path, exc)
+            logger.error("delete failed", path=path, exc=str(exc))
             return False
 
     def list_objects(self, prefix: str = "") -> list[str]:
@@ -370,9 +371,9 @@ class DualStorage:
 
         if enable_bigquery and bigquery_project:
             self.bigquery_storage = BigQueryStorage(bigquery_project)
-            logger.info("Dual storage enabled: Local Parquet + BigQuery")
+            logger.info("dual storage enabled: local parquet + bigquery")
         else:
-            logger.info("Storage mode: Local Parquet only")
+            logger.info("storage mode: local parquet only")
 
     def _write_layer(self, layer: str, data: Any, key: str, timestamp: str) -> bool:
         """

@@ -19,7 +19,8 @@ Run:
 
 from __future__ import annotations
 
-from loguru import logger
+import structlog
+logger = structlog.get_logger()
 
 try:
     import pyspark.sql

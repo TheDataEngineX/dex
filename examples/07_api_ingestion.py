@@ -17,7 +17,8 @@ import os
 from datetime import UTC, datetime
 from typing import Any
 
-from loguru import logger
+import structlog
+logger = structlog.get_logger()
 
 from dataenginex.core.medallion_architecture import Layer, MedallionConfig
 from dataenginex.core.quality import QualityCheck, QualityGate, Severity

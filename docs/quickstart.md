@@ -5,21 +5,21 @@ Get a DataEngineX pipeline running in under five minutes.
 ## 1. Install
 
 ```bash
-git clone https://github.com/TheDataEngineX/DEX && cd DEX
+git clone https://github.com/TheDataEngineX/dataenginex && cd dataenginex
 uv sync            # Install Python deps
 ```
 
 ## 2. Run the Dev Server
 
 ```bash
-uv run poe dev     # Starts FastAPI on http://localhost:8000
+uv run poe dev     # Starts FastAPI on http://localhost:17000
 ```
 
 Verify it works:
 
 ```bash
-curl http://localhost:8000/health          # → {"status":"healthy"}
-curl http://localhost:8000/api/v1/data/sources | python3 -m json.tool
+curl http://localhost:17000/health          # → {"status":"healthy"}
+curl http://localhost:17000/ | python3 -m json.tool
 ```
 
 ## 3. Try an Example
@@ -43,7 +43,7 @@ uv run python examples/05_rag_demo.py
 uv run python examples/06_llm_quickstart.py
 ```
 
-All examples are in the [`examples/`](https://github.com/TheDataEngineX/DEX/tree/main/examples) directory with full descriptions in `examples/GUIDE.md`.
+All examples are in the [`examples/`](https://github.com/TheDataEngineX/dataenginex/tree/main/examples) directory with full descriptions in `examples/GUIDE.md`.
 
 ## 4. Run Tests
 

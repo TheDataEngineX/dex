@@ -32,11 +32,13 @@ from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Any
 
-from loguru import logger
+import structlog
 
 from dataenginex.core.medallion_architecture import DataLayer, MedallionArchitecture
 from dataenginex.core.validators import DataQualityChecks
 from dataenginex.data.profiler import DataProfiler, ProfileReport
+
+logger = structlog.get_logger()
 
 __all__ = [
     "QualityDimension",

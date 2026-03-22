@@ -21,12 +21,13 @@ from dataclasses import dataclass
 from hashlib import sha256
 from typing import Any
 
+import structlog
 from fastapi import Request
 from fastapi.responses import JSONResponse
-from loguru import logger
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.responses import Response
 
+logger = structlog.get_logger()
 __all__ = [
     "AuthMiddleware",
     "AuthUser",

@@ -14,8 +14,9 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from loguru import logger
+import structlog
 
+logger = structlog.get_logger()
 __all__ = [
     "SchemaRegistry",
     "SchemaVersion",
@@ -92,7 +93,7 @@ class SchemaRegistry:
         if schema.version in existing:
             raise ValueError(f"Schema {schema.name!r} version {schema.version} already registered")
         versions.append(schema)
-        logger.info("Registered schema %s v%s", schema.name, schema.version)
+        logger.info("schema registered", name=schema.name, version=schema.version)
         self._save()
         return schema
 
@@ -157,4 +158,4 @@ class SchemaRegistry:
                 )
                 for v in versions
             ]
-        logger.info("Loaded %d schemas from %s", len(self._schemas), self._persist_path)
+        logger.info("schemas loaded", count=len(self._schemas), path=str(self._persist_path))

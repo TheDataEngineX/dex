@@ -1,305 +1,150 @@
-# DEX Project Architecture & Roadmap
+# DataEngineX Architecture
 
-## Executive Summary
+## Overview
 
-**DEX (DataEngineX)** is evolving from a foundational API service into a complete data engineering and ML platform. We are following a phased approach: **Foundation → Core Features → Advanced Platform → Future Innovation**.
+**DataEngineX** is a unified Data + ML + AI framework that orchestrates industry tools through a single config-driven interface. One `dex.yaml` defines the entire pipeline.
 
-## DEX Philosophy
+**Design principle:** Opinionated defaults that work out of the box. Swap any layer for industry tools via extras.
 
-DEX is a unified framework that bridges **Data Engineering, Data Warehousing, Machine Learning, AI Agents, MLOps, and DevOps**. It focuses on building **AI‑ready infrastructure** that moves models from notebooks to production.
-
-**Portfolio Modules (Roadmap):**
-
-- dex-data (Spark/Flink/Kafka pipelines)
-- dex-warehouse (dbt + lakehouse/warehouse patterns)
-- dex-lakehouse (Iceberg/Delta datasets)
-- dex-ml (MLflow/Kubeflow + model serving)
-- dex-api (FastAPI feature/prediction APIs)
-- dex-ops (Terraform + Kubernetes + GitOps)
-
-See [README.md](https://github.com/TheDataEngineX/DEX/blob/main/README.md) for the full philosophy and roadmap context.
-
-## Current State (see `pyproject.toml` for version — Foundation + Data + ML Platform)
-
-### Infrastructure Baseline (implemented)
-
-- ✅ **CI/CD**: GitHub Actions — lint (ruff), type-check (mypy), test (pytest), build, push
-- ✅ **GitOps**: ArgoCD with branch-based deployment (dev/prod)
-- ✅ **Code Quality**: Ruff (0 errors), mypy strict (0 errors), 94% test coverage
-- ✅ **Pre-commit**: ruff + mypy + standard hooks
-- ✅ **Containerization**: Multi-stage Docker with non-root user, healthcheck
-- ✅ **Infrastructure-as-Code**: Kustomize overlays for all environments
-- ✅ **Observability**: Structured logging (structlog), Prometheus metrics, OpenTelemetry tracing
-- ✅ **Data Framework**: Medallion architecture (Bronze/Silver/Gold), data quality validators
-- ✅ **Security**: CodeQL, Trivy scanning, pip-audit, branch protection
-
-### Current Architecture
+## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                     DEX Platform                            │
-├─────────────────────────────────────────────────────────────┤
-│                                                              │
-│  ┌──────────────────────────────────────────────────────┐   │
-│  │  dataenginex (src/dataenginex/)                      │   │
-│  │  API + middleware + ML + data + lakehouse + plugins  │   │
-│  └──────────────────────────────────────────────────────┘   │
-│  Observability: Prometheus + OpenTelemetry + structlog      │
-│  Quality: Ruff + mypy + pytest (94% cov) + pre-commit      │
-└─────────────────────────────────────────────────────────────┘
-         │
-         ▼
-┌─────────────────────────────────────────────────────────────┐
-│              Kubernetes + ArgoCD (GitOps)                   │
-│   Environments: dev (2 pods, dex-dev), prod (3 pods, dex)    │
-└─────────────────────────────────────────────────────────────┘
+dex.yaml
+  │
+  ▼
+┌─────────────────────────────────────────────────────────┐
+│                    Config System                         │
+│  YAML → env var resolution → Pydantic validation         │
+│  Layering: base + overlay (dex.prod.yaml)                │
+└────────────────────┬────────────────────────────────────┘
+                     │
+        ┌────────────┼────────────┐
+        ▼            ▼            ▼
+┌──────────────┐ ┌──────────┐ ┌──────────────┐
+│  Data Layer  │ │ ML Layer │ │   AI Layer   │
+│              │ │          │ │              │
+│ Connectors   │ │ Tracker  │ │ LLM Provider │
+│ Transforms   │ │ Training │ │ Retriever    │
+│ Quality      │ │ Serving  │ │ Vector Store │
+│ Orchestrator │ │ Drift    │ │ Agent Runtime│
+│ Feature Store│ │          │ │              │
+└──────┬───────┘ └────┬─────┘ └──────┬───────┘
+       │              │              │
+       └──────────────┼──────────────┘
+                      ▼
+        ┌─────────────────────────┐
+        │    Backend Registry     │
+        │  Base* ABC + registry   │
+        │  Built-in or extras     │
+        └─────────────────────────┘
+                      │
+        ┌─────────────┼─────────────┐
+        ▼             ▼             ▼
+   Built-in       [dagster]     [mlflow]
+   (DuckDB,       (Dagster      (MLflow
+    croniter,      orchestration) tracking)
+    JSON tracker)
 ```
 
-## Target Architecture (v1.0.0 - Production Ready)
+## Core Patterns
 
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                     DEX Platform (v1.0.0)                           │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                      │
-│  ┌────────────────┐  ┌──────────────┐  ┌─────────────────┐        │
-│  │  FastAPI       │  │  Data        │  │  ML Model       │        │
-│  │  Service       │  │  Pipelines   │  │  Serving        │        │
-│  │                │  │              │  │                 │        │
-│  │ • Auth (JWT)   │  │ • Ingestion  │  │ • Training      │        │
-│  │ • Validation   │  │ • Transform  │  │ • Inference     │        │
-│  │ • Logging      │  │ • Quality    │  │ • Monitoring    │        │
-│  │ • Metrics      │  │ • Scheduling │  │ • Registry      │        │
-│  └────────────────┘  └──────────────┘  └─────────────────┘        │
-│         │                   │                    │                  │
-│         └───────────────────┴────────────────────┘                  │
-│                             │                                       │
-├─────────────────────────────┼───────────────────────────────────────┤
-│  ┌───────────┐  ┌──────────┐│  ┌────────┐  ┌──────────────┐       │
-│  │PostgreSQL │  │  Redis   ││  │ MinIO  │  │   MLflow     │       │
-│  │  (OLTP)   │  │ (Cache)  ││  │(Object)│  │ (Experiments)│       │
-│  └───────────┘  └──────────┘│  └────────┘  └──────────────┘       │
-└─────────────────────────────┼───────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│        Observability Layer (Prometheus, Grafana, Loki)              │
-│        GitOps (ArgoCD) + Secret Management (Sealed Secrets)         │
-│        Kubernetes Cluster (HPA, Resource Limits, Health Checks)     │
-└─────────────────────────────────────────────────────────────────────┘
+### Backend Registry
+
+Every subsystem follows the same pattern:
+
+1. **ABC** in `core/interfaces.py` — defines the contract (e.g. `BaseConnector`)
+2. **BackendRegistry[T]** in `core/registry.py` — discovers and registers implementations
+3. **Built-in** implements the ABC with zero external deps
+4. **Extras** implement the same ABC, swapped in via config
+
+```python
+from dataenginex.core.registry import BackendRegistry
+from dataenginex.core.interfaces import BaseConnector
+
+connector_registry: BackendRegistry[BaseConnector] = BackendRegistry("connector")
+
+@connector_registry.decorator("csv")
+class CsvConnector(BaseConnector):
+    ...
 ```
 
-## Roadmap Overview
+### Config System
 
-The detailed roadmap is tracked in GitHub Issues/Milestones with CSV export in `docs/roadmap/project-roadmap.csv` as canonical documentation source.
+- Single `dex.yaml` → Pydantic validation → typed `DexConfig` object
+- Env var interpolation: `${VAR:-default}`
+- Overlay layering: `dex.yaml` + `dex.prod.yaml`
+- Cross-reference validation (pipeline sources, dependencies)
+- Only `project.name` is required; everything else has defaults
 
-Organization project hub: `https://github.com/orgs/TheDataEngineX/projects`
+### Exception Hierarchy
 
-### Phases (High Level)
-
-- **Phase 1: Foundation (v0.1–v0.2)** ✅ — CI/CD, GitOps, multi‑env deployments, observability, health probes
-- **Phase 2: Data + ML Platform (v0.3–v0.4)** ✅ — medallion architecture, data quality, training, registry, serving, monitoring
-- **Phase 3: Advanced ML + Ecosystem (v0.5–v0.6)** ✅ — RAG, LLM integration, drift detection, embeddings, plugin system, workspace expansion (datadex, agentdex, careerdex, dex-studio)
-- **Phase 4: Production Hardening (v0.7+)** — auth, caching, analytics, DR, security hardening, performance at scale
-
-For execution details, see GitHub Issues and [SDLC](SDLC.md).
-
-## Modular Monolith Strategy
-
-### Current Module Structure
+All framework exceptions inherit from `DataEngineXError`:
 
 ```
-src/dataenginex/          # Core framework
-├── api/                  # FastAPI app, health, auth, errors, pagination
-├── core/                 # Medallion architecture, validators, schemas
-├── dashboard/            # Streamlit dashboard (panels, config)
-├── data/                 # Connectors, profiler, schema registry
-├── lakehouse/            # Catalog, partitioning, storage
-├── ml/                   # Training, registry, serving, drift, LLM, vectorstore
-├── middleware/           # Logging, metrics, tracing, request handling
-├── plugins/              # Plugin system (ABC, registry, discovery)
-└── warehouse/            # Transforms, lineage
-
-examples/                 # Runnable example scripts
-├── 01_hello_pipeline.py  # Minimal medallion pipeline
-├── 02_api_quickstart.py  # FastAPI server
-├── 03_quality_gate.py    # Quality gate checks
-├── 04_ml_training.py     # ML model training + registration
-├── 05_rag_demo.py        # RAG pipeline
-├── 06_llm_quickstart.py  # LLM provider quickstart
-├── 07_api_ingestion.py   # HTTP API ingestion with medallion
-├── 08_spark_ml.py        # PySpark feature engineering + training
-├── 09_feature_engineering.py  # Time/lag/rolling features
-└── 10_model_analysis.py  # Drift detection + prediction analysis
+DataEngineXError
+├── ConfigError → ConfigValidationError
+├── PipelineError → PipelineStepError
+├── RegistryError
+├── BackendNotInstalledError
+├── TrainingError
+├── ServingError
+└── AgentError → LLMProviderError
 ```
 
-### Service Extraction Criteria
+## Tech Stack
 
-**When to Extract a Service:**
+| Component | Built-in | Extra |
+|-----------|----------|-------|
+| Data Engine | DuckDB | PySpark (`[spark]`) |
+| Orchestration | croniter scheduler | Dagster (`[dagster]`) |
+| ML Tracking | JSON-based | MLflow (`[mlflow]`) |
+| Model Serving | Built-in HTTP | BentoML (`[serving]`) |
+| LLM Provider | Ollama / LiteLLM | Any OpenAI-compatible |
+| Vector Store | DuckDB VSS | Qdrant, LanceDB (`[vectors]`) |
+| Retrieval | BM25 + Dense + Hybrid | ColBERT (`[colbert]`) |
+| Embeddings | — (requires opt-in) | sentence-transformers (`[embeddings]`) |
+| Feature Store | DuckDB-based | Feast (`[feast]`) |
+| API Framework | FastAPI + Uvicorn | — |
+| Logging | structlog | — |
+| Config | Pydantic + YAML | — |
+| CLI | Click + Rich | — |
 
-1. **Independent Scaling**: Different resource requirements (e.g., GPU for ML)
-1. **Team Ownership**: Separate team needs autonomy
-1. **Technology Diversity**: Different tech stack required
-1. **Deployment Frequency**: Needs to deploy independently
-1. **Fault Isolation**: Failures shouldn't cascade
+## Deployment Tiers
 
-**First Extraction Candidate: ML Model Serving**
+| Tier | Target | Infrastructure |
+|------|--------|---------------|
+| 1 | Laptop | `pip install dataenginex && dex serve` |
+| 2 | VPS | `docker compose up` on Hetzner (~15/mo) |
+| 3 | Production | K3s/EKS/GKE with Helm + ArgoCD |
 
-- GPU scaling independent from API
-- Polyglot support (TensorFlow Serving, TorchServe)
-- High-frequency model updates
-- Separate SLA requirements
-
-**Not Extracting Yet:**
-
-- Data pipelines (shared storage, orchestration overhead)
-- API endpoints (low latency requirements)
-- Analytics (tightly coupled to data layer)
-
-## Technology Decisions
-
-### Core Stack (Confirmed)
-
-- **API**: FastAPI + Uvicorn
-- **Language**: Python 3.13+
-- **Package Management**: uv (dependencies/env) + Hatchling (build backend)
-- **Container**: Docker
-- **Orchestration**: Kubernetes + ArgoCD
-- **CI/CD**: GitHub Actions
-
-### Infrastructure Additions (v0.2.0+)
-
-- **Observability**: Prometheus, Grafana, Loki, OpenTelemetry
-- **Database**: PostgreSQL (OLTP)
-- **Cache**: Redis
-- **Object Storage**: MinIO (default) / S3-compatible adapters
-- **Secrets**: Sealed Secrets
-
-### Data & ML Stack (v0.5.0+)
-
-- **Orchestration**: Apache Airflow
-- **ML Tracking**: MLflow (preferred) or Weights & Biases
-- **BI Tool**: Metabase (preferred) or Superset
-- **Data Quality**: Great Expectations
-- **Feature Store**: Feast (future)
-
-## Development Workflow
-
-### 1. Planning Phase
+## Ecosystem
 
 ```
-TODO.md → GitHub Issue (using template) → Add to Project Board → Assign Milestone
+TheDataEngineX/
+├── dataenginex    — Core framework (PyPI: dataenginex)
+├── dex-studio     — Web UI (NiceGUI) — single pane of glass
+└── infradex       — Terraform + Helm + K3s deployment
 ```
 
-### 2. Development Phase
+- **Container images:** `ghcr.io/thedataenginex/dataenginex`
+- **Docs:** `docs.dataenginex.org` (Cloudflare Pages)
+- **Domain:** `dataenginex.org`
 
-```
-Create branch → Develop → Test locally → Commit with #issue → Push
-```
+## Key Design Decisions
 
-### 3. Review Phase
-
-```
-Create PR → CI checks → Code review → Merge to main
-```
-
-### 4. Deployment Phase
-
-```
-CI builds image → CD updates manifests → ArgoCD syncs → Monitor
-```
-
-### 5. Promotion Flow
-
-```
-dev (auto) → prod (PR promotion via main branch)
-```
-
-## Risk Management
-
-### High Priority Risks
-
-1. **Complexity Creep**: Too many features, slow delivery
-
-   - **Mitigation**: Strict prioritization, MVP mindset
-
-1. **Technical Debt**: Fast iteration sacrifices quality
-
-   - **Mitigation**: 20% time for refactoring, code reviews
-
-1. **Infrastructure Costs**: Cloud bills spiral
-
-   - **Mitigation**: Resource limits, cost monitoring, right-sizing
-
-1. **Security Gaps**: Auth/secrets not implemented early
-
-   - **Mitigation**: Phase 5 prioritizes security hardening
-
-### Medium Priority Risks
-
-1. **Data Quality Issues**: Bad data in production
-
-   - **Mitigation**: Data quality framework in Phase 3
-
-1. **Model Drift**: Models degrade over time
-
-   - **Mitigation**: Monitoring and automated retraining in Phase 4
-
-1. **Scaling Bottlenecks**: Performance issues at scale
-
-   - **Mitigation**: Load testing, HPA, caching
-
-## Success Metrics
-
-### v0.2.0 (Production Hardening)
-
-- API uptime: >99%
-- P99 latency: \<200ms
-- Test coverage: >80%
-- Zero critical security vulnerabilities
-
-### v0.3.0 (Data Platform) ✅
-
-- Pipeline success rate: >95%
-- Data freshness: \<1 hour delay
-- Data quality checks: 100% passing
-- Pipeline runtime: \<30 minutes
-
-### v0.4.0 (ML Platform) ✅
-
-- Model deployment time: \<5 minutes
-- Model accuracy: >baseline
-- Inference latency: \<100ms
-- Drift detection: active
-
-### v1.0.0 (Production)
-
-- SLA: 99.9% uptime
-- RTO: \<1 hour
-- Cost per request: \<$0.001
-- Customer satisfaction: >4/5
-
-## Next Actions
-
-1. **Immediate** (This Sprint):
-
-   - Database integration (PostgreSQL)
-   - Authentication (JWT + API keys)
-   - Cache layer (Redis)
-
-1. **Short Term** (Next 2 Sprints):
-
-   - ML experiment tracking (MLflow)
-   - Model serving endpoints
-   - Feature store integration
-
-1. **Medium Term** (Next Quarter):
-
-   - Complete v1.0.0 production readiness
-   - Performance tuning and load testing
+| ID | Decision | Rationale |
+|----|----------|-----------|
+| AD1 | FastAPI is core dependency | Required by API, health, metrics — not optional |
+| AD2 | structlog only (no loguru) | One logging standard across entire codebase |
+| AD3 | DuckDB single-writer via asyncio queue | Serialized writes avoid WAL conflicts |
+| AD4 | SQLite for tracker, DuckDB for data | Different access patterns need different engines |
+| AD5 | Embeddings require explicit opt-in | sentence-transformers + ONNX are 500MB+; never auto-download |
+| AD6 | Project isolation via separate DuckDB files | Each `dex init` project gets its own `.dex/` directory |
+| AD7 | Python 3.12+ (not 3.14) | 3.12 is oldest supported with full type parameter syntax |
+| AD8 | Graceful degradation | Missing extras produce clear error messages, not crashes |
 
 ______________________________________________________________________
 
-**Last Updated**: 2026-03-14
-**Document Owner**: Project Lead
-**Review Cadence**: Bi-weekly
+**Spec:** See `docs/superpowers/specs/2026-03-21-dataenginex-v2-system-redesign.md` for full design.
+
+**Last Updated:** 2026-03-21

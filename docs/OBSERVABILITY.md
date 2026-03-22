@@ -153,7 +153,7 @@ scrape_configs:
     metrics_path: '/metrics'
 ```
 
-If you run the API outside Docker, use `localhost:8000` as the target.
+If you run the API outside Docker, use `localhost:17000` as the target.
 
 ### Grafana Dashboard
 
@@ -333,7 +333,7 @@ ______________________________________________________________________
 
 ## Grafana Dashboards
 
-Prebuilt dashboards are available in [monitoring/grafana](https://github.com/TheDataEngineX/DEX/blob/main/monitoring/grafana/GUIDE.md):
+Prebuilt dashboards are available in [monitoring/grafana](https://github.com/TheDataEngineX/dataenginex/blob/main/monitoring/grafana/GUIDE.md):
 
 - **DEX Metrics**: request rate, latency, error rate, in-flight.
 - **DEX Logs**: log volume, error spikes, recent logs, and request IDs (Loki).
@@ -367,7 +367,7 @@ uv run poe api
 
 2. **Test metrics endpoint**:
 ```bash
-curl http://localhost:8000/metrics
+curl http://localhost:17000/metrics
 ````
 
 **Expected output:**
@@ -382,15 +382,15 @@ http_requests_total{endpoint="/",method="GET",status="200"} 1.0
 3. **Generate traffic to see metrics**:
    ```bash
    # Make some requests
-   curl http://localhost:8000/
-   curl http://localhost:8000/health
+   curl http://localhost:17000/
+   curl http://localhost:17000/health
    ```
 
-curl http://localhost:8000/ready
+curl http://localhost:17000/ready
 
 # Check updated metrics
 
-curl http://localhost:8000/metrics
+curl http://localhost:17000/metrics
 
 ````
 
@@ -436,7 +436,7 @@ uv run poe api
 3. **Generate traces**:
 ```bash
 # Make several requests
-for i in {1..10}; do curl http://localhost:8000/; done
+for i in {1..10}; do curl http://localhost:17000/; done
 ````
 
 4. **View traces in Jaeger UI**:
@@ -456,7 +456,7 @@ uv run poe api
 Make a request and check console output:
 
 ```bash
-curl http://localhost:8000/
+curl http://localhost:17000/
 ```
 
 **Console output:**
@@ -581,7 +581,7 @@ ______________________________________________________________________
 
 ### Prometheus alert rules (SLO-aligned)
 
-The actual rule definitions live in `monitoring/alerts/dataenginex-alerts.yml`. They expose three alerts—latency, error rate, and saturation—each scoped by `environment` so the thresholds can reflect the traffic patterns for dev, stage, and prod. Every alert annotation links to the [deployment runbook](https://github.com/TheDataEngineX/DEX/blob/main/docs/DEPLOY_RUNBOOK.md).
+The actual rule definitions live in `monitoring/alerts/dataenginex-alerts.yml`. They expose three alerts—latency, error rate, and saturation—each scoped by `environment` so the thresholds can reflect the traffic patterns for dev, stage, and prod. Every alert annotation links to the [deployment runbook](https://github.com/TheDataEngineX/dataenginex/blob/main/docs/DEPLOY_RUNBOOK.md).
 
 | Alert | Environment | Threshold | Severity | Receiver |
 |-------|-------------|-----------|----------|----------|
@@ -615,7 +615,7 @@ kubectl apply -f monitoring/alertmanager.yml
 kubectl rollout restart deployment/alertmanager
 ```
 
-3. Verify the alerts appear in Alertmanager UI and reference the release runbook described in [`docs/DEPLOY_RUNBOOK.md`](https://github.com/TheDataEngineX/DEX/blob/main/docs/DEPLOY_RUNBOOK.md).
+3. Verify the alerts appear in Alertmanager UI and reference the release runbook described in [`docs/DEPLOY_RUNBOOK.md`](https://github.com/TheDataEngineX/dataenginex/blob/main/docs/DEPLOY_RUNBOOK.md).
 
 If you manage the stack via ArgoCD, push the changes to the kustomize overlay and let ArgoCD sync the deployments automatically rather than running the commands above manually.
 
@@ -627,13 +627,13 @@ These endpoints surface the modules under `src/pyconcepts` so that you can explo
 
    - Uses `pyconcepts.external_data.fetch_external_data` to call the Coindesk API and return the latest BTC rate for the requested currency.
    - Returns a JSON object with `symbol`, `currency`, `value`, `timestamp`, and `source` fields.
-   - Example: `curl "http://localhost:8000/api/external-data?currency=eur"`
+   - Example: `curl "http://localhost:17000/api/external-data?currency=eur"`
 
 1. **Streaming insights** — `GET /api/insights?count=5&interval=0.75`
 
    - Streams conservative synthetic metrics via Server-Sent Events (`text/event-stream`).
    - Honors `count` (1–20) and `interval` seconds per event to throttle data for demos.
-   - Consume it with `curl -N http://localhost:8000/api/insights` and parse each `data: {...}` chunk as JSON.
+   - Consume it with `curl -N http://localhost:17000/api/insights` and parse each `data: {...}` chunk as JSON.
 
 ______________________________________________________________________
 
@@ -716,11 +716,11 @@ Should output: `http://localhost:4317`
 3. **Generate traffic** - Jaeger only shows services that have sent traces:
    ```bash
    # Make several requests
-   curl http://localhost:8000/
-   curl http://localhost:8000/health
+   curl http://localhost:17000/
+   curl http://localhost:17000/health
    ```
 
-curl http://localhost:8000/ready
+curl http://localhost:17000/ready
 
 ````
 

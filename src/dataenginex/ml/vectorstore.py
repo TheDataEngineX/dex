@@ -28,10 +28,12 @@ import uuid
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
-from loguru import logger
+import structlog
 
 if TYPE_CHECKING:
     from dataenginex.ml.llm import LLMProvider, LLMResponse
+
+logger = structlog.get_logger()
 
 __all__ = [
     "ChromaDBBackend",
@@ -134,15 +136,15 @@ class InMemoryBackend(VectorStoreBackend):
         for doc in documents:
             if doc.embedding and len(doc.embedding) != self.dimension:
                 logger.warning(
-                    "embedding dimension mismatch id={} expected={} got={}",
-                    doc.id,
-                    self.dimension,
-                    len(doc.embedding),
+                    "embedding dimension mismatch",
+                    doc_id=doc.id,
+                    expected=self.dimension,
+                    got=len(doc.embedding),
                 )
                 continue
             self._docs[doc.id] = doc
             count += 1
-        logger.info("inmemory upserted={} total={}", count, len(self._docs))
+        logger.info("in-memory upserted", count=count, total=len(self._docs))
         return count
 
     def query(
@@ -268,7 +270,7 @@ class ChromaDBBackend(VectorStoreBackend):
                 documents=texts,
                 metadatas=metadatas,
             )
-        logger.info("chromadb upserted={}", len(ids))
+        logger.info("chromadb upserted", count=len(ids))
         return len(ids)
 
     def query(
@@ -361,7 +363,7 @@ class SentenceTransformerEmbedder:
             from sentence_transformers import SentenceTransformer  # type: ignore[import-not-found]
 
             self._model = SentenceTransformer(model_name)
-            logger.info("SentenceTransformerEmbedder model={}", model_name)
+            logger.info("sentence transformer embedder initialised", model=model_name)
         except ImportError as exc:
             msg = "sentence-transformers is required: uv add 'dataenginex[ml]'"
             raise ImportError(msg) from exc
@@ -425,7 +427,7 @@ class RAGPipeline:
             docs.append(Document(id=doc_id, text=text, metadata=m, embedding=embedding))
 
         count = self.store.upsert(docs)
-        logger.info("RAG ingest texts={} stored={}", len(texts), count)
+        logger.info("rag ingest complete", texts=len(texts), stored=count)
         return count
 
     def query(
@@ -437,7 +439,7 @@ class RAGPipeline:
         """Retrieve top-k relevant documents for *question*."""
         q_embed = self._embed_fn(question)
         results = self.store.query(q_embed, top_k=top_k, filter_metadata=filter_metadata)
-        logger.info("RAG query top_k={} results={}", top_k, len(results))
+        logger.info("rag query complete", top_k=top_k, results=len(results))
         return results
 
     def build_context(
@@ -492,7 +494,7 @@ class RAGPipeline:
             :class:`~dataenginex.ml.llm.LLMResponse` from the provider.
         """
         context = self.build_context(question, top_k=top_k, max_context_chars=max_context_chars)
-        logger.info("RAG answer question_len={} context_len={}", len(question), len(context))
+        logger.info("rag answer complete", question_len=len(question), context_len=len(context))
         return llm.generate_with_context(question, context, system_prompt=system_prompt)
 
     # ------------------------------------------------------------------

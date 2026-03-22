@@ -15,12 +15,13 @@ import time
 from dataclasses import dataclass
 from typing import Any
 
+import structlog
 from fastapi import Request
 from fastapi.responses import JSONResponse
-from loguru import logger
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.responses import Response
 
+logger = structlog.get_logger()
 __all__ = [
     "RateLimiter",
     "RateLimitMiddleware",
@@ -117,7 +118,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
         client_ip = request.client.host if request.client else "unknown"
         if not self._limiter.allow(client_ip):
-            logger.warning("Rate limit exceeded for %s", client_ip)
+            logger.warning("rate limit exceeded", client_ip=client_ip)
             return JSONResponse(
                 status_code=429,
                 content={
