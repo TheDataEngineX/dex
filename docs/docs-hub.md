@@ -8,7 +8,7 @@ ______________________________________________________________________
 
 **New to DEX? Start here:**
 
-1. **[Main README](https://github.com/TheDataEngineX/DEX/blob/main/README.md)** - Project overview
+1. **[Main README](https://github.com/TheDataEngineX/dataenginex/blob/main/README.md)** - Project overview
 1. **[Development Setup](./DEVELOPMENT.md)** - Local environment setup
 1. **[CI/CD Pipeline](./CI_CD.md)** - Build, release, and publish workflow
 1. **[Contributing](./CONTRIBUTING.md)** - How to contribute
@@ -56,7 +56,7 @@ Runnable pipeline and ML examples:
 
 - **[Project Roadmap (Canonical CSV)](./roadmap/project-roadmap.csv)** - Strategic milestones and status source of truth
 - **[Project Roadmap (Derived JSON)](./roadmap/project-roadmap.json)** - Machine-readable export generated from CSV
-- **[GitHub Issues](https://github.com/TheDataEngineX/DEX/issues)** - Task tracking
+- **[GitHub Issues](https://github.com/TheDataEngineX/dataenginex/issues)** - Task tracking
 
 ______________________________________________________________________
 

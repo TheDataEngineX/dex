@@ -1,20 +1,20 @@
 blank_issues_enabled: false
 contact_links:
   - name: Security Policy
-    url: https://github.com/TheDataEngineX/DEX/blob/main/SECURITY.md
+    url: https://github.com/TheDataEngineX/dataenginex/blob/main/SECURITY.md
     about: Report vulnerabilities responsibly using the security policy
   - name: Support Guide
-    url: https://github.com/TheDataEngineX/DEX/blob/main/SUPPORT.md
+    url: https://github.com/TheDataEngineX/dataenginex/blob/main/SUPPORT.md
     about: Find the right channel for help, bugs, and feature proposals
   - name: Questions and Ideas (GitHub Discussions)
-    url: https://github.com/TheDataEngineX/DEX/discussions
+    url: https://github.com/TheDataEngineX/dataenginex/discussions
     about: Use Discussions for Q&A, design brainstorming, and early proposals
   - name: Organization Projects
     url: https://github.com/orgs/TheDataEngineX/projects
     about: Track roadmap status, milestones, and planning boards
   - name: Documentation
-    url: https://github.com/TheDataEngineX/DEX/blob/main/docs/docs-hub.md
+    url: https://github.com/TheDataEngineX/dataenginex/blob/main/docs/docs-hub.md
     about: Check the documentation for guides and runbooks
   - name: SDLC Guide
-    url: https://github.com/TheDataEngineX/DEX/blob/main/docs/SDLC.md
+    url: https://github.com/TheDataEngineX/dataenginex/blob/main/docs/SDLC.md
     about: Review the development lifecycle and workflow

@@ -14,7 +14,7 @@ Steps:
    - Quality gate → `src/dataenginex/quality/`
    - Plugin hook → `src/dataenginex/plugins/` — entry-point based discovery
    - Framework util → `src/dataenginex/core/`
-1. **Implement** — Follow existing patterns. `from __future__ import annotations` at top. structlog for API/middleware, loguru for ML/backend. No `print()`.
+1. **Implement** — Follow existing patterns. `from __future__ import annotations` at top. `structlog` only (no loguru, no print). Use `BackendRegistry` for new pluggable subsystems.
 1. **Test** — Unit tests in `tests/unit/`, integration tests in `tests/integration/` (live uvicorn). `asyncio_mode = "auto"` — no `@pytest.mark.asyncio` needed.
 1. **Validate** — Run `/validate` (dex version — includes real server step)
 1. **Update** — Mark complete in `tasks/todo.md`; update `TODO.md` if relevant

@@ -20,8 +20,9 @@ from pathlib import Path
 from typing import Any
 
 import httpx
-from loguru import logger
+import structlog
 
+logger = structlog.get_logger()
 __all__ = [
     "ConnectorStatus",
     "DataConnector",
@@ -116,11 +117,11 @@ class DataConnector(ABC):
     def _mark_connected(self) -> None:
         self.status = ConnectorStatus.CONNECTED
         self._connected_at = datetime.now(tz=UTC)
-        logger.info("Connector %s connected", self.name)
+        logger.info("connector connected", name=self.name)
 
     def _mark_error(self, message: str) -> None:
         self.status = ConnectorStatus.ERROR
-        logger.error("Connector %s error: %s", self.name, message)
+        logger.error("connector error", name=self.name, message=message)
 
     # -- context manager -----------------------------------------------------
 
@@ -249,7 +250,7 @@ class RestConnector(DataConnector):
             await self._client.aclose()
             self._client = None
         self.status = ConnectorStatus.CLOSED
-        logger.info("RestConnector %s closed", self.name)
+        logger.info("connector closed", name=self.name)
 
 
 # ---------------------------------------------------------------------------

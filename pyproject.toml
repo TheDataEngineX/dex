@@ -1,18 +1,21 @@
 [project]
 name = "dataenginex"
-version = "0.8.9"
-description = "DataEngineX - Core framework for data engineering projects"
+version = "0.8.10"
+description = "DataEngineX - Core framework for AI/ML/Data engineering projects"
 authors = [
     {name = "Jay", email = "jayapal.myaka99@gmail.com"}
 ]
 readme = "src/dataenginex/README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.12"
 license = {file = "LICENSE"}
 dependencies = [
     "pydantic>=2.10.0",
     "python-dotenv>=1.2.1",
     "pyyaml>=6.0.3",
-    "loguru>=0.7.3",
+    "click>=8.3.1",
+    "rich>=14.3.3",
+    "duckdb>=1.5.0",
+    "croniter>=6.0.0",
     "httpx>=0.28.0",
     "prometheus-client>=0.24.1",
     # API framework
@@ -28,6 +31,9 @@ dependencies = [
     # Data formats
     "pyarrow>=23.0.1",
 ]
+
+[project.scripts]
+dex = "dataenginex.cli.main:dex"
 
 [project.optional-dependencies]
 cloud = [
@@ -102,7 +108,7 @@ conflicts = [
 
 [tool.ruff]
 line-length = 100
-target-version = "py313"
+target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "SIM", "C90"]
@@ -111,7 +117,7 @@ select = ["E", "F", "I", "B", "UP", "SIM", "C90"]
 max-complexity = 8
 
 [tool.mypy]
-python_version = "3.13"
+python_version = "3.12"
 strict = true
 warn_unused_configs = true
 disallow_any_generics = true
@@ -121,7 +127,7 @@ warn_unreachable = true
 no_implicit_optional = true
 
 [[tool.mypy.overrides]]
-module = ["structlog.*", "loguru.*", "prometheus_client.*", "opentelemetry.*", "streamlit.*"]
+module = ["structlog.*", "prometheus_client.*", "opentelemetry.*", "streamlit.*"]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]

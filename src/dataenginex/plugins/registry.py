@@ -7,7 +7,9 @@ from importlib.metadata import PackageNotFoundError, entry_points
 from importlib.metadata import version as _pkg_version
 from typing import Any
 
-from loguru import logger
+import structlog
+
+logger = structlog.get_logger()
 
 
 def get_package_version(package_name: str) -> str:
@@ -93,14 +95,14 @@ def discover() -> list[DataEngineXPlugin]:
             instance = plugin_cls()
             if not isinstance(instance, DataEngineXPlugin):
                 logger.warning(
-                    "entry point %s does not implement DataEngineXPlugin — skipped",
-                    ep.name,
+                    "entry point does not implement DataEngineXPlugin — skipped",
+                    plugin=ep.name,
                 )
                 continue
             plugins.append(instance)
-            logger.info("discovered plugin name=%s version=%s", instance.name, instance.version)
+            logger.info("discovered plugin", name=instance.name, version=instance.version)
         except Exception as exc:
-            logger.error("failed to load plugin %s: %s", ep.name, exc)
+            logger.error("failed to load plugin", plugin=ep.name, exc=str(exc))
 
     return plugins
 
@@ -137,7 +139,7 @@ class PluginRegistry:
             msg = f"plugin already registered: {plugin.name}"
             raise ValueError(msg)
         self._plugins[plugin.name] = plugin
-        logger.info("registered plugin name=%s version=%s", plugin.name, plugin.version)
+        logger.info("registered plugin", name=plugin.name, version=plugin.version)
 
     def get(self, name: str) -> DataEngineXPlugin | None:
         """Look up a plugin by name.  Returns ``None`` if not found."""
@@ -158,7 +160,7 @@ class PluginRegistry:
             try:
                 results[name] = plugin.health_check()
             except Exception as exc:
-                logger.error("health check failed for plugin %s: %s", name, exc)
+                logger.error("health check failed", plugin=name, exc=str(exc))
                 results[name] = {"status": "unhealthy", "error": str(exc)}
         return results
 

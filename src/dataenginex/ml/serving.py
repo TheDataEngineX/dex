@@ -12,8 +12,9 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
 
-from loguru import logger
+import structlog
 
+logger = structlog.get_logger()
 __all__ = [
     "ModelServer",
     "PredictionRequest",
@@ -100,7 +101,7 @@ class ModelServer:
         """
         key = f"{name}:{version}"
         self._loaded[key] = model
-        logger.info("Loaded model %s for serving", key)
+        logger.info("loaded model for serving", key=key)
 
     def predict(self, request: PredictionRequest) -> PredictionResponse:
         """Run inference for *request*."""

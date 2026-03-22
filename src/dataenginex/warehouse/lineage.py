@@ -14,8 +14,9 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from loguru import logger
+import structlog
 
+logger = structlog.get_logger()
 __all__ = [
     "LineageEvent",
     "PersistentLineage",
@@ -185,4 +186,4 @@ class PersistentLineage:
         for item in raw:
             item.pop("timestamp", None)  # skip — auto-set on creation
             self._events.append(LineageEvent(**item))
-        logger.info("Loaded %d lineage events from %s", len(self._events), self._persist_path)
+        logger.info("lineage events loaded", count=len(self._events), path=str(self._persist_path))

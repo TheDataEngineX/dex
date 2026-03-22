@@ -32,10 +32,12 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any, Protocol
 
-from loguru import logger
+import structlog
 
 from .drift import DriftDetector, DriftReport
 from .metrics import model_drift_alerts_total, model_drift_psi
+
+logger = structlog.get_logger()
 
 __all__ = [
     "DriftCheckResult",
@@ -158,10 +160,10 @@ class DriftScheduler:
         with self._lock:
             self._monitors[config.model_name] = (config, data_fn, 0.0)
         logger.info(
-            "Drift monitor registered: model=%s interval=%ss features=%d",
-            config.model_name,
-            config.check_interval_seconds,
-            len(config.reference_data),
+            "drift monitor registered",
+            model=config.model_name,
+            interval=config.check_interval_seconds,
+            features=len(config.reference_data),
         )
 
     def unregister(self, model_name: str) -> None:
@@ -183,7 +185,7 @@ class DriftScheduler:
                 raise KeyError(msg)
             del self._monitors[model_name]
             self._results.pop(model_name, None)
-        logger.info("Drift monitor unregistered: model=%s", model_name)
+        logger.info("drift monitor unregistered", model=model_name)
 
     def start(self) -> None:
         """Start the background monitoring thread.
@@ -204,7 +206,7 @@ class DriftScheduler:
             daemon=True,
         )
         self._thread.start()
-        logger.info("DriftScheduler started (tick=%ss)", self._tick)
+        logger.info("drift scheduler started", tick=self._tick)
 
     def stop(self, timeout: float = 10.0) -> None:
         """Stop the background monitoring thread.
@@ -218,7 +220,7 @@ class DriftScheduler:
         if self._thread is not None:
             self._thread.join(timeout=timeout)
             self._thread = None
-        logger.info("DriftScheduler stopped")
+        logger.info("drift scheduler stopped")
 
     @property
     def is_running(self) -> bool:
@@ -266,7 +268,7 @@ class DriftScheduler:
 
     def _run_loop(self) -> None:
         """Background loop — check each monitor when its interval elapses."""
-        logger.debug("Drift scheduler loop entered")
+        logger.debug("drift scheduler loop entered")
         while not self._stop_event.is_set():
             now = time.monotonic()
             with self._lock:
@@ -277,7 +279,7 @@ class DriftScheduler:
                     try:
                         self._execute_check(config, data_fn)
                     except Exception:
-                        logger.exception("Drift check failed for model=%s", name)
+                        logger.exception("drift check failed", model=name)
                     # Update last_check regardless of success/failure
                     with self._lock:
                         if name in self._monitors:
@@ -327,18 +329,18 @@ class DriftScheduler:
 
         if drift_detected:
             logger.warning(
-                "Drift detected: model=%s max_psi=%.4f features_drifted=%d/%d",
-                config.model_name,
-                max_psi,
-                sum(1 for r in reports if r.drift_detected),
-                len(reports),
+                "drift detected",
+                model=config.model_name,
+                max_psi=round(max_psi, 4),
+                features_drifted=sum(1 for r in reports if r.drift_detected),
+                features_total=len(reports),
             )
         else:
             logger.info(
-                "Drift check OK: model=%s max_psi=%.4f features=%d",
-                config.model_name,
-                max_psi,
-                len(reports),
+                "drift check ok",
+                model=config.model_name,
+                max_psi=round(max_psi, 4),
+                features=len(reports),
             )
 
         return result

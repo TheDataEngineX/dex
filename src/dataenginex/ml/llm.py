@@ -26,8 +26,10 @@ import time
 from dataclasses import dataclass, field
 from typing import Any
 
-from loguru import logger
+import structlog
 from prometheus_client import Counter, Histogram
+
+logger = structlog.get_logger()
 
 __all__ = [
     "ChatMessage",
@@ -176,7 +178,7 @@ class OllamaProvider(LLMProvider):
         self._api_generate = f"{self.base_url}/api/generate"
         self._api_chat = f"{self.base_url}/api/chat"
         self._api_tags = f"{self.base_url}/api/tags"
-        logger.info("OllamaProvider model={} url={}", cfg.model, self.base_url)
+        logger.info("ollama provider initialised", model=cfg.model, url=self.base_url)
 
     def generate(self, prompt: str) -> LLMResponse:
         """Generate text via Ollama ``/api/generate``."""
@@ -228,11 +230,11 @@ class OllamaProvider(LLMProvider):
 
             return result
         except httpx.ConnectError as exc:
-            logger.error("Ollama server not reachable at {}", self.base_url)
+            logger.error("ollama server not reachable", url=self.base_url)
             msg = f"Ollama server not reachable at {self.base_url}"
             raise ConnectionError(msg) from exc
         except httpx.HTTPStatusError as exc:
-            logger.error("Ollama HTTP error status={}", exc.response.status_code)
+            logger.error("ollama http error", status=exc.response.status_code)
             msg = f"Ollama returned HTTP {exc.response.status_code}"
             raise ConnectionError(msg) from exc
 
@@ -283,11 +285,11 @@ class OllamaProvider(LLMProvider):
 
             return result
         except httpx.ConnectError as exc:
-            logger.error("Ollama server not reachable at {}", self.base_url)
+            logger.error("ollama server not reachable", url=self.base_url)
             msg = f"Ollama server not reachable at {self.base_url}"
             raise ConnectionError(msg) from exc
         except httpx.HTTPStatusError as exc:
-            logger.error("Ollama HTTP error status={}", exc.response.status_code)
+            logger.error("ollama http error", status=exc.response.status_code)
             msg = f"Ollama returned HTTP {exc.response.status_code}"
             raise ConnectionError(msg) from exc
 
@@ -315,13 +317,10 @@ class OllamaProvider(LLMProvider):
             models = resp.json().get("models", [])
             return [m.get("name", "") for m in models]
         except (ImportError, httpx.ConnectError, httpx.TimeoutException):
-            logger.warning("Could not list Ollama models")
+            logger.warning("could not list ollama models")
             return []
         except httpx.HTTPStatusError as exc:
-            logger.warning(
-                "Ollama returned HTTP %d while listing models",
-                exc.response.status_code,
-            )
+            logger.warning("ollama http error listing models", status=exc.response.status_code)
             return []
 
 
@@ -400,11 +399,7 @@ class OpenAICompatibleProvider(LLMProvider):
         self.base_url = base_url.rstrip("/")
         self._chat_url = f"{self.base_url}/v1/chat/completions"
         # Never log the API key
-        logger.info(
-            "OpenAICompatibleProvider model={} url={}",
-            cfg.model,
-            self.base_url,
-        )
+        logger.info("openai-compatible provider initialised", model=cfg.model, url=self.base_url)
 
     def _headers(self) -> dict[str, str]:
         return {
@@ -467,14 +462,11 @@ class OpenAICompatibleProvider(LLMProvider):
 
             return result
         except httpx.ConnectError as exc:
-            logger.error("OpenAI-compatible server not reachable at {}", self.base_url)
+            logger.error("openai-compatible server not reachable", url=self.base_url)
             msg = f"OpenAI-compatible server not reachable at {self.base_url}"
             raise ConnectionError(msg) from exc
         except httpx.HTTPStatusError as exc:
-            logger.error(
-                "OpenAI-compatible HTTP error status={}",
-                exc.response.status_code,
-            )
+            logger.error("openai-compatible http error", status=exc.response.status_code)
             msg = f"OpenAI-compatible API returned HTTP {exc.response.status_code}"
             raise ConnectionError(msg) from exc
 

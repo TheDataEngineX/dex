@@ -10,9 +10,11 @@ from pathlib import Path
 from typing import Any
 
 import httpx
+import structlog
 import yaml
-from loguru import logger
 from pydantic import BaseModel, Field
+
+logger = structlog.get_logger()
 
 try:
     import streamlit as st
@@ -31,7 +33,7 @@ class DashboardConfig(BaseModel):
         description="Base URL of the Prometheus server",
     )
     dex_api_url: str = Field(
-        default="http://localhost:8000",
+        default="http://localhost:17000",
         description="Base URL of the DEX API for metrics/health",
     )
     refresh_interval_seconds: int = Field(default=30, ge=5, description="Auto-refresh interval")
@@ -50,11 +52,11 @@ class DashboardConfig(BaseModel):
         """Load configuration from a YAML file."""
         p = Path(path)
         if not p.exists():
-            logger.warning("config file not found at %s, using defaults", p)
+            logger.warning("config file not found, using defaults", path=str(p))
             return cls()
         raw = yaml.safe_load(p.read_text(encoding="utf-8"))
         if not isinstance(raw, dict):
-            logger.warning("invalid config format in %s, using defaults", p)
+            logger.warning("invalid config format, using defaults", path=str(p))
             return cls()
         return cls(**raw)
 
@@ -98,7 +100,7 @@ def _fetch_metrics(config: DashboardConfig) -> dict[str, Any]:
                 pass
 
     except httpx.ConnectError:
-        logger.warning("cannot reach DEX API at %s", config.dex_api_url)
+        logger.warning("cannot reach dex api", url=config.dex_api_url)
 
     return metrics
 

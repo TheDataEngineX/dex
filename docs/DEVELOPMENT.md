@@ -37,8 +37,8 @@ This installs all Python dependencies and configures pre-commit hooks.
 
 ```bash
 # 1. Clone repo and create feature branch
-git clone https://github.com/TheDataEngineX/DEX.git
-cd DEX
+git clone https://github.com/TheDataEngineX/dataenginex.git
+cd dataenginex
 git checkout -b feat/issue-XXX-description dev
 
 # 3. Install Python deps & pre-commit hooks
@@ -199,7 +199,7 @@ uv run poe test               # Run all tests
 uv run poe test-cov           # Tests with coverage report
 uv run poe security           # pip-audit vulnerability scan
 uv run poe pre-commit         # Run all pre-commit hooks
-uv run poe dev                # Run dev server (localhost:8000)
+uv run poe dev                # Run dev server (localhost:17000)
 uv run poe clean              # Remove caches and build artifacts
 ```
 
@@ -209,5 +209,5 @@ uv run poe clean              # Remove caches and build artifacts
 - **Architecture**: See [ARCHITECTURE.md](./ARCHITECTURE.md)
 - **ADRs**: See [ADR-0001](./adr/0001-medallion-architecture.md) for architectural decisions
 - **Deployment**: See Deployment Runbook in the `infradex` repo
-- **Issues**: [GitHub Issues](https://github.com/TheDataEngineX/DEX/issues)
+- **Issues**: [GitHub Issues](https://github.com/TheDataEngineX/dataenginex/issues)
 - **Chat**: #dex-dev Slack channel

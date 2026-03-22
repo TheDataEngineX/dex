@@ -14,8 +14,9 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
-from loguru import logger
+import structlog
 
+logger = structlog.get_logger()
 __all__ = [
     "ModelArtifact",
     "ModelRegistry",
@@ -149,11 +150,11 @@ class ModelRegistry:
             current = self.get_production(name)
             if current and current.version != version:
                 current.stage = ModelStage.ARCHIVED
-                logger.info("Archived %s v%s", name, current.version)
+                logger.info("model archived", name=name, version=current.version)
 
         artifact.stage = target_stage
         artifact.promoted_at = datetime.now(tz=UTC)
-        logger.info("Promoted %s v%s → %s", name, version, target_stage.value)
+        logger.info("model promoted", name=name, version=version, stage=target_stage.value)
         self._save()
         return artifact
 
@@ -179,4 +180,4 @@ class ModelRegistry:
                 v.pop("promoted_at", None)
                 v["stage"] = ModelStage(v.get("stage", "development"))
                 self._models[name][v["version"]] = ModelArtifact(**v)
-        logger.info("Loaded %d models from %s", len(self._models), self._persist_path)
+        logger.info("models loaded", count=len(self._models), path=str(self._persist_path))

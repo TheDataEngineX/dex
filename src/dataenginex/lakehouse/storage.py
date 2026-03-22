@@ -19,9 +19,11 @@ import json
 from pathlib import Path
 from typing import Any
 
-from loguru import logger
+import structlog
 
 from dataenginex.core.medallion_architecture import StorageBackend, StorageFormat
+
+logger = structlog.get_logger()
 
 __all__ = [
     "BigQueryStorage",
@@ -56,7 +58,7 @@ class JsonStorage(StorageBackend):
     def __init__(self, base_path: str = "data") -> None:
         self.base_path = Path(base_path)
         self.base_path.mkdir(parents=True, exist_ok=True)
-        logger.info("JsonStorage initialised at %s", self.base_path)
+        logger.info("json storage initialised", path=str(self.base_path))
 
     def write(
         self,
@@ -70,10 +72,10 @@ class JsonStorage(StorageBackend):
             full.parent.mkdir(parents=True, exist_ok=True)
             records = self._normalise(data)
             full.write_text(json.dumps(records, indent=2, default=str))
-            logger.info("Wrote %d records to %s", len(records), full)
+            logger.info("wrote records", count=len(records), path=str(full))
             return True
         except Exception as exc:
-            logger.error("JsonStorage write failed: %s", exc)
+            logger.error("json storage write failed", exc=str(exc))
             return False
 
     def read(self, path: str, format: StorageFormat = StorageFormat.PARQUET) -> Any:
@@ -81,11 +83,11 @@ class JsonStorage(StorageBackend):
         try:
             full = self.base_path / f"{path}.json"
             if not full.exists():
-                logger.warning("File not found: %s", full)
+                logger.warning("file not found", path=str(full))
                 return None
             return json.loads(full.read_text())
         except Exception as exc:
-            logger.error("JsonStorage read failed: %s", exc)
+            logger.error("json storage read failed", exc=str(exc))
             return None
 
     def delete(self, path: str) -> bool:
@@ -94,10 +96,10 @@ class JsonStorage(StorageBackend):
             full = self.base_path / f"{path}.json"
             if full.exists():
                 full.unlink()
-                logger.info("Deleted %s", full)
+                logger.info("deleted file", path=str(full))
             return True
         except Exception as exc:
-            logger.error("JsonStorage delete failed: %s", exc)
+            logger.error("json storage delete failed", exc=str(exc))
             return False
 
     @staticmethod
@@ -141,9 +143,9 @@ class ParquetStorage(StorageBackend):
         self.compression = compression
 
         if _HAS_PYARROW:
-            logger.info("ParquetStorage initialised at %s (pyarrow available)", self.base_path)
+            logger.info("parquet storage initialised", path=str(self.base_path))
         else:
-            logger.warning("pyarrow not installed — ParquetStorage will use JSON fallback")
+            logger.warning("pyarrow not installed — parquet storage will use json fallback")
             self._fallback = JsonStorage(str(self.base_path))
 
     def write(
@@ -161,14 +163,14 @@ class ParquetStorage(StorageBackend):
             full.parent.mkdir(parents=True, exist_ok=True)
             records = self._to_records(data)
             if not records:
-                logger.warning("No records to write to %s", full)
+                logger.warning("no records to write", path=str(full))
                 return False
             table = pa.Table.from_pylist(records)
             pq.write_table(table, str(full), compression=self.compression)
-            logger.info("Wrote %d records to %s", len(records), full)
+            logger.info("wrote records", count=len(records), path=str(full))
             return True
         except Exception as exc:
-            logger.error("ParquetStorage write failed: %s", exc)
+            logger.error("parquet storage write failed", exc=str(exc))
             return False
 
     def read(self, path: str, format: StorageFormat = StorageFormat.PARQUET) -> Any:
@@ -179,12 +181,12 @@ class ParquetStorage(StorageBackend):
         try:
             full = self.base_path / f"{path}.parquet"
             if not full.exists():
-                logger.warning("Parquet file not found: %s", full)
+                logger.warning("parquet file not found", path=str(full))
                 return None
             table = pq.read_table(str(full))
             return table.to_pylist()
         except Exception as exc:
-            logger.error("ParquetStorage read failed: %s", exc)
+            logger.error("parquet storage read failed", exc=str(exc))
             return None
 
     def delete(self, path: str) -> bool:
@@ -196,10 +198,10 @@ class ParquetStorage(StorageBackend):
             full = self.base_path / f"{path}.parquet"
             if full.exists():
                 full.unlink()
-                logger.info("Deleted %s", full)
+                logger.info("deleted file", path=str(full))
             return True
         except Exception as exc:
-            logger.error("ParquetStorage delete failed: %s", exc)
+            logger.error("parquet storage delete failed", exc=str(exc))
             return False
 
     @staticmethod
@@ -274,14 +276,14 @@ class S3Storage(StorageBackend):
         self.endpoint_url = endpoint_url
 
         if not _HAS_BOTO3:
-            logger.warning("boto3 not installed — S3Storage operations will fail")
+            logger.warning("boto3 not installed — s3 storage operations will fail")
             self._client = None
         else:
             client_kwargs: dict[str, Any] = {"region_name": region}
             if endpoint_url:
                 client_kwargs["endpoint_url"] = endpoint_url
             self._client = boto3.client("s3", **client_kwargs)
-            logger.info("S3Storage initialised: s3://%s/%s", bucket, prefix)
+            logger.info("s3 storage initialised", uri=f"s3://{bucket}/{prefix}")
 
     def _key(self, path: str) -> str:
         return f"{self.prefix}/{path}" if self.prefix else path
@@ -294,23 +296,23 @@ class S3Storage(StorageBackend):
     ) -> bool:
         """Write JSON-serialised data to S3."""
         if self._client is None:
-            logger.error("S3Storage: boto3 not available")
+            logger.error("s3 storage: boto3 not available")
             return False
         try:
             records = data if isinstance(data, list) else [data]
             body = json.dumps(records, default=str).encode()
             key = self._key(f"{path}.json")
             self._client.put_object(Bucket=self.bucket, Key=key, Body=body)
-            logger.info("Wrote %d records to s3://%s/%s", len(records), self.bucket, key)
+            logger.info("wrote records to s3", count=len(records), uri=f"s3://{self.bucket}/{key}")
             return True
         except Exception as exc:
-            logger.error("S3Storage write failed: %s", exc)
+            logger.error("s3 storage write failed", exc=str(exc))
             return False
 
     def read(self, path: str, format: StorageFormat = StorageFormat.PARQUET) -> Any:
         """Read JSON data from S3."""
         if self._client is None:
-            logger.error("S3Storage: boto3 not available")
+            logger.error("s3 storage: boto3 not available")
             return None
         try:
             key = self._key(f"{path}.json")
@@ -318,21 +320,21 @@ class S3Storage(StorageBackend):
             body = response["Body"].read().decode()
             return json.loads(body)
         except Exception as exc:
-            logger.error("S3Storage read failed: %s", exc)
+            logger.error("s3 storage read failed", exc=str(exc))
             return None
 
     def delete(self, path: str) -> bool:
         """Delete object from S3."""
         if self._client is None:
-            logger.error("S3Storage: boto3 not available")
+            logger.error("s3 storage: boto3 not available")
             return False
         try:
             key = self._key(f"{path}.json")
             self._client.delete_object(Bucket=self.bucket, Key=key)
-            logger.info("Deleted s3://%s/%s", self.bucket, key)
+            logger.info("deleted s3 object", uri=f"s3://{self.bucket}/{key}")
             return True
         except Exception as exc:
-            logger.error("S3Storage delete failed: %s", exc)
+            logger.error("s3 storage delete failed", exc=str(exc))
             return False
 
     def list_objects(self, prefix: str = "") -> list[str]:
@@ -344,7 +346,7 @@ class S3Storage(StorageBackend):
             resp = self._client.list_objects_v2(Bucket=self.bucket, Prefix=full_prefix)
             return [obj["Key"] for obj in resp.get("Contents", [])]
         except Exception as exc:
-            logger.error("S3Storage list_objects failed: %s", exc)
+            logger.error("s3 storage list_objects failed", exc=str(exc))
             return []
 
     def exists(self, path: str) -> bool:
@@ -365,7 +367,7 @@ class S3Storage(StorageBackend):
             ).get("Code", "")
             if error_code in ("404", "NoSuchKey"):
                 return False
-            logger.error("S3Storage.exists() failed: %s", exc)
+            logger.error("s3 storage exists check failed", exc=str(exc))
             raise
 
 
@@ -429,13 +431,13 @@ class BigQueryStorage(StorageBackend):
 
         if client is not None:
             self._client = client
-            logger.info("BigQueryStorage initialised with injected client for %s", project_id)
+            logger.info("bigquery storage initialised with injected client", project=project_id)
         elif not _HAS_BIGQUERY:
             logger.warning("google-cloud-bigquery not installed — install dataenginex[cloud]")
             self._client = None
         else:
             self._client = bq_client.Client(project=project_id, location=location)
-            logger.info("BigQueryStorage initialised for project %s", project_id)
+            logger.info("bigquery storage initialised", project=project_id)
 
     def _table_ref(self, path: str) -> str:
         """Resolve *path* to ``project.dataset.table``."""
@@ -453,7 +455,7 @@ class BigQueryStorage(StorageBackend):
     ) -> bool:
         """Load *data* (list of dicts) into a BigQuery table."""
         if self._client is None:
-            logger.error("BigQueryStorage: google-cloud-bigquery not available")
+            logger.error("bigquery storage: google-cloud-bigquery not available")
             return False
         try:
             records = data if isinstance(data, list) else [data]
@@ -475,37 +477,37 @@ class BigQueryStorage(StorageBackend):
                 job_config=job_config,
             )
             job.result()  # block until complete
-            logger.info("Wrote %d records to %s", len(records), table_ref)
+            logger.info("wrote records to bigquery", count=len(records), table=table_ref)
             return True
         except Exception as exc:
-            logger.error("BigQueryStorage write failed: %s", exc)
+            logger.error("bigquery storage write failed", exc=str(exc))
             return False
 
     def read(self, path: str, format: StorageFormat = StorageFormat.BIGQUERY) -> Any:
         """Query all rows from a BigQuery table."""
         if self._client is None:
-            logger.error("BigQueryStorage: google-cloud-bigquery not available")
+            logger.error("bigquery storage: google-cloud-bigquery not available")
             return None
         try:
             table_ref = self._table_ref(path)
             rows = self._client.list_rows(table_ref)
             return [dict(row) for row in rows]
         except Exception as exc:
-            logger.error("BigQueryStorage read failed: %s", exc)
+            logger.error("bigquery storage read failed", exc=str(exc))
             return None
 
     def delete(self, path: str) -> bool:
         """Delete a BigQuery table."""
         if self._client is None:
-            logger.error("BigQueryStorage: google-cloud-bigquery not available")
+            logger.error("bigquery storage: google-cloud-bigquery not available")
             return False
         try:
             table_ref = self._table_ref(path)
             self._client.delete_table(table_ref, not_found_ok=True)
-            logger.info("Deleted %s", table_ref)
+            logger.info("deleted bigquery table", table=table_ref)
             return True
         except Exception as exc:
-            logger.error("BigQueryStorage delete failed: %s", exc)
+            logger.error("bigquery storage delete failed", exc=str(exc))
             return False
 
     def list_objects(self, prefix: str = "") -> list[str]:
@@ -520,7 +522,7 @@ class BigQueryStorage(StorageBackend):
                 names = [n for n in names if n.startswith(prefix)]
             return names
         except Exception as exc:
-            logger.error("BigQueryStorage list_objects failed: %s", exc)
+            logger.error("bigquery storage list_objects failed", exc=str(exc))
             return []
 
     def exists(self, path: str) -> bool:
@@ -535,7 +537,7 @@ class BigQueryStorage(StorageBackend):
             error_type = type(exc).__name__
             if error_type == "NotFound":
                 return False
-            logger.error("BigQueryStorage.exists() failed: %s", exc)
+            logger.error("bigquery storage exists check failed", exc=str(exc))
             raise
 
 
@@ -570,7 +572,7 @@ class GCSStorage(StorageBackend):
         self.prefix = prefix.rstrip("/")
 
         if not _HAS_GCS:
-            logger.warning("google-cloud-storage not installed — GCSStorage operations will fail")
+            logger.warning("google-cloud-storage not installed — gcs storage operations will fail")
             self._bucket = None
         else:
             if api_endpoint:
@@ -588,7 +590,7 @@ class GCSStorage(StorageBackend):
             else:
                 client = gcs_storage.Client(project=project)
             self._bucket = client.bucket(bucket)
-            logger.info("GCSStorage initialised: gs://%s/%s", bucket, prefix)
+            logger.info("gcs storage initialised", uri=f"gs://{bucket}/{prefix}")
 
     def _blob_name(self, path: str) -> str:
         return f"{self.prefix}/{path}" if self.prefix else path
@@ -601,49 +603,44 @@ class GCSStorage(StorageBackend):
     ) -> bool:
         """Write JSON-serialised data to GCS."""
         if self._bucket is None:
-            logger.error("GCSStorage: google-cloud-storage not available")
+            logger.error("gcs storage: google-cloud-storage not available")
             return False
         try:
             records = data if isinstance(data, list) else [data]
             body = json.dumps(records, default=str)
             blob = self._bucket.blob(self._blob_name(f"{path}.json"))
             blob.upload_from_string(body, content_type="application/json")
-            logger.info(
-                "Wrote %d records to gs://%s/%s",
-                len(records),
-                self.bucket_name,
-                blob.name,
-            )
+            logger.info("wrote records to gcs", count=len(records), uri=f"gs://{self.bucket_name}/{blob.name}")
             return True
         except Exception as exc:
-            logger.error("GCSStorage write failed: %s", exc)
+            logger.error("gcs storage write failed", exc=str(exc))
             return False
 
     def read(self, path: str, format: StorageFormat = StorageFormat.PARQUET) -> Any:
         """Read JSON data from GCS."""
         if self._bucket is None:
-            logger.error("GCSStorage: google-cloud-storage not available")
+            logger.error("gcs storage: google-cloud-storage not available")
             return None
         try:
             blob = self._bucket.blob(self._blob_name(f"{path}.json"))
             body = blob.download_as_text()
             return json.loads(body)
         except Exception as exc:
-            logger.error("GCSStorage read failed: %s", exc)
+            logger.error("gcs storage read failed", exc=str(exc))
             return None
 
     def delete(self, path: str) -> bool:
         """Delete object from GCS."""
         if self._bucket is None:
-            logger.error("GCSStorage: google-cloud-storage not available")
+            logger.error("gcs storage: google-cloud-storage not available")
             return False
         try:
             blob = self._bucket.blob(self._blob_name(f"{path}.json"))
             blob.delete()
-            logger.info("Deleted gs://%s/%s", self.bucket_name, blob.name)
+            logger.info("deleted gcs object", uri=f"gs://{self.bucket_name}/{blob.name}")
             return True
         except Exception as exc:
-            logger.error("GCSStorage delete failed: %s", exc)
+            logger.error("gcs storage delete failed", exc=str(exc))
             return False
 
     def list_objects(self, prefix: str = "") -> list[str]:
@@ -654,7 +651,7 @@ class GCSStorage(StorageBackend):
             full_prefix = self._blob_name(prefix)
             return [blob.name for blob in self._bucket.list_blobs(prefix=full_prefix)]
         except Exception as exc:
-            logger.error("GCSStorage list_objects failed: %s", exc)
+            logger.error("gcs storage list_objects failed", exc=str(exc))
             return []
 
     def exists(self, path: str) -> bool:
@@ -668,7 +665,7 @@ class GCSStorage(StorageBackend):
             return False
         except Exception as exc:
             # Surface auth/permission errors instead of silently returning False
-            logger.error("GCSStorage.exists() failed: %s", exc)
+            logger.error("gcs storage exists check failed", exc=str(exc))
             raise
 
 

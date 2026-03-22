@@ -81,7 +81,7 @@ ______________________________________________________________________
 
 ## Continuous Integration (CI)
 
-**Workflow**: [`.github/workflows/ci.yml`](https://github.com/TheDataEngineX/DEX/blob/main/.github/workflows/ci.yml)
+**Workflow**: [`.github/workflows/ci.yml`](https://github.com/TheDataEngineX/dataenginex/blob/main/.github/workflows/ci.yml)
 
 **Triggers**:
 
@@ -106,7 +106,7 @@ uv run poe test-cov
 
 ### 2. Security Scans
 
-Runs in parallel via [`.github/workflows/security.yml`](https://github.com/TheDataEngineX/DEX/blob/main/.github/workflows/security.yml):
+Runs in parallel via [`.github/workflows/security.yml`](https://github.com/TheDataEngineX/dataenginex/blob/main/.github/workflows/security.yml):
 
 - **CodeQL**: Static analysis for security vulnerabilities
 - **Semgrep**: OWASP Top 10 and best practice checks
@@ -140,7 +140,7 @@ ______________________________________________________________________
 
 ### DataEngineX Releases
 
-**Workflow**: [`.github/workflows/release-dataenginex.yml`](https://github.com/TheDataEngineX/DEX/blob/main/.github/workflows/release-dataenginex.yml)
+**Workflow**: [`.github/workflows/release-dataenginex.yml`](https://github.com/TheDataEngineX/dataenginex/blob/main/.github/workflows/release-dataenginex.yml)
 
 **Trigger**: `release: types: [published]` — fires when release-please creates a GitHub Release
 
@@ -166,7 +166,7 @@ ______________________________________________________________________
 
 ## PyPI Publishing
 
-**Workflow**: [`.github/workflows/pypi-publish.yml`](https://github.com/TheDataEngineX/DEX/blob/main/.github/workflows/pypi-publish.yml)
+**Workflow**: [`.github/workflows/pypi-publish.yml`](https://github.com/TheDataEngineX/dataenginex/blob/main/.github/workflows/pypi-publish.yml)
 
 **Trigger**: GitHub release published (from `release-dataenginex.yml`)
 

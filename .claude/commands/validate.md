@@ -25,10 +25,10 @@ Run the full DEX validation pipeline in order. Stop and report on first failure.
    ```bash
    uv run python examples/02_api_quickstart.py &
    sleep 2
-   curl -sf http://localhost:8000/health   | python -m json.tool
-   curl -sf http://localhost:8000/         | python -m json.tool
-   curl -sf http://localhost:8000/metrics  | head -20
-   curl -sf -X POST http://localhost:8000/echo -H "Content-Type: application/json" -d '{"message":"test"}' | python -m json.tool
+   curl -sf http://localhost:17000/health   | python -m json.tool
+   curl -sf http://localhost:17000/         | python -m json.tool
+   curl -sf http://localhost:17000/metrics  | head -20
+   curl -sf -X POST http://localhost:17000/echo -H "Content-Type: application/json" -d '{"message":"test"}' | python -m json.tool
    ```
 
    Check response **bodies** — not just status codes. Kill the server after.

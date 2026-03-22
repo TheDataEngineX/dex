@@ -11,11 +11,10 @@ Run:
     uv run python examples/02_api_quickstart.py
 
 Then visit:
-    http://localhost:8000/          → root info
-    http://localhost:8000/health    → health check
-    http://localhost:8000/api/v1/data/sources   → data sources
-    http://localhost:8000/api/v1/data/quality   → quality summary
-    http://localhost:8000/api/v1/warehouse/layers → medallion layers
+    http://localhost:17000/          → root info
+    http://localhost:17000/health    → health check
+    http://localhost:17000/echo      → echo endpoint (POST)
+    http://localhost:17000/metrics   → Prometheus metrics
 """
 
 from __future__ import annotations
@@ -24,9 +23,26 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.responses import Response
 
+import structlog
+from pydantic import BaseModel
+
 from dataenginex.api import HealthChecker
 from dataenginex.middleware.logging_config import configure_logging
 from dataenginex.middleware.metrics import get_metrics
+
+logger = structlog.get_logger()
+
+
+class EchoRequest(BaseModel):
+    """Echo request body."""
+
+    message: str
+
+
+class EchoResponse(BaseModel):
+    """Echo response body."""
+
+    echo: str
 
 
 def create_app() -> FastAPI:
@@ -35,11 +51,10 @@ def create_app() -> FastAPI:
 
     app = FastAPI(
         title="DataEngineX",
-        version="0.6.0",
+        version="0.8.9",
         description="Example DEX API instance",
     )
 
-    # Health endpoint
     checker = HealthChecker()
 
     @app.get("/")
@@ -52,6 +67,10 @@ def create_app() -> FastAPI:
         status = checker.overall_status(components)
         return {"status": status.value}
 
+    @app.post("/echo", response_model=EchoResponse)
+    def echo(body: EchoRequest) -> EchoResponse:
+        return EchoResponse(echo=body.message)
+
     @app.get("/metrics")
     def metrics() -> Response:
         data, content_type = get_metrics()
@@ -63,6 +82,5 @@ def create_app() -> FastAPI:
 app = create_app()
 
 if __name__ == "__main__":
-    print("Starting DEX API on http://localhost:8000")
-    print("Press Ctrl+C to stop\n")
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    logger.info("starting dex api", host="0.0.0.0", port=17000)
+    uvicorn.run(app, host="0.0.0.0", port=17000)

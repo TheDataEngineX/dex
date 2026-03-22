@@ -1,72 +1,63 @@
 # dataenginex
 
-`dataenginex` is the core DataEngineX framework package for building observable, production-ready data and API services.
-
-It provides:
-
-- FastAPI application primitives and API extensions
-- Middleware for structured logging, metrics, and tracing
-- Data quality and validation utilities
-- Lakehouse and warehouse building blocks (S3, GCS, BigQuery, Parquet)
-- Reusable ML support modules for model-serving workflows
+Unified Data + ML + AI framework. Config-driven, self-hosted, production-ready.
 
 ## Install
 
 ```bash
-# Core (no web framework dependencies)
+# Core (DuckDB, FastAPI, structlog, Pydantic, Click, Rich)
 pip install dataenginex
 
-# With FastAPI, middleware, auth, health checks
-pip install dataenginex[api]
-
-# With cloud storage backends
-pip install dataenginex[s3]        # AWS S3 via boto3
-pip install dataenginex[gcs]       # Google Cloud Storage
-pip install dataenginex[bq]        # Google BigQuery
-pip install dataenginex[cloud]     # All cloud storage (S3 + GCS)
-
-# Everything
-pip install dataenginex[all]
+# With optional extras
+pip install dataenginex[dagster]      # Dagster orchestration
+pip install dataenginex[mlflow]       # MLflow experiment tracking
+pip install dataenginex[agents]       # LangGraph agent runtime
+pip install dataenginex[vectors]      # Qdrant + LanceDB vector stores
+pip install dataenginex[embeddings]   # sentence-transformers + ONNX
+pip install dataenginex[spark]        # PySpark transforms
+pip install dataenginex[cloud]        # S3 + GCS storage backends
+pip install dataenginex[all]          # Everything
 ```
-
-## Package Scope
-
-`dataenginex` is the core library from the DEX monorepo. It is the only published package — applications and examples are built on top of it.
 
 ## Submodules
 
 | Module | Requires Extra | Description |
 |--------|---------------|-------------|
-| `dataenginex.core` | — | Medallion architecture, schemas, quality gates, validators |
-| `dataenginex.data` | — | Schema registry, data contracts, catalog |
-| `dataenginex.lakehouse` | optional `[s3]` `[gcs]` `[bq]` | Storage backends (JSON, Parquet, S3, GCS, BigQuery), catalog, partitioning |
-| `dataenginex.warehouse` | — | Warehouse layers, lineage tracking |
-| `dataenginex.ml` | — | Model registry, vectorstore, LLM adapters, drift detection |
-| `dataenginex.api` | `[api]` | Auth (JWT), health checks, error handling, pagination, rate limiting |
-| `dataenginex.middleware` | `[api]` | Structured logging, Prometheus metrics, OpenTelemetry tracing |
+| `dataenginex.config` | — | dex.yaml schema, loader, env var resolution, layering |
+| `dataenginex.core` | — | Exceptions, interfaces (10 Base* ABCs), backend registry |
+| `dataenginex.cli` | — | `dex` CLI (validate, version, init, serve) |
+| `dataenginex.api` | — | FastAPI app, auth (JWT), health, rate limiting |
+| `dataenginex.data` | — | Connectors, schema registry, profiler |
+| `dataenginex.ml` | — | Training, model registry, serving, drift detection |
+| `dataenginex.middleware` | — | Structured logging, Prometheus metrics, tracing |
+| `dataenginex.lakehouse` | optional `[cloud]` | Storage backends (local, S3, GCS), catalog |
+| `dataenginex.warehouse` | — | SQL/Spark transforms, lineage |
+| `dataenginex.plugins` | — | Plugin system (entry-point discovery) |
 
 ## Quick Usage
 
 ```python
-# Core — always available
-from dataenginex.core import MedallionArchitecture, QualityGate
-from dataenginex.data import SchemaRegistry
+# Config system
+from dataenginex.config import load_config
+cfg = load_config(Path("dex.yaml"))
+
+# Core interfaces + registry
+from dataenginex.core.interfaces import BaseConnector
+from dataenginex.core.registry import BackendRegistry
+
+# Exceptions
+from dataenginex.core.exceptions import DataEngineXError, BackendNotInstalledError
+
+# ML
 from dataenginex.ml import ModelRegistry
 
-# API — requires pip install dataenginex[api]
-from dataenginex.api import HealthChecker, AuthMiddleware, paginate
-from dataenginex.middleware import configure_logging, configure_tracing
-
-# Storage — requires the relevant extra
-from dataenginex.lakehouse import JsonStorage, get_storage
-storage = get_storage("file://./data")       # always works
-storage = get_storage("s3://my-bucket")      # requires [s3]
-storage = get_storage("gs://my-bucket")      # requires [gcs]
-storage = get_storage("bq://my-project/ds")  # requires [bq]
+# CLI
+# dex validate dex.yaml
+# dex version
 ```
 
 ## Source and Docs
 
-- Repository: https://github.com/TheDataEngineX/DEX
-- CI/CD guide: `docs/CI_CD.md`
-- Release notes: `src/dataenginex/RELEASE_NOTES.md`
+- Repository: https://github.com/TheDataEngineX/dataenginex
+- Documentation: https://docs.dataenginex.org
+- Release notes: `CHANGELOG.md`
