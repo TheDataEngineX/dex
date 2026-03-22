@@ -4,6 +4,7 @@ Every section is a Pydantic BaseModel with defaults so that
 only ``project.name`` is required. Progressive disclosure:
 add sections as you need them.
 """
+
 from __future__ import annotations
 
 from typing import Any, Literal
@@ -212,9 +213,7 @@ class PiiConfig(BaseModel):
     """PII detection configuration."""
 
     scan: bool = False
-    patterns: list[str] = Field(
-        default_factory=lambda: ["email", "ssn", "phone", "credit_card"]
-    )
+    patterns: list[str] = Field(default_factory=lambda: ["email", "ssn", "phone", "credit_card"])
     action: Literal["warn", "mask", "block"] = "warn"
 
 

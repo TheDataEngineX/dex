@@ -3,6 +3,7 @@
 Quality gates run after transforms and before loading to the target layer.
 They use DuckDB SQL aggregations for speed (no row-by-row Python).
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -45,7 +46,9 @@ def _check_completeness(
         result.passed = False
         logger.warning(
             "quality check failed: completeness",
-            table=table, score=round(score, 4), threshold=threshold,
+            table=table,
+            score=round(score, 4),
+            threshold=threshold,
         )
 
 
@@ -58,9 +61,7 @@ def _check_uniqueness(
 ) -> None:
     """Check that specified columns have no duplicates."""
     key_cols = ", ".join(columns)
-    distinct_row = conn.execute(
-        f"SELECT count(DISTINCT ({key_cols})) FROM {table}"
-    ).fetchone()
+    distinct_row = conn.execute(f"SELECT count(DISTINCT ({key_cols})) FROM {table}").fetchone()
     distinct_count: int = int(distinct_row[0]) if distinct_row else 0
     score = distinct_count / total_rows if total_rows > 0 else 1.0
     result.uniqueness_score = score
@@ -68,8 +69,10 @@ def _check_uniqueness(
         result.passed = False
         logger.warning(
             "quality check failed: uniqueness",
-            table=table, columns=columns,
-            distinct=distinct_count, total=total_rows,
+            table=table,
+            columns=columns,
+            distinct=distinct_count,
+            total=total_rows,
         )
 
 

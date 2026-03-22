@@ -3,6 +3,7 @@
 DuckDB reads CSV, Parquet, JSON natively.
 This connector wraps DuckDB as a data source/sink for pipelines.
 """
+
 from __future__ import annotations
 
 from typing import Any

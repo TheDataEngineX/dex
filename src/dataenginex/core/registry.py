@@ -17,6 +17,7 @@ Usage::
     cls = connector_registry.get("csv")
     instance = cls(**kwargs)
 """
+
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -38,9 +39,7 @@ class BackendRegistry[T]:
         self._backends: dict[str, type[T]] = {}
         self._default: str | None = None
 
-    def register(
-        self, name: str, cls: type[T], *, is_default: bool = False
-    ) -> None:
+    def register(self, name: str, cls: type[T], *, is_default: bool = False) -> None:
         """Register a backend class under *name*.
 
         Raises:
@@ -59,9 +58,7 @@ class BackendRegistry[T]:
             default=is_default,
         )
 
-    def decorator(
-        self, name: str, *, is_default: bool = False
-    ) -> Callable[[type[T]], type[T]]:
+    def decorator(self, name: str, *, is_default: bool = False) -> Callable[[type[T]], type[T]]:
         """Class decorator for registration.
 
         Usage::

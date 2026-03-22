@@ -3,6 +3,7 @@
 Resolves cross-pipeline dependencies defined by `depends_on` in config.
 Uses Kahn's algorithm (topological sort) to produce execution order.
 """
+
 from __future__ import annotations
 
 from collections import deque
@@ -48,9 +49,7 @@ def resolve_execution_order(
     _validate_deps(pipelines)
     in_degree, adjacency = _build_graph(pipelines)
 
-    queue: deque[str] = deque(
-        name for name, degree in in_degree.items() if degree == 0
-    )
+    queue: deque[str] = deque(name for name, degree in in_degree.items() if degree == 0)
     order: list[str] = []
 
     while queue:

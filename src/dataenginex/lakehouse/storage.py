@@ -610,7 +610,11 @@ class GCSStorage(StorageBackend):
             body = json.dumps(records, default=str)
             blob = self._bucket.blob(self._blob_name(f"{path}.json"))
             blob.upload_from_string(body, content_type="application/json")
-            logger.info("wrote records to gcs", count=len(records), uri=f"gs://{self.bucket_name}/{blob.name}")
+            logger.info(
+                "wrote records to gcs",
+                count=len(records),
+                uri=f"gs://{self.bucket_name}/{blob.name}",
+            )
             return True
         except Exception as exc:
             logger.error("gcs storage write failed", exc=str(exc))

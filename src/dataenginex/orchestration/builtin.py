@@ -3,6 +3,7 @@
 Simple scheduler for single-node deployments. Stores last-run timestamps
 in memory. For production: use [dagster] or [airflow] extras.
 """
+
 from __future__ import annotations
 
 import uuid

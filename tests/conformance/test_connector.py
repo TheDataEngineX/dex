@@ -3,6 +3,7 @@
 Every connector backend must pass these tests.
 Subclass this and provide a `connector` fixture.
 """
+
 from __future__ import annotations
 
 from typing import Any

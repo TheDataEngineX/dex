@@ -1,4 +1,5 @@
 """Tests for pipeline DAG resolution."""
+
 from __future__ import annotations
 
 import pytest

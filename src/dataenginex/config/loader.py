@@ -7,6 +7,7 @@ Usage::
     cfg = load_config(Path("dex.yaml"))
     cfg = load_config(Path("dex.yaml"), overlay=Path("dex.prod.yaml"))
 """
+
 from __future__ import annotations
 
 import os
@@ -55,11 +56,7 @@ def _deep_merge(base: dict[str, Any], overlay: dict[str, Any]) -> dict[str, Any]
     """Recursively merge *overlay* into *base*. Overlay values win."""
     merged = base.copy()
     for key, value in overlay.items():
-        if (
-            key in merged
-            and isinstance(merged[key], dict)
-            and isinstance(value, dict)
-        ):
+        if key in merged and isinstance(merged[key], dict) and isinstance(value, dict):
             merged[key] = _deep_merge(merged[key], value)
         else:
             merged[key] = value
@@ -137,14 +134,10 @@ def validate_config(config: DexConfig) -> list[str]:
 
     for pipe_name, pipe_cfg in config.data.pipelines.items():
         if pipe_cfg.source and pipe_cfg.source not in source_names:
-            errors.append(
-                f"Pipeline '{pipe_name}' references undefined source '{pipe_cfg.source}'"
-            )
+            errors.append(f"Pipeline '{pipe_name}' references undefined source '{pipe_cfg.source}'")
         for dep in pipe_cfg.depends_on:
             if dep not in pipeline_names:
-                errors.append(
-                    f"Pipeline '{pipe_name}' depends_on undefined pipeline '{dep}'"
-                )
+                errors.append(f"Pipeline '{pipe_name}' depends_on undefined pipeline '{dep}'")
 
     if errors:
         logger.warning("config validation issues", count=len(errors))

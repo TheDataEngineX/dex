@@ -2,6 +2,7 @@
 
 These are applied when a section is omitted from dex.yaml.
 """
+
 from __future__ import annotations
 
 # Data

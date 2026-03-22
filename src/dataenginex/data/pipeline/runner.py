@@ -2,6 +2,7 @@
 
 Flow: Config -> Extract (connector) -> Transform chain -> Quality gate -> Load (lakehouse layer)
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -195,7 +196,8 @@ class PipelineRunner:
             return
         q = cfg.quality
         result = check_quality(
-            conn, table,
+            conn,
+            table,
             completeness=q.completeness,
             uniqueness=q.uniqueness,
             custom_sql=q.custom_sql,
@@ -236,8 +238,7 @@ class PipelineRunner:
             return {}
 
         dep_graph: dict[str, list[str]] = {
-            name: list(p.depends_on)
-            for name, p in self._config.data.pipelines.items()
+            name: list(p.depends_on) for name, p in self._config.data.pipelines.items()
         }
         order = resolve_execution_order(dep_graph)
         results: dict[str, PipelineResult] = {}

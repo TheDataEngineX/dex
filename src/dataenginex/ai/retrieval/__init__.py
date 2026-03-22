@@ -1,0 +1,11 @@
+"""Retriever registry.
+
+Built-in retriever supports dense, sparse (BM25), and hybrid strategies.
+"""
+
+from __future__ import annotations
+
+from dataenginex.core.interfaces import BaseRetriever
+from dataenginex.core.registry import BackendRegistry
+
+retriever_registry: BackendRegistry[BaseRetriever] = BackendRegistry("retriever")

@@ -1,4 +1,5 @@
 """DuckDB connector tests — conformance + DuckDB-specific tests."""
+
 from __future__ import annotations
 
 import pytest

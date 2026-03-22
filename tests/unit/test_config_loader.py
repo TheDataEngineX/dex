@@ -1,4 +1,5 @@
 """Tests for YAML config loading, env var resolution, and layering."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -50,9 +51,7 @@ class TestLoadConfig:
         assert isinstance(cfg, DexConfig)
         assert cfg.project.name == "test-project"
 
-    def test_load_with_env_vars(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_load_with_env_vars(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("PROJECT_NAME", "env-project")
         yaml_content = dedent("""\
             project:

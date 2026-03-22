@@ -6,6 +6,7 @@ Usage::
     dex validate dex.yaml
     dex version
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -82,8 +83,12 @@ def version() -> None:
 
 
 from dataenginex.cli.run import run  # noqa: E402
+from dataenginex.cli.serve import serve  # noqa: E402
+from dataenginex.cli.train import train  # noqa: E402
 
 dex.add_command(run)
+dex.add_command(serve)
+dex.add_command(train)
 
 if __name__ == "__main__":
     dex()

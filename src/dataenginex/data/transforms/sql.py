@@ -4,6 +4,7 @@ All transforms execute SQL against a DuckDB connection and return
 the name of the output table. Each transform is registered in the transform_registry.
 The PipelineRunner chains them: input_table -> transform1 -> transform2 -> ...
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -131,8 +132,11 @@ class DeduplicateTransform(BaseTransform):
         after_row = conn.execute(f"SELECT count(*) FROM {output}").fetchone()
         after = int(after_row[0]) if after_row else 0
         logger.info(
-            "deduplicate applied", key=self._key,
-            before=before, after=after, removed=before - after,
+            "deduplicate applied",
+            key=self._key,
+            before=before,
+            after=after,
+            removed=before - after,
         )
         return output
 

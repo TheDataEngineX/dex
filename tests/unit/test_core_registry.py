@@ -1,4 +1,5 @@
 """Tests for the generic backend registry."""
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod

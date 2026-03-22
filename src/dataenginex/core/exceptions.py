@@ -10,6 +10,7 @@ can catch broad or narrow as needed::
     except DataEngineXError:
         ...  # catch-all
 """
+
 from __future__ import annotations
 
 
@@ -71,9 +72,7 @@ class BackendNotInstalledError(DataEngineXError):
     def __init__(self, backend: str, extra: str) -> None:
         self.backend = backend
         self.extra = extra
-        super().__init__(
-            f"Backend '{backend}' requires: pip install dataenginex[{extra}]"
-        )
+        super().__init__(f"Backend '{backend}' requires: pip install dataenginex[{extra}]")
 
 
 # --- ML ---

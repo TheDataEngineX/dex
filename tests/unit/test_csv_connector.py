@@ -1,4 +1,5 @@
 """CSV connector tests — conformance + CSV-specific tests."""
+
 from __future__ import annotations
 
 import pytest

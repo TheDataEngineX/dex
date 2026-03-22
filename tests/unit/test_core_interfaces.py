@@ -1,4 +1,5 @@
 """Tests proving Base* ABCs enforce their contracts."""
+
 from __future__ import annotations
 
 from typing import Any
@@ -90,9 +91,7 @@ class TestBaseTrackerContract:
             ) -> None:
                 pass
 
-            def start_run(
-                self, experiment_id: str, run_name: str | None = None
-            ) -> str:
+            def start_run(self, experiment_id: str, run_name: str | None = None) -> str:
                 return "run-1"
 
             def end_run(self, run_id: str, status: str = "FINISHED") -> None:
@@ -108,9 +107,7 @@ class TestBaseTrackerContract:
 class TestBaseRetrieverContract:
     def test_minimal_implementation(self) -> None:
         class DummyRetriever(BaseRetriever):
-            def retrieve(
-                self, query: str, top_k: int = 10, **kwargs: Any
-            ) -> list[dict[str, Any]]:
+            def retrieve(self, query: str, top_k: int = 10, **kwargs: Any) -> list[dict[str, Any]]:
                 return []
 
         r = DummyRetriever()

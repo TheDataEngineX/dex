@@ -3,6 +3,7 @@
 Uses DuckDB's native CSV reader for performance (columnar scan,
 parallel reads, auto-type detection).
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -41,7 +42,11 @@ class CsvConnector(BaseConnector):
             self._conn = None
 
     def read(
-        self, *, table: str | None = None, default: Any = None, **kwargs: Any,
+        self,
+        *,
+        table: str | None = None,
+        default: Any = None,
+        **kwargs: Any,
     ) -> list[dict[str, Any]]:
         if self._conn is None:
             msg = "Not connected — call connect() first"
@@ -59,9 +64,7 @@ class CsvConnector(BaseConnector):
             msg = f"CSV file not found: {filepath}"
             raise FileNotFoundError(msg)
 
-        result = self._conn.execute(
-            f"SELECT * FROM read_csv_auto('{filepath}')"
-        )
+        result = self._conn.execute(f"SELECT * FROM read_csv_auto('{filepath}')")
         columns = [desc[0] for desc in result.description]
         return [dict(zip(columns, row, strict=True)) for row in result.fetchall()]
 

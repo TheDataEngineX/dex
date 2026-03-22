@@ -56,5 +56,5 @@ USER dex
 # Expose FastAPI default port
 EXPOSE 17000
 
-# Start the example API server (override CMD to use your own app entry point)
-CMD ["python", "examples/02_api_quickstart.py"]
+# Start the DEX API server (override CMD for custom entry point)
+CMD ["dex", "serve", "--host", "0.0.0.0", "--port", "17000"]

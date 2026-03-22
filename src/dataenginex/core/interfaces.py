@@ -15,6 +15,7 @@ The interfaces defined here are:
 - BaseLLMProvider — LLM API wrapper
 - BaseVectorStore — vector CRUD operations
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -79,9 +80,7 @@ class BaseTracker(ABC):
         """Create an experiment, return its ID."""
 
     @abstractmethod
-    def start_run(
-        self, experiment_id: str, run_name: str | None = None
-    ) -> str:
+    def start_run(self, experiment_id: str, run_name: str | None = None) -> str:
         """Start a run within an experiment, return run ID."""
 
     @abstractmethod
@@ -110,15 +109,11 @@ class BaseFeatureStore(ABC):
     """Interface for feature storage and serving."""
 
     @abstractmethod
-    def save_features(
-        self, feature_group: str, data: Any, entity_key: str
-    ) -> None:
+    def save_features(self, feature_group: str, data: Any, entity_key: str) -> None:
         """Persist features for a feature group."""
 
     @abstractmethod
-    def get_features(
-        self, feature_group: str, entity_ids: list[str]
-    ) -> Any:
+    def get_features(self, feature_group: str, entity_ids: list[str]) -> Any:
         """Retrieve features by entity IDs."""
 
     @abstractmethod
@@ -149,9 +144,7 @@ class BaseRetriever(ABC):
     """Interface for document/vector retrieval."""
 
     @abstractmethod
-    def retrieve(
-        self, query: str, top_k: int = 10, **kwargs: Any
-    ) -> list[dict[str, Any]]:
+    def retrieve(self, query: str, top_k: int = 10, **kwargs: Any) -> list[dict[str, Any]]:
         """Retrieve top_k relevant documents for query."""
 
 
@@ -216,15 +209,11 @@ class BaseAgentRuntime(ABC):
     """Interface for agent execution runtimes."""
 
     @abstractmethod
-    async def run(
-        self, message: str, **kwargs: Any
-    ) -> str:
+    async def run(self, message: str, **kwargs: Any) -> str:
         """Execute agent with message and return response."""
 
     @abstractmethod
-    async def step(
-        self, message: str, **kwargs: Any
-    ) -> dict[str, Any]:
+    async def step(self, message: str, **kwargs: Any) -> dict[str, Any]:
         """Execute one reasoning step, return step details."""
 
 

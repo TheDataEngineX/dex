@@ -1,4 +1,5 @@
 """End-to-end pipeline integration test."""
+
 from __future__ import annotations
 
 import shutil

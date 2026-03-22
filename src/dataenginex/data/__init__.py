@@ -15,6 +15,7 @@ Public API::
         SchemaRegistry, SchemaVersion,
     )
 """
+
 from __future__ import annotations
 
 # New Phase 1 API
