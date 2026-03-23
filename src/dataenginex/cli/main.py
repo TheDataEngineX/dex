@@ -45,12 +45,19 @@ def validate(config_path: Path, overlay: Path | None) -> None:
         console.print(f"[red]Error:[/red] {exc}")
         raise SystemExit(1) from exc
 
-    errors = validate_config(cfg)
+    issues = validate_config(cfg)
+    warnings = [i for i in issues if i.startswith("Warning:")]
+    hard_errors = [i for i in issues if not i.startswith("Warning:")]
 
-    if errors:
-        console.print(f"[yellow]Config loaded with {len(errors)} warning(s):[/yellow]")
-        for err in errors:
-            console.print(f"  [yellow]![/yellow] {err}")
+    if warnings:
+        console.print(f"[yellow]{len(warnings)} warning(s):[/yellow]")
+        for w in warnings:
+            console.print(f"  [yellow]![/yellow] {w}")
+
+    if hard_errors:
+        console.print(f"[red]{len(hard_errors)} error(s):[/red]")
+        for err in hard_errors:
+            console.print(f"  [red]✗[/red] {err}")
         raise SystemExit(1)
 
     # Summary table

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from unittest.mock import patch
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -32,7 +34,8 @@ def app():
 
 @pytest.fixture()
 def client(app):
-    return TestClient(app)
+    with TestClient(app) as c:
+        yield c
 
 
 class TestRootRouter:
@@ -79,11 +82,26 @@ class TestPipelinesRouter:
         resp = client.post("/api/v1/pipelines/ingest/run")
         assert resp.status_code == 200
         data = resp.json()
-        assert data["status"] == "triggered"
+        assert "pipeline" in data
+        assert data["pipeline"] == "ingest"
+        assert "success" in data
 
     def test_run_pipeline_not_found(self, client) -> None:
         resp = client.post("/api/v1/pipelines/nonexistent/run")
         assert resp.status_code == 404
+
+
+class TestPipelineExecution:
+    def test_run_pipeline_returns_result(self, client) -> None:
+        """POST /api/v1/pipelines/{name}/run returns PipelineResult fields."""
+        resp = client.post("/api/v1/pipelines/ingest/run")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "success" in data
+        assert "rows_input" in data
+        assert "rows_output" in data
+        assert "steps_completed" in data
+        assert "pipeline" in data
 
 
 class TestAppFactory:
@@ -96,3 +114,54 @@ class TestAppFactory:
         app = create_app(config)
         assert app.title == "custom"
         assert app.version == "2.0.0"
+
+
+class TestLifespan:
+    def test_pipeline_runner_initialized(self, client) -> None:
+        """After app startup, pipeline_runner should be on app.state."""
+        assert hasattr(client.app.state, "pipeline_runner")
+        assert client.app.state.pipeline_runner is not None
+
+    def test_tracker_initialized(self, client) -> None:
+        assert hasattr(client.app.state, "tracker")
+        assert client.app.state.tracker is not None
+
+    def test_feature_store_initialized(self, client) -> None:
+        assert hasattr(client.app.state, "feature_store")
+        assert client.app.state.feature_store is not None
+
+    def test_serving_engine_initialized(self, client) -> None:
+        assert hasattr(client.app.state, "serving_engine")
+        assert client.app.state.serving_engine is not None
+
+    def test_agents_dict_initialized(self, client) -> None:
+        assert hasattr(client.app.state, "agents")
+        assert isinstance(client.app.state.agents, dict)
+
+    def test_llm_graceful_degradation(self) -> None:
+        """LLM failure should not prevent app startup."""
+        config = DexConfig(project=ProjectConfig(name="test-degraded"))
+        with patch(
+            "dataenginex.api.factory.get_llm_provider",
+            side_effect=Exception("Ollama not running"),
+        ):
+            app = create_app(config)
+            with TestClient(app) as tc:
+                assert tc.app.state.llm is None
+
+    def test_lineage_initialized(self, client) -> None:
+        assert hasattr(client.app.state, "lineage")
+
+
+class TestMiddleware:
+    def test_request_logging_middleware(self, client) -> None:
+        """Request logging middleware adds X-Request-ID header."""
+        resp = client.get("/")
+        assert "x-request-id" in resp.headers
+
+    def test_metrics_middleware_tracks_requests(self, client) -> None:
+        """Metrics middleware should track HTTP requests."""
+        client.get("/")
+        resp = client.get("/metrics")
+        assert resp.status_code == 200
+        assert b"http_requests_total" in resp.content

@@ -104,6 +104,10 @@ class BaseTracker(ABC):
     def list_runs(self, experiment_id: str) -> list[dict[str, Any]]:
         """List all runs for an experiment."""
 
+    @abstractmethod
+    def list_experiments(self) -> list[dict[str, Any]]:
+        """List all experiments. Returns list of dicts with at least 'id' and 'name'."""
+
 
 class BaseFeatureStore(ABC):
     """Interface for feature storage and serving."""
@@ -209,8 +213,11 @@ class BaseAgentRuntime(ABC):
     """Interface for agent execution runtimes."""
 
     @abstractmethod
-    async def run(self, message: str, **kwargs: Any) -> str:
-        """Execute agent with message and return response."""
+    async def run(self, message: str, **kwargs: Any) -> dict[str, Any]:
+        """Execute agent with message and return response.
+
+        Returns dict with 'response', 'iterations', 'tool_calls'.
+        """
 
     @abstractmethod
     async def step(self, message: str, **kwargs: Any) -> dict[str, Any]:

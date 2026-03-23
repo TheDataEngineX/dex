@@ -47,25 +47,33 @@ class BuiltinAgentRuntime(BaseAgentRuntime):
         self._history: list[dict[str, str]] = []
         register_builtin_tools()
 
-    async def run(self, message: str, **kwargs: Any) -> str:
-        """Execute agent with message and return final response."""
+    async def run(self, message: str, **kwargs: Any) -> dict[str, Any]:
+        """Execute agent with message and return structured result.
+
+        Returns dict with 'response' (str), 'iterations' (int), 'tool_calls' (int).
+        """
         self._history.append({"role": "user", "content": message})
 
+        tool_calls = 0
+        iterations = 0
+
         for i in range(self._max_iterations):
+            iterations = i + 1
             step_result = await self.step(message, iteration=i, **kwargs)
 
             if step_result.get("done", False):
                 response = str(step_result.get("response", ""))
                 self._history.append({"role": "assistant", "content": response})
-                return response
+                return {"response": response, "iterations": iterations, "tool_calls": tool_calls}
 
             # If tool was called, continue the loop
+            tool_calls += 1
             message = step_result.get("observation", "")
 
         # Hit max iterations
         final = "I've reached my reasoning limit. Here's what I have so far."
         self._history.append({"role": "assistant", "content": final})
-        return final
+        return {"response": final, "iterations": self._max_iterations, "tool_calls": tool_calls}
 
     async def step(self, message: str, **kwargs: Any) -> dict[str, Any]:
         """Execute one reasoning step."""

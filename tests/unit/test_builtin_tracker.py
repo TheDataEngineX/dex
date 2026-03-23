@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
 from dataenginex.ml.tracking.builtin import BuiltinTracker
@@ -53,3 +55,21 @@ class TestBuiltinTracker(TrackerConformanceTests):
         tracker = BuiltinTracker(storage_dir=str(tmp_path / "err3"))
         with pytest.raises(KeyError):
             tracker.log_metrics("nonexistent", {"x": 1.0})
+
+
+def test_list_experiments(tmp_path: Path) -> None:
+    tracker = BuiltinTracker(storage_dir=str(tmp_path / "tracking"))
+    # Empty initially
+    assert tracker.list_experiments() == []
+    # Create experiments
+    tracker.create_experiment("exp-1")
+    tracker.create_experiment("exp-2")
+    result = tracker.list_experiments()
+    assert len(result) == 2
+    names = [e["name"] for e in result]
+    assert "exp-1" in names
+    assert "exp-2" in names
+    # Each entry has id and name
+    for exp in result:
+        assert "id" in exp
+        assert "name" in exp

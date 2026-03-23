@@ -122,13 +122,9 @@ def load_config(
     return config
 
 
-def validate_config(config: DexConfig) -> list[str]:
-    """Run cross-reference validation on a loaded config.
-
-    Returns a list of error messages (empty = valid).
-    """
+def _validate_pipelines(config: DexConfig) -> list[str]:
+    """Check pipeline source and depends_on references."""
     errors: list[str] = []
-
     source_names = set(config.data.sources.keys())
     pipeline_names = set(config.data.pipelines.keys())
 
@@ -138,6 +134,61 @@ def validate_config(config: DexConfig) -> list[str]:
         for dep in pipe_cfg.depends_on:
             if dep not in pipeline_names:
                 errors.append(f"Pipeline '{pipe_name}' depends_on undefined pipeline '{dep}'")
+    return errors
+
+
+def _validate_registries(config: DexConfig) -> list[str]:
+    """Check backends and tools against registries (warnings)."""
+    # Import builtins to ensure they're registered before checking.
+    import dataenginex.ai.agents.builtin  # noqa: F401
+    import dataenginex.ml.features.builtin  # noqa: F401
+    import dataenginex.ml.serving_engine.builtin  # noqa: F401
+    import dataenginex.ml.tracking.builtin  # noqa: F401
+    from dataenginex.ai.agents import agent_registry
+    from dataenginex.ai.tools import tool_registry
+    from dataenginex.core.registry import BackendRegistry
+    from dataenginex.ml.features import feature_store_registry
+    from dataenginex.ml.serving_engine import serving_registry
+    from dataenginex.ml.tracking import tracker_registry
+
+    warnings: list[str] = []
+
+    checks: list[tuple[str, BackendRegistry[Any], str]] = [
+        (config.ml.tracking.backend, tracker_registry, "tracker backend"),
+        (config.ml.features.backend, feature_store_registry, "feature store backend"),
+        (config.ml.serving.engine, serving_registry, "serving engine"),
+    ]
+    for value, registry, label in checks:
+        if value not in registry:
+            warnings.append(
+                f"Warning: {label} '{value}' not found in registry (available: {registry.list()})"
+            )
+
+    for agent_name, agent_cfg in config.ai.agents.items():
+        if agent_cfg.runtime not in agent_registry:
+            warnings.append(
+                f"Warning: agent '{agent_name}' runtime "
+                f"'{agent_cfg.runtime}' not found in registry "
+                f"(available: {agent_registry.list()})"
+            )
+        for tool_name in agent_cfg.tools:
+            if tool_name not in tool_registry._tools:
+                warnings.append(
+                    f"Warning: agent '{agent_name}' references unknown tool '{tool_name}'"
+                )
+
+    return warnings
+
+
+def validate_config(config: DexConfig) -> list[str]:
+    """Run cross-reference validation on a loaded config.
+
+    Returns a list of error/warning messages (empty = valid).
+    Pipeline source/depends_on mismatches are errors.
+    Unknown registry backends are warnings (extras register at import time).
+    """
+    errors = _validate_pipelines(config)
+    errors.extend(_validate_registries(config))
 
     if errors:
         logger.warning("config validation issues", count=len(errors))

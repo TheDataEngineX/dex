@@ -8,7 +8,14 @@ from textwrap import dedent
 import pytest
 
 from dataenginex.config.loader import load_config, resolve_env_vars, validate_config
-from dataenginex.config.schema import DexConfig
+from dataenginex.config.schema import (
+    AgentConfig,
+    AiConfig,
+    DexConfig,
+    MlConfig,
+    ProjectConfig,
+    TrackerConfig,
+)
 from dataenginex.core.exceptions import ConfigError
 
 
@@ -118,3 +125,28 @@ class TestValidateConfig:
         )
         errors = validate_config(cfg)
         assert any("nonexistent_source" in e for e in errors)
+
+
+class TestRegistryValidation:
+    def test_warns_on_unknown_tracker_backend(self) -> None:
+        config = DexConfig(
+            project=ProjectConfig(name="test"),
+            ml=MlConfig(tracking=TrackerConfig(backend="nonexistent")),
+        )
+        warnings = validate_config(config)
+        assert any("tracker" in w.lower() and "nonexistent" in w for w in warnings)
+
+    def test_warns_on_unknown_agent_runtime(self) -> None:
+        config = DexConfig(
+            project=ProjectConfig(name="test"),
+            ai=AiConfig(
+                agents={"bot": AgentConfig(runtime="nonexistent", system_prompt="test")},
+            ),
+        )
+        warnings = validate_config(config)
+        assert any("agent" in w.lower() and "nonexistent" in w for w in warnings)
+
+    def test_valid_config_no_warnings(self) -> None:
+        config = DexConfig(project=ProjectConfig(name="test"))
+        warnings = validate_config(config)
+        assert len(warnings) == 0

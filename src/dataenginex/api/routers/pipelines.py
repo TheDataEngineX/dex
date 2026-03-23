@@ -2,9 +2,15 @@
 
 from __future__ import annotations
 
+import time
 from typing import Any
 
+import structlog
 from fastapi import APIRouter, HTTPException, Request
+
+from dataenginex.api.schemas import PipelineResultResponse
+
+logger = structlog.get_logger()
 
 router = APIRouter(prefix="/pipelines", tags=["pipelines"])
 
@@ -35,15 +41,24 @@ def get_pipeline(pipeline_name: str, request: Request) -> dict[str, Any]:
     }
 
 
-@router.post("/{pipeline_name}/run")
-def run_pipeline(pipeline_name: str, request: Request) -> dict[str, Any]:
-    """Trigger a pipeline run."""
+@router.post("/{pipeline_name}/run", response_model=PipelineResultResponse)
+def run_pipeline(pipeline_name: str, request: Request) -> PipelineResultResponse:
+    """Execute a pipeline run."""
     config = request.app.state.config
     if pipeline_name not in config.data.pipelines:
         raise HTTPException(status_code=404, detail=f"Pipeline '{pipeline_name}' not found")
 
-    return {
-        "pipeline": pipeline_name,
-        "status": "triggered",
-        "message": f"Pipeline '{pipeline_name}' run triggered",
-    }
+    runner = request.app.state.pipeline_runner
+    start = time.monotonic()
+    result = runner.run(pipeline_name)
+    duration_ms = (time.monotonic() - start) * 1000
+
+    return PipelineResultResponse(
+        pipeline=pipeline_name,
+        success=result.success,
+        rows_input=result.rows_input,
+        rows_output=result.rows_output,
+        steps_completed=result.steps_completed,
+        duration_ms=round(duration_ms, 2),
+        error=result.error,
+    )

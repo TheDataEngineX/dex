@@ -100,6 +100,9 @@ class TestBaseTrackerContract:
             def list_runs(self, experiment_id: str) -> list[dict[str, Any]]:
                 return []
 
+            def list_experiments(self) -> list[dict[str, Any]]:
+                return []
+
         t = DummyTracker()
         assert t.create_experiment("test") == "exp-1"
 

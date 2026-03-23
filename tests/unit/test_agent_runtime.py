@@ -13,7 +13,10 @@ class TestBuiltinAgentRuntime:
     async def test_run_without_llm_echoes(self) -> None:
         agent = BuiltinAgentRuntime(llm=None)
         result = await agent.run("hello")
-        assert result == "hello"
+        assert isinstance(result, dict)
+        assert result["response"] == "hello"
+        assert result["iterations"] >= 1
+        assert result["tool_calls"] == 0
 
     @pytest.mark.asyncio()
     async def test_step_without_llm(self) -> None:

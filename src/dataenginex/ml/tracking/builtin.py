@@ -133,3 +133,7 @@ class BuiltinTracker(BaseTracker):
             for rid, run in self._runs.items()
             if run["experiment_id"] == experiment_id
         ]
+
+    def list_experiments(self) -> list[dict[str, Any]]:
+        """List all experiments with their IDs and names."""
+        return [{"id": exp_id, "name": exp["name"]} for exp_id, exp in self._experiments.items()]
