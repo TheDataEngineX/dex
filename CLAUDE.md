@@ -12,7 +12,7 @@ Always Be pragmatic, straight forward and challenge my ideas and system design f
 |---------|----------|---------|
 | `dataenginex` | `src/dataenginex/` | Core framework — config system, backend registry, CLI, API, ML, AI agents |
 
-**Stack:** Python 3.12+ · FastAPI · DuckDB · structlog · Pydantic · Click · Rich · uv · Ruff · mypy strict · pytest
+**Stack:** Python 3.13+ · FastAPI · DuckDB · structlog · Pydantic · Click · Rich · uv · Ruff · mypy strict · pytest
 
 **Version:** `uv run poe version`
 

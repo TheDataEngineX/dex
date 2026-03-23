@@ -4,6 +4,7 @@ Every section is a Pydantic BaseModel with defaults so that
 only ``project.name`` is required. Progressive disclosure:
 add sections as you need them.
 """
+
 from __future__ import annotations
 
 from typing import Any, Literal
@@ -48,6 +49,7 @@ class SourceConfig(BaseModel):
     path: str | None = None
     query: str | None = None
     url: str | None = None
+    connection: dict[str, Any] = Field(default_factory=dict)
     options: dict[str, Any] = Field(default_factory=dict)
 
 
@@ -57,7 +59,9 @@ class TransformStepConfig(BaseModel):
     type: str  # filter, derive, cast, deduplicate, sql, etc.
     condition: str | None = None
     expression: str | None = None
-    columns: list[str] | None = None
+    name: str | None = None  # for derive: column name
+    columns: dict[str, str] | list[str] | None = None  # for cast: {col: type}
+    key: str | list[str] | None = None  # for deduplicate: key columns
     sql: str | None = None
     options: dict[str, Any] = Field(default_factory=dict)
 
@@ -78,6 +82,7 @@ class PipelineConfig(BaseModel):
     transforms: list[TransformStepConfig] = Field(default_factory=list)
     quality: QualityCheckConfig | None = None
     destination: str | None = None
+    target: dict[str, str] | None = None  # {layer: "silver"}
     depends_on: list[str] = Field(default_factory=list)
     schedule: str | None = None  # cron expression
 
@@ -208,9 +213,7 @@ class PiiConfig(BaseModel):
     """PII detection configuration."""
 
     scan: bool = False
-    patterns: list[str] = Field(
-        default_factory=lambda: ["email", "ssn", "phone", "credit_card"]
-    )
+    patterns: list[str] = Field(default_factory=lambda: ["email", "ssn", "phone", "credit_card"])
     action: Literal["warn", "mask", "block"] = "warn"
 
 

@@ -1,4 +1,5 @@
 """Tests for the unified exception hierarchy."""
+
 from __future__ import annotations
 
 from dataenginex.core.exceptions import (

@@ -1,4 +1,5 @@
 """Integration tests: config loading + CLI validate end-to-end."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -21,8 +22,10 @@ class TestExampleDexYaml:
 
     def test_cross_reference_validation_passes(self) -> None:
         cfg = load_config(EXAMPLES_DIR / "dex.yaml")
-        errors = validate_config(cfg)
-        assert errors == []
+        issues = validate_config(cfg)
+        # Registry warnings are acceptable; only hard errors are failures
+        hard_errors = [e for e in issues if not e.startswith("Warning:")]
+        assert hard_errors == []
 
     def test_sources_populated(self) -> None:
         cfg = load_config(EXAMPLES_DIR / "dex.yaml")

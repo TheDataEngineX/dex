@@ -6,6 +6,7 @@ Usage::
     dex validate dex.yaml
     dex version
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -44,12 +45,19 @@ def validate(config_path: Path, overlay: Path | None) -> None:
         console.print(f"[red]Error:[/red] {exc}")
         raise SystemExit(1) from exc
 
-    errors = validate_config(cfg)
+    issues = validate_config(cfg)
+    warnings = [i for i in issues if i.startswith("Warning:")]
+    hard_errors = [i for i in issues if not i.startswith("Warning:")]
 
-    if errors:
-        console.print(f"[yellow]Config loaded with {len(errors)} warning(s):[/yellow]")
-        for err in errors:
-            console.print(f"  [yellow]![/yellow] {err}")
+    if warnings:
+        console.print(f"[yellow]{len(warnings)} warning(s):[/yellow]")
+        for w in warnings:
+            console.print(f"  [yellow]![/yellow] {w}")
+
+    if hard_errors:
+        console.print(f"[red]{len(hard_errors)} error(s):[/red]")
+        for err in hard_errors:
+            console.print(f"  [red]✗[/red] {err}")
         raise SystemExit(1)
 
     # Summary table
@@ -80,6 +88,14 @@ def version() -> None:
     console.print(f"Python {sys.version}")
     console.print(f"Platform {platform.platform()}")
 
+
+from dataenginex.cli.run import run  # noqa: E402
+from dataenginex.cli.serve import serve  # noqa: E402
+from dataenginex.cli.train import train  # noqa: E402
+
+dex.add_command(run)
+dex.add_command(serve)
+dex.add_command(train)
 
 if __name__ == "__main__":
     dex()

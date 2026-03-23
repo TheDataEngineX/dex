@@ -15,6 +15,7 @@ The interfaces defined here are:
 - BaseLLMProvider — LLM API wrapper
 - BaseVectorStore — vector CRUD operations
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -35,11 +36,11 @@ class BaseConnector(ABC):
         """Close connection."""
 
     @abstractmethod
-    def read(self, **kwargs: Any) -> Any:
+    def read(self, *, table: str, **kwargs: Any) -> Any:
         """Read data from the source."""
 
     @abstractmethod
-    def write(self, data: Any, **kwargs: Any) -> None:
+    def write(self, data: Any, *, table: str, **kwargs: Any) -> None:
         """Write data to the sink."""
 
     @abstractmethod
@@ -48,16 +49,24 @@ class BaseConnector(ABC):
 
 
 class BaseTransform(ABC):
-    """Interface for data transformation steps."""
+    """Interface for data transformation steps.
+
+    Transforms operate on DuckDB tables: given a connection and input table
+    name, they produce an output table and return its name.
+    """
 
     @property
-    @abstractmethod
     def name(self) -> str:
         """Human-readable transform name."""
+        return type(self).__name__
 
     @abstractmethod
-    def apply(self, data: Any) -> Any:
-        """Apply transformation and return result."""
+    def apply(self, conn: Any, input_table: str) -> str:
+        """Apply transformation to *input_table* and return output table name."""
+
+    def validate(self) -> list[str]:
+        """Return validation errors (empty list if valid)."""
+        return []
 
 
 # --- ML Layer ---
@@ -71,9 +80,7 @@ class BaseTracker(ABC):
         """Create an experiment, return its ID."""
 
     @abstractmethod
-    def start_run(
-        self, experiment_id: str, run_name: str | None = None
-    ) -> str:
+    def start_run(self, experiment_id: str, run_name: str | None = None) -> str:
         """Start a run within an experiment, return run ID."""
 
     @abstractmethod
@@ -97,20 +104,20 @@ class BaseTracker(ABC):
     def list_runs(self, experiment_id: str) -> list[dict[str, Any]]:
         """List all runs for an experiment."""
 
+    @abstractmethod
+    def list_experiments(self) -> list[dict[str, Any]]:
+        """List all experiments. Returns list of dicts with at least 'id' and 'name'."""
+
 
 class BaseFeatureStore(ABC):
     """Interface for feature storage and serving."""
 
     @abstractmethod
-    def save_features(
-        self, feature_group: str, data: Any, entity_key: str
-    ) -> None:
+    def save_features(self, feature_group: str, data: Any, entity_key: str) -> None:
         """Persist features for a feature group."""
 
     @abstractmethod
-    def get_features(
-        self, feature_group: str, entity_ids: list[str]
-    ) -> Any:
+    def get_features(self, feature_group: str, entity_ids: list[str]) -> Any:
         """Retrieve features by entity IDs."""
 
     @abstractmethod
@@ -141,9 +148,7 @@ class BaseRetriever(ABC):
     """Interface for document/vector retrieval."""
 
     @abstractmethod
-    def retrieve(
-        self, query: str, top_k: int = 10, **kwargs: Any
-    ) -> list[dict[str, Any]]:
+    def retrieve(self, query: str, top_k: int = 10, **kwargs: Any) -> list[dict[str, Any]]:
         """Retrieve top_k relevant documents for query."""
 
 
@@ -208,15 +213,14 @@ class BaseAgentRuntime(ABC):
     """Interface for agent execution runtimes."""
 
     @abstractmethod
-    async def run(
-        self, message: str, **kwargs: Any
-    ) -> str:
-        """Execute agent with message and return response."""
+    async def run(self, message: str, **kwargs: Any) -> dict[str, Any]:
+        """Execute agent with message and return response.
+
+        Returns dict with 'response', 'iterations', 'tool_calls'.
+        """
 
     @abstractmethod
-    async def step(
-        self, message: str, **kwargs: Any
-    ) -> dict[str, Any]:
+    async def step(self, message: str, **kwargs: Any) -> dict[str, Any]:
         """Execute one reasoning step, return step details."""
 
 

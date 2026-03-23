@@ -10,6 +10,7 @@ can catch broad or narrow as needed::
     except DataEngineXError:
         ...  # catch-all
 """
+
 from __future__ import annotations
 
 
@@ -43,10 +44,19 @@ class PipelineError(DataEngineXError):
 class PipelineStepError(PipelineError):
     """A specific pipeline step failed."""
 
-    def __init__(self, step: str, cause: str) -> None:
+    def __init__(
+        self,
+        step: str,
+        cause: str = "",
+        *,
+        pipeline: str = "",
+        message: str = "",
+    ) -> None:
         self.step = step
-        self.cause = cause
-        super().__init__(f"Pipeline step '{step}' failed: {cause}")
+        self.pipeline = pipeline
+        self.cause = cause or message
+        prefix = f"[{pipeline}] " if pipeline else ""
+        super().__init__(f"{prefix}Pipeline step '{step}' failed: {self.cause}")
 
 
 # --- Registry ---
@@ -62,9 +72,7 @@ class BackendNotInstalledError(DataEngineXError):
     def __init__(self, backend: str, extra: str) -> None:
         self.backend = backend
         self.extra = extra
-        super().__init__(
-            f"Backend '{backend}' requires: pip install dataenginex[{extra}]"
-        )
+        super().__init__(f"Backend '{backend}' requires: pip install dataenginex[{extra}]")
 
 
 # --- ML ---
