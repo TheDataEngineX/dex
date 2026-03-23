@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from loguru import logger
+import structlog
+
+logger = structlog.get_logger()
 
 try:
     import streamlit as st
@@ -45,7 +47,7 @@ def pipeline_status_panel(metrics: dict[str, Any]) -> None:
         col2.metric("Status", f"{icon} {status}")
         col3.metric("Duration", pipeline.get("duration", "N/A"))
 
-    logger.debug("rendered pipeline_status_panel with {} pipelines", len(pipelines))
+    logger.debug("rendered pipeline_status_panel", count=len(pipelines))
 
 
 def quality_scores_panel(metrics: dict[str, Any]) -> None:
@@ -68,7 +70,7 @@ def quality_scores_panel(metrics: dict[str, Any]) -> None:
         color = "normal" if score >= 0.8 else ("off" if score >= 0.5 else "inverse")
         st.metric(label=name, value=f"{score:.1%}", delta_color=color)
 
-    logger.debug("rendered quality_scores_panel with {} datasets", len(datasets))
+    logger.debug("rendered quality_scores_panel", count=len(datasets))
 
 
 def model_drift_panel(metrics: dict[str, Any]) -> None:
@@ -95,7 +97,7 @@ def model_drift_panel(metrics: dict[str, Any]) -> None:
         threshold = model.get("threshold", 0.2)
         col2.progress(min(psi / threshold, 1.0), text=f"Threshold: {threshold}")
 
-    logger.debug("rendered model_drift_panel with {} models", len(models))
+    logger.debug("rendered model_drift_panel", count=len(models))
 
 
 def alerts_panel(metrics: dict[str, Any]) -> None:
@@ -124,4 +126,4 @@ def alerts_panel(metrics: dict[str, Any]) -> None:
         else:
             st.info(f"🔵 [{time_str}] {message}")
 
-    logger.debug("rendered alerts_panel with {} alerts", len(alerts))
+    logger.debug("rendered alerts_panel", count=len(alerts))

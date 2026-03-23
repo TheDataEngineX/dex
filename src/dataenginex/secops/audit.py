@@ -1,7 +1,7 @@
 """SecOps audit logging — structured log of PII detection and masking operations.
 
 Every time PII is detected or masked, an ``AuditEvent`` is emitted via
-loguru (structured key-value format) and appended to the in-memory
+structlog (structured key-value format) and appended to the in-memory
 ``AuditLogger`` for programmatic access.
 
 This is NOT a replacement for a production audit trail (e.g. SIEM).
@@ -16,7 +16,9 @@ from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Any
 
-from loguru import logger
+import structlog
+
+logger = structlog.get_logger()
 
 __all__ = [
     "AuditEvent",
@@ -71,7 +73,7 @@ class AuditEvent:
 class AuditLogger:
     """In-memory audit log for SecOps operations.
 
-    Emits structured loguru events on every write and maintains an
+    Emits structured structlog events on every write and maintains an
     in-memory history for testing and local inspection.
 
     Parameters
@@ -85,7 +87,7 @@ class AuditLogger:
         self._max = max_history
 
     def log(self, event: AuditEvent) -> None:
-        """Record an audit event (in-memory + loguru)."""
+        """Record an audit event (in-memory + structlog)."""
         if len(self._events) >= self._max:
             self._events.pop(0)
         self._events.append(event)

@@ -8,7 +8,7 @@ Requires the ``dashboard`` dependency group::
 
     uv sync --group dashboard
 
-The dashboard connects to a running DEX API (default: http://localhost:8000)
+The dashboard connects to a running DEX API (default: http://localhost:17000)
 and displays pipeline status, data quality, model drift, and alerts.
 """
 

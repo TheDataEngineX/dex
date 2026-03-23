@@ -1,5 +1,5 @@
 # Build and push Docker image to GitHub Container Registry (GHCR)
-# Triggers on merge to main — publishes ghcr.io/thedataenginex/dex:<version>
+# Triggers on merge to main — publishes ghcr.io/thedataenginex/dataenginex:<version>
 
 name: Docker Build & Push
 
@@ -36,7 +36,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v6
         with:
-          images: ghcr.io/thedataenginex/dex
+          images: ghcr.io/thedataenginex/dataenginex
           tags: |
             type=raw,value=${{ steps.version.outputs.version }}
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}

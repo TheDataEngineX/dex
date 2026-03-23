@@ -14,8 +14,9 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from loguru import logger
+import structlog
 
+logger = structlog.get_logger()
 __all__ = [
     "CatalogEntry",
     "DataCatalog",
@@ -166,4 +167,6 @@ class DataCatalog:
             item.pop("updated_at", None)
             entry = CatalogEntry(**item)
             self._entries[entry.name] = entry
-        logger.info("Loaded %d catalog entries from %s", len(self._entries), self._persist_path)
+        logger.info(
+            "catalog entries loaded", count=len(self._entries), path=str(self._persist_path)
+        )

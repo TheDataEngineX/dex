@@ -4,7 +4,7 @@
 title: "DataEngineX Pipeline Monitor"
 
 # DEX API endpoint (for /health, /metrics, /api/v1/*)
-dex_api_url: "http://localhost:8000"
+dex_api_url: "http://localhost:17000"
 
 # Prometheus server for raw metrics queries
 prometheus_url: "http://localhost:9090"

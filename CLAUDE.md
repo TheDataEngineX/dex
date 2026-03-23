@@ -6,15 +6,17 @@ Always Be pragmatic, straight forward and challenge my ideas and system design f
 
 ## Project Overview
 
-**DEX** — pure package repo for the `dataenginex` core framework.
+**DataEngineX** — unified Data + ML + AI framework. Config-driven, self-hosted, production-ready.
 
 | Package | Location | Purpose |
 |---------|----------|---------|
-| `dataenginex` | `src/dataenginex/` | Core framework (FastAPI, middleware, observability, quality gates, ML registry) |
+| `dataenginex` | `src/dataenginex/` | Core framework — config system, backend registry, CLI, API, ML, AI agents |
 
-**Stack:** Python 3.13+ · FastAPI · uv · Ruff · mypy strict · pytest · Docker · Kubernetes (ArgoCD)
+**Stack:** Python 3.13+ · FastAPI · DuckDB · structlog · Pydantic · Click · Rich · uv · Ruff · mypy strict · pytest
 
 **Version:** `uv run poe version`
+
+**Domain:** dataenginex.org | **Org:** github.com/TheDataEngineX
 
 ______________________________________________________________________
 
@@ -32,6 +34,10 @@ uv run poe test           # All tests
 uv run poe test-unit      # Unit tests only
 uv run poe test-integration  # Integration tests only
 uv run poe test-cov       # Tests with coverage
+
+# CLI
+dex validate dex.yaml     # Validate config file
+dex version               # Show version + environment
 
 # Run
 uv run poe dev            # Dev server (uvicorn reload, port 17000)
@@ -54,16 +60,32 @@ Run in this exact order after ANY code change:
 1. uv run poe lint                    # Ruff lint
 2. uv run poe typecheck              # mypy --strict
 3. uv run poe test                   # pytest
-4. uv run python examples/02_api_quickstart.py  # Real server
+4. uv run dex validate examples/dex.yaml  # Config validation
+5. uv run python examples/02_api_quickstart.py  # Real server
    # Then curl: /health, /, /echo, /metrics
-5. Import key classes standalone      # Verify modules work independently
+6. Import key classes standalone      # Verify modules work independently
 ```
 
-**Tests passing ≠ app working. Step 4 is NON-NEGOTIABLE.**
+**Tests passing ≠ app working. Steps 4-5 are NON-NEGOTIABLE.**
 
 ______________________________________________________________________
 
 ## Architecture Patterns
+
+### Config System (`dex.yaml`)
+
+- Single YAML defines entire Data + ML + AI pipeline
+- Pydantic models in `src/dataenginex/config/schema.py`
+- Env var resolution: `${VAR:-default}` syntax
+- Config layering: base + overlay (e.g. `dex.prod.yaml`)
+- Cross-reference validation (pipeline sources, dependencies)
+
+### Backend Registry
+
+- Every subsystem has a `Base*` ABC in `core/interfaces.py`
+- `BackendRegistry[T]` in `core/registry.py` discovers and registers implementations
+- Built-in backends work out of the box; extras implement same interface
+- Conformance test suites verify both built-in and extra backends
 
 ### API
 
@@ -74,21 +96,34 @@ ______________________________________________________________________
 
 ### Data
 
+- DuckDB as default engine (built-in, zero config)
 - Medallion architecture: Bronze → Silver → Gold
-- Airflow DAGs for orchestration
-- PySpark for transforms
+- PySpark available via `[spark]` extra
 - `SchemaRegistry`, `DataCatalog`, data contracts via Pydantic
 
 ### ML
 
 - Model lifecycle: development → staging → production → archived
-- `ModelRegistry` (JSON-persisted)
+- Built-in JSON tracker (MLflow via `[mlflow]` extra)
 - Drift detection: PSI-based
-- PySpark ML pipelines — see `examples/08_spark_ml.py`
+- Feature store interface
+
+### AI
+
+- LLM: Ollama/LiteLLM (default), any OpenAI-compatible provider
+- Retrieval: BM25 + Dense + Hybrid + Reranking
+- Vector store: DuckDB VSS (built-in), Qdrant/LanceDB via extras
+- Agent runtime: built-in or LangGraph via `[agents]` extra
+
+### Logging
+
+- **structlog only** — no loguru, no print()
+- Structured JSON logging in production, human-readable in dev
 
 ### Infrastructure
 
 - Docker: multi-stage, Python 3.13-slim, non-root `dex` user
+- Container images: `ghcr.io/thedataenginex/dataenginex`
 - Kubernetes: Kustomize base + overlays (dev, prod)
 - ArgoCD GitOps: `dev` → dex-dev, `main` → dex
 
@@ -100,22 +135,36 @@ ______________________________________________________________________
 |------|---------|
 | `pyproject.toml` | Package config (version source of truth) |
 | `poe_tasks.toml` | All poe task definitions |
-| `src/dataenginex/` | Framework source |
+| `src/dataenginex/config/` | Config schema, loader, defaults |
+| `src/dataenginex/core/` | Exceptions, interfaces (ABCs), registry |
+| `src/dataenginex/cli/` | `dex` CLI entry point |
+| `examples/dex.yaml` | Example full-stack config |
 | `examples/` | Runnable examples (01–10) |
 | `tests/` | All tests (unit + integration) |
 | `tasks/todo.md` | Task tracker — plan here first |
 | `tasks/lessons.md` | Lessons learned — update after corrections |
 | `tasks/findings.md` | Research log — decisions, dead ends, context |
-| `.github/CHECKLISTS.md` | Code review checklists |
+| `docs/superpowers/specs/` | System redesign spec |
 | `TODO.md` | Project-level task board |
 
 ______________________________________________________________________
 
 ## Framework API Endpoints
 
-Run `uv run poe dev` to start the example server.
+Run `uv run poe dev` to start the example server on port 17000.
 
 - `GET /` — Root
 - `POST /echo` — Echo endpoint
 - `GET /health` — Health check
 - `GET /metrics` — Prometheus metrics
+
+______________________________________________________________________
+
+## Ecosystem (3 repos)
+
+```
+TheDataEngineX/
+├── dataenginex    — Core framework (this repo) — PyPI: dataenginex
+├── dex-studio     — Web UI (NiceGUI) — single pane of glass
+└── infradex       — Terraform + Helm + K3s deployment
+```

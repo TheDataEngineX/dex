@@ -1,12 +1,16 @@
 """Structured logging configuration for DataEngineX.
 
-Uses **loguru** as the primary logging backend, integrated with **structlog**
-for structured context in the FastAPI application.  All stdlib ``logging``
-output is intercepted and routed through loguru so that every log line—
-regardless of origin—gets the same formatting and sink configuration.
+Uses **structlog** as the sole logging backend.  All stdlib ``logging``
+output is intercepted and rendered through structlog so that every log
+line — regardless of origin — gets the same formatting and sink
+configuration.
+
+The key design constraint: structlog must use ``PrintLoggerFactory`` (direct
+stdout write) rather than ``stdlib.LoggerFactory`` to avoid re-entering the
+``_InterceptHandler`` and causing infinite recursion.
 
 Functions:
-    configure_logging: Configure loguru + structlog sinks.
+    configure_logging: Configure structlog sinks.
     get_logger: Obtain a configured ``structlog.BoundLogger``.
     add_app_context: Structlog processor adding app name and version.
 
@@ -19,12 +23,9 @@ from __future__ import annotations
 
 import logging
 import os
-import sys
-from types import FrameType
 from typing import Any, cast
 
 import structlog
-from loguru import logger as _loguru_logger
 from structlog.types import EventDict, Processor
 
 __all__ = [
@@ -46,32 +47,25 @@ APP_NAME = os.getenv("APP_NAME", "dataenginex")
 
 
 # ---------------------------------------------------------------------------
-# Intercept stdlib logging → loguru
+# Intercept stdlib logging → structlog
 # ---------------------------------------------------------------------------
 
 
 class _InterceptHandler(logging.Handler):
-    """Route all stdlib ``logging`` calls into **loguru**.
+    """Route third-party stdlib ``logging`` calls into **structlog**.
 
-    This ensures third-party libraries that use ``logging.getLogger``
-    (e.g. uvicorn, httpx) also appear in loguru output.
+    Uses structlog's bound logger directly — structlog is configured with
+    ``PrintLoggerFactory`` so no stdlib ``logging`` call is made, which
+    avoids the infinite-recursion loop that occurs with ``LoggerFactory``.
     """
 
     def emit(self, record: logging.LogRecord) -> None:  # noqa: D102
-        # Map stdlib level to loguru level name
-        try:
-            level = _loguru_logger.level(record.levelname).name
-        except ValueError:
-            level = str(record.levelno)
+        from collections.abc import Callable  # noqa: PLC0415
 
-        # Find caller from where the logged message originated
-        frame: FrameType | None = logging.currentframe()
-        depth = 2
-        while frame and frame.f_code.co_filename == logging.__file__:
-            frame = frame.f_back
-            depth += 1
-
-        _loguru_logger.opt(depth=depth, exception=record.exc_info).log(level, record.getMessage())
+        level = record.levelname.lower()
+        bound = structlog.get_logger(record.name)
+        log_fn: Callable[..., None] = getattr(bound, level, bound.info)
+        log_fn(record.getMessage(), exc_info=record.exc_info or None)
 
 
 def add_app_context(logger: Any, method_name: str, event_dict: EventDict) -> EventDict:
@@ -82,43 +76,25 @@ def add_app_context(logger: Any, method_name: str, event_dict: EventDict) -> Eve
 
 
 def configure_logging(log_level: str = "INFO", json_logs: bool = True) -> None:
-    """Configure loguru + structlog for the application.
+    """Configure structlog for the application.
 
     Args:
         log_level: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
         json_logs: If True, output JSON logs; otherwise use coloured console
     """
-    # -- loguru sink ---------------------------------------------------------
-    _loguru_logger.remove()  # Drop default stderr handler
+    numeric_level = getattr(logging, log_level.upper(), logging.INFO)
 
-    if json_logs:
-        _loguru_logger.add(
-            sys.stdout,
-            level=log_level.upper(),
-            serialize=True,  # JSON output
-            backtrace=False,
-            diagnose=False,
-        )
-    else:
-        _loguru_logger.add(
-            sys.stdout,
-            level=log_level.upper(),
-            format=(
-                "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | "
-                "<level>{level: <8}</level> | "
-                "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - "
-                "<level>{message}</level>"
-            ),
-            colorize=True,
-        )
+    # Route all stdlib logging through our intercept handler.
+    # Set stdlib root to WARNING so that structlog's own internal calls
+    # (which may touch stdlib) don't re-enter the handler.
+    logging.basicConfig(
+        handlers=[_InterceptHandler()],
+        level=numeric_level,
+        force=True,
+    )
 
-    # -- Intercept stdlib logging → loguru -----------------------------------
-    logging.basicConfig(handlers=[_InterceptHandler()], level=0, force=True)
-
-    # -- structlog (for FastAPI middleware / structured context) --------------
     processors: list[Processor] = [
         structlog.contextvars.merge_contextvars,
-        structlog.stdlib.add_logger_name,
         structlog.stdlib.add_log_level,
         structlog.processors.TimeStamper(fmt="iso"),
         add_app_context,
@@ -131,11 +107,14 @@ def configure_logging(log_level: str = "INFO", json_logs: bool = True) -> None:
     else:
         processors.append(structlog.dev.ConsoleRenderer())
 
+    # Use PrintLoggerFactory (direct stdout) — NOT stdlib.LoggerFactory.
+    # stdlib.LoggerFactory routes back through logging.Logger which triggers
+    # _InterceptHandler again, causing infinite recursion.
     structlog.configure(
         processors=processors,
-        wrapper_class=structlog.make_filtering_bound_logger(getattr(logging, log_level.upper())),
+        wrapper_class=structlog.make_filtering_bound_logger(numeric_level),
         context_class=dict,
-        logger_factory=structlog.stdlib.LoggerFactory(),
+        logger_factory=structlog.PrintLoggerFactory(),
         cache_logger_on_first_use=True,
     )
 

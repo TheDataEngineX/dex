@@ -15,8 +15,9 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
 
-from loguru import logger
+import structlog
 
+logger = structlog.get_logger()
 __all__ = [
     "AddTimestampTransform",
     "CastTypesTransform",
