@@ -38,7 +38,9 @@ help = "Run mypy strict type checking"
 env = { UV_PYTHON = "3.13", UV_PROJECT_ENVIRONMENT = ".venv" }
 
 [tool.poe.tasks.security]
-cmd = "uvx pip-audit --progress-spinner off"
+# uv run pip-audit audits the project venv directly — no pip required.
+# GHSA-5239-wwwm-4pmq: pygments ReDoS — no fix released yet, revisit when patch available.
+cmd = "uv run pip-audit --progress-spinner off --ignore-vuln GHSA-5239-wwwm-4pmq"
 help = "Audit dependencies for known vulnerabilities"
 
 [tool.poe.tasks.actionlint]

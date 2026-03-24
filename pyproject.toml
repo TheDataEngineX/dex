@@ -1,6 +1,6 @@
 [project]
 name = "dataenginex"
-version = "0.9.7"
+version = "0.9.8"
 description = "DataEngineX - Core framework for AI/ML/Data engineering projects"
 authors = [
     {name = "Jay", email = "jayapal.myaka99@gmail.com"}
@@ -57,6 +57,7 @@ dev = [
     "mkdocs-material>=9.7.0",
     "mkdocstrings[python]>=0.29.0",
     "pre-commit>=4.5.1",
+    "pip-audit>=2.10.0",
 ]
 data = [
     "pyspark>=4.1.1",
