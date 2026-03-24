@@ -62,7 +62,7 @@ def _init_ml_backends(app: FastAPI, config: DexConfig) -> None:
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     """Initialize all backends at startup, tear down on shutdown."""
     config: DexConfig = app.state.config
 
