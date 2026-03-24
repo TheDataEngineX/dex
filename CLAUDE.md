@@ -1,12 +1,13 @@
 # CLAUDE.md — DEX (dataenginex)
 
-Always Be pragmatic, straight forward and challenge my ideas and system design focus on creating a consistent, scalable, and accessible user experience while improving development efficiency. Always refer to up to date resources as of today. Question my assumptions, point out the blank/blind spots and highlight opportunity costs. No sugarcoating. No pandering. No bias. No both siding. No retro active reasoning. If there is something wrong or will not work let me know even if I don't ask it specifically. If it is an issue/bug/problem find the root problem and suggest a solution refering to latest day resources — don't skip, bypass, supress or don't fallback to a defense mode.
+Brief answers only. No explanations unless asked.
+Goal is to save Claude code tokens for lower cost without loosing quality.
 
 > Repo-specific context. Workspace-level rules, coding standards, and git conventions are in `../CLAUDE.md`.
 
 ## Project Overview
 
-**DataEngineX** — unified Data + ML + AI framework. Config-driven, self-hosted, production-ready.
+**DEX** — unified Data + ML + AI framework. Config-driven, self-hosted, production-ready.
 
 | Package | Location | Purpose |
 |---------|----------|---------|
@@ -16,7 +17,7 @@ Always Be pragmatic, straight forward and challenge my ideas and system design f
 
 **Version:** `uv run poe version`
 
-**Domain:** dataenginex.org | **Org:** github.com/TheDataEngineX
+**Domain:** thedataenginex.org | **Org:** github.com/TheDataEngineX
 
 ______________________________________________________________________
 
@@ -123,7 +124,7 @@ ______________________________________________________________________
 ### Infrastructure
 
 - Docker: multi-stage, Python 3.13-slim, non-root `dex` user
-- Container images: `ghcr.io/thedataenginex/dataenginex`
+- Container images: `ghcr.io/thedataenginex/dex`
 - Kubernetes: Kustomize base + overlays (dev, prod)
 - ArgoCD GitOps: `dev` → dex-dev, `main` → dex
 

@@ -8,6 +8,7 @@ the medallion layers, persisting the graph to disk so it survives restarts.
 from __future__ import annotations
 
 import json
+import threading
 import uuid
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
@@ -99,6 +100,7 @@ class PersistentLineage:
     def __init__(self, persist_path: str | Path | None = None) -> None:
         self._events: list[LineageEvent] = []
         self._persist_path = Path(persist_path) if persist_path else None
+        self._lock = threading.Lock()
         if self._persist_path and self._persist_path.exists():
             self._load()
 
@@ -109,18 +111,19 @@ class PersistentLineage:
 
         Accepts the same keyword arguments as ``LineageEvent``.
         """
-        event = LineageEvent(**kwargs)
-        self._events.append(event)
-        logger.info(
-            "Lineage event %s: %s %s → %s (%d→%d)",
-            event.event_id,
-            event.operation,
-            event.source,
-            event.destination,
-            event.input_count,
-            event.output_count,
-        )
-        self._save()
+        with self._lock:
+            event = LineageEvent(**kwargs)
+            self._events.append(event)
+            logger.info(
+                "Lineage event %s: %s %s → %s (%d→%d)",
+                event.event_id,
+                event.operation,
+                event.source,
+                event.destination,
+                event.input_count,
+                event.output_count,
+            )
+            self._save()
         return event
 
     def get_event(self, event_id: str) -> LineageEvent | None:
@@ -182,8 +185,20 @@ class PersistentLineage:
     def _load(self) -> None:
         if not self._persist_path or not self._persist_path.exists():
             return
-        raw = json.loads(self._persist_path.read_text())
-        for item in raw:
-            item.pop("timestamp", None)  # skip — auto-set on creation
-            self._events.append(LineageEvent(**item))
-        logger.info("lineage events loaded", count=len(self._events), path=str(self._persist_path))
+        try:
+            raw = json.loads(self._persist_path.read_text())
+            for item in raw:
+                item.pop("timestamp", None)
+                self._events.append(LineageEvent(**item))
+            logger.info(
+                "lineage events loaded",
+                count=len(self._events),
+                path=str(self._persist_path),
+            )
+        except (json.JSONDecodeError, TypeError, KeyError) as exc:
+            logger.warning(
+                "lineage file corrupted, starting fresh",
+                path=str(self._persist_path),
+                error=str(exc),
+            )
+            self._events = []

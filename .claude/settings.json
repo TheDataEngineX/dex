@@ -50,5 +50,22 @@
       "Bash(chmod 777*)",
       "Bash(curl * | bash*)"
     ]
-  }
+  },
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "Classify this task as 'simple' (data lookup, quick questions, simple edits — use haiku for speed/cost), 'moderate' (implementation, debugging, refactoring — use sonnet for balance), or 'complex' (architecture, multi-file design, research — use opus for reasoning). Based on the user message below, respond with ONLY the word: haiku, sonnet, or opus. User message: $ARGUMENTS",
+            "statusMessage": "Analyzing task complexity...",
+            "model": "claude-haiku-4-5-20251001"
+          }
+        ]
+      }
+    ]
+  },
+  "alwaysThinkingEnabled": false,
+  "cleanupPeriodDays": 7
 }

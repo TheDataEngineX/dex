@@ -1,9 +1,9 @@
-# DataEngineX Release Post-Processing
+# DEX Release Post-Processing
 # Triggered when release-please creates a GitHub Release (release:published).
 # Generates a CycloneDX SBOM and attaches it to the release.
 # PyPI publishing is handled by pypi-publish.yml (also triggers on release:published).
 
-name: Release DataEngineX
+name: Release DEX
 
 on:
   release:
@@ -22,7 +22,7 @@ env:
   SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
 
 jobs:
-  release-dataenginex:
+  release-dex:
     name: Attach SBOM to Release
     runs-on: ubuntu-latest
 
@@ -38,12 +38,12 @@ jobs:
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                  text: '💎 DataEngineX Release Post-Processing Started',
+                  text: '💎 DEX Release Post-Processing Started',
                   blocks: [{
                     type: 'section',
                     text: {
                       type: 'mrkdwn',
-                      text: `*💎 DataEngineX Release Post-Processing*\n*Tag:* ${process.env.TAG}\n*Generating SBOM...*`
+                      text: `*💎 DEX Release Post-Processing*\n*Tag:* ${process.env.TAG}\n*Generating SBOM...*`
                     }
                   }]
                 })
@@ -74,9 +74,9 @@ jobs:
       - name: Generate CycloneDX SBOM
         run: |
           uvx --from cyclonedx-bom cyclonedx-py environment \
-            -o sbom-dataenginex-${{ steps.version.outputs.version }}.json \
+            -o sbom-dex-${{ steps.version.outputs.version }}.json \
             --of json
-          echo "SBOM generated: sbom-dataenginex-${{ steps.version.outputs.version }}.json"
+          echo "SBOM generated: sbom-dex-${{ steps.version.outputs.version }}.json"
 
       - name: Attach SBOM to release
         env:
@@ -84,7 +84,7 @@ jobs:
         run: |
           RELEASE_TAG="${{ github.event.release.tag_name || inputs.tag }}"
           gh release upload "$RELEASE_TAG" \
-            "sbom-dataenginex-${{ steps.version.outputs.version }}.json" \
+            "sbom-dex-${{ steps.version.outputs.version }}.json" \
             --clobber
 
       - name: Notify Release Success
@@ -98,12 +98,12 @@ jobs:
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                  text: '✅ DataEngineX Release Ready',
+                  text: '✅ DEX Release Ready',
                   blocks: [{
                     type: 'section',
                     text: {
                       type: 'mrkdwn',
-                      text: `*✅ DataEngineX Release Ready*\n*Version:* ${process.env.VERSION}\n*SBOM attached*\n*Release:* <${process.env.URL}|View Release>`
+                      text: `*✅ DEX Release Ready*\n*Version:* ${process.env.VERSION}\n*SBOM attached*\n*Release:* <${process.env.URL}|View Release>`
                     }
                   }]
                 })
@@ -125,11 +125,11 @@ jobs:
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                  text: '❌ DataEngineX Release Post-Processing Failed',
+                  text: '❌ DEX Release Post-Processing Failed',
                   blocks: [
                     {
                       type: 'section',
-                      text: { type: 'mrkdwn', text: `*❌ DataEngineX Release Post-Processing Failed*` }
+                      text: { type: 'mrkdwn', text: `*❌ DEX Release Post-Processing Failed*` }
                     },
                     {
                       type: 'section',

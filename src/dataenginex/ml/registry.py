@@ -8,6 +8,7 @@ Tracks model artifacts with staging lifecycle:
 from __future__ import annotations
 
 import json
+import threading
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
 from enum import StrEnum
@@ -83,6 +84,7 @@ class ModelRegistry:
         # name → version → artifact
         self._models: dict[str, dict[str, ModelArtifact]] = {}
         self._persist_path = Path(persist_path) if persist_path else None
+        self._lock = threading.Lock()
         if self._persist_path and self._persist_path.exists():
             self._load()
 
@@ -90,19 +92,20 @@ class ModelRegistry:
 
     def register(self, artifact: ModelArtifact) -> ModelArtifact:
         """Register a new model version."""
-        versions = self._models.setdefault(artifact.name, {})
-        if artifact.version in versions:
-            raise ValueError(
-                f"Model {artifact.name!r} version {artifact.version} already registered"
+        with self._lock:
+            versions = self._models.setdefault(artifact.name, {})
+            if artifact.version in versions:
+                raise ValueError(
+                    f"Model {artifact.name!r} version {artifact.version} already registered"
+                )
+            versions[artifact.version] = artifact
+            logger.info(
+                "Registered model %s v%s (stage=%s)",
+                artifact.name,
+                artifact.version,
+                artifact.stage.value,
             )
-        versions[artifact.version] = artifact
-        logger.info(
-            "Registered model %s v%s (stage=%s)",
-            artifact.name,
-            artifact.version,
-            artifact.stage.value,
-        )
-        self._save()
+            self._save()
         return artifact
 
     # -- queries -------------------------------------------------------------
@@ -141,21 +144,22 @@ class ModelRegistry:
         If promoting to ``production``, any existing production model is
         automatically archived.
         """
-        artifact = self.get(name, version)
-        if artifact is None:
-            raise ValueError(f"Model {name!r} version {version} not found")
+        with self._lock:
+            artifact = self.get(name, version)
+            if artifact is None:
+                raise ValueError(f"Model {name!r} version {version} not found")
 
-        if target_stage == ModelStage.PRODUCTION:
-            # Archive the current production model
-            current = self.get_production(name)
-            if current and current.version != version:
-                current.stage = ModelStage.ARCHIVED
-                logger.info("model archived", name=name, version=current.version)
+            if target_stage == ModelStage.PRODUCTION:
+                # Archive the current production model
+                current = self.get_production(name)
+                if current and current.version != version:
+                    current.stage = ModelStage.ARCHIVED
+                    logger.info("model archived", name=name, version=current.version)
 
-        artifact.stage = target_stage
-        artifact.promoted_at = datetime.now(tz=UTC)
-        logger.info("model promoted", name=name, version=version, stage=target_stage.value)
-        self._save()
+            artifact.stage = target_stage
+            artifact.promoted_at = datetime.now(tz=UTC)
+            logger.info("model promoted", name=name, version=version, stage=target_stage.value)
+            self._save()
         return artifact
 
     # -- persistence ---------------------------------------------------------

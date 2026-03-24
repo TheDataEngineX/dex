@@ -7,7 +7,9 @@ from pathlib import Path
 import pytest
 
 from dataenginex.config import load_config
+from dataenginex.config.schema import DexConfig
 from dataenginex.data.pipeline.runner import PipelineRunner
+from dataenginex.warehouse.lineage import PersistentLineage
 
 
 @pytest.fixture()
@@ -48,6 +50,12 @@ data:
     return config_file
 
 
+@pytest.fixture()
+def simple_config(sample_config: Path) -> DexConfig:
+    """Return a loaded DexConfig from the sample config path."""
+    return load_config(sample_config)
+
+
 class TestPipelineRunner:
     def test_run_single_pipeline(self, sample_config: Path, tmp_path: Path) -> None:
         config = load_config(sample_config)
@@ -82,3 +90,15 @@ class TestPipelineRunner:
         runner = PipelineRunner(config, data_dir=data_dir)
         runner.run("ingest-movies")
         assert (data_dir / "silver" / "ingest-movies.parquet").exists()
+
+    def test_lineage_recorded_on_run(self, tmp_path: Path, simple_config: DexConfig) -> None:
+        """Pipeline run records lineage events for extract and load."""
+        lineage = PersistentLineage(tmp_path / "lineage.json")
+        runner = PipelineRunner(simple_config, data_dir=tmp_path / "lakehouse", lineage=lineage)
+        result = runner.run("ingest-movies")
+        assert result.success
+        events = lineage.all_events
+        assert len(events) >= 2
+        ops = [e.operation for e in events]
+        assert "ingest" in ops
+        assert "load" in ops

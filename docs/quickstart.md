@@ -60,3 +60,26 @@ uv run poe check-all  # All of the above in one command
 - [Architecture](ARCHITECTURE.md) — medallion layers, API design, ML lifecycle
 - [API Reference](api-reference/index.md) — auto-generated module docs
 - `examples/` directory — full list of runnable examples (01–10)
+
+---
+
+## CareerDEX + DEX Studio
+
+CareerDEX is the reference domain app built on DEX — job matching, salary prediction, AI agents. Use it to see the full stack in action via DEX Studio.
+
+```bash
+# Clone both repos
+git clone https://github.com/TheDataEngineX/careerdex
+git clone https://github.com/TheDataEngineX/dex-studio
+
+# Install
+cd careerdex && uv sync && cd ..
+cd dex-studio && uv sync
+
+# Launch Studio with the CareerDEX config
+uv run dex-studio /path/to/careerdex/careerdex.yaml
+```
+
+Open [http://localhost:7860](http://localhost:7860) — full Data / ML / AI / System dashboard loaded from `careerdex.yaml`, no separate server needed.
+
+See the [CareerDEX README](https://github.com/TheDataEngineX/careerdex) for data setup and all launch options.

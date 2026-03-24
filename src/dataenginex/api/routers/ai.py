@@ -66,7 +66,19 @@ async def agent_chat(name: str, body: AgentChatRequest, request: Request) -> Age
         raise HTTPException(status_code=404, detail=f"Agent '{name}' not found")
 
     agent = agents[name]
-    result: dict[str, Any] = await agent.run(body.message)
+    try:
+        result: dict[str, Any] = await agent.run(body.message)
+    except ConnectionError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=f"LLM provider unreachable: {exc}",
+        ) from exc
+    except Exception as exc:
+        logger.error("agent runtime error", agent=name, error=str(exc))
+        raise HTTPException(
+            status_code=500,
+            detail=f"Agent error: {exc}",
+        ) from exc
     return AgentChatResponse(
         agent=name,
         response=result["response"],
