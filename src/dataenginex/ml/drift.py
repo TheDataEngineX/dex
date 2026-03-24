@@ -39,7 +39,7 @@ class DriftReport:
     feature_name: str
     psi: float  # Population Stability Index
     drift_detected: bool
-    severity: str  # "none", "minor", "moderate", "severe"
+    severity: str  # "none", "moderate", "severe"
     reference_mean: float | None = None
     current_mean: float | None = None
     reference_std: float | None = None

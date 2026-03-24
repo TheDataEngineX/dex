@@ -6,6 +6,7 @@ For production: use Feast via ``[feast]`` extra.
 
 from __future__ import annotations
 
+import threading
 from pathlib import Path
 from typing import Any
 
@@ -30,6 +31,7 @@ class BuiltinFeatureStore(BaseFeatureStore):
         db_path = Path(database)
         db_path.parent.mkdir(parents=True, exist_ok=True)
         self._conn = duckdb.connect(str(db_path))
+        self._lock = threading.Lock()
         self._conn.execute("""
             CREATE TABLE IF NOT EXISTS _feature_groups (
                 name VARCHAR PRIMARY KEY,
@@ -58,21 +60,23 @@ class BuiltinFeatureStore(BaseFeatureStore):
             msg = f"Unsupported data type: {type(data)}"
             raise TypeError(msg)
 
-        # Register or update feature group metadata
-        self._conn.execute(
-            "INSERT OR REPLACE INTO _feature_groups (name, entity_key) VALUES (?, ?)",
-            [feature_group, entity_key],
-        )
-        # Store features as a table (overwrite)
-        self._conn.execute(
-            f"CREATE OR REPLACE TABLE {feature_group} AS SELECT * FROM tbl"  # noqa: S608
-        )
-        logger.info(
-            "features saved",
-            feature_group=feature_group,
-            entity_key=entity_key,
-            rows=len(tbl),
-        )
+        with self._lock:
+            # Register or update feature group metadata
+            self._conn.execute(
+                "INSERT OR REPLACE INTO _feature_groups (name, entity_key) VALUES (?, ?)",
+                [feature_group, entity_key],
+            )
+            # Store features as a table (overwrite)
+            safe_name = feature_group.replace('"', '""')
+            self._conn.execute(
+                f'CREATE OR REPLACE TABLE "{safe_name}" AS SELECT * FROM tbl'  # noqa: S608
+            )
+            logger.info(
+                "features saved",
+                feature_group=feature_group,
+                entity_key=entity_key,
+                rows=len(tbl),
+            )
 
     def get_features(
         self,
@@ -92,9 +96,11 @@ class BuiltinFeatureStore(BaseFeatureStore):
 
         # Build IN clause
         placeholders = ", ".join(["?"] * len(entity_ids))
+        safe_name = feature_group.replace('"', '""')
+        safe_key = entity_key.replace('"', '""')
         result = self._conn.execute(
-            f"SELECT * FROM {feature_group} "  # noqa: S608
-            f"WHERE CAST({entity_key} AS VARCHAR) IN ({placeholders})",
+            f'SELECT * FROM "{safe_name}" '  # noqa: S608
+            f'WHERE CAST("{safe_key}" AS VARCHAR) IN ({placeholders})',
             entity_ids,
         )
         columns = [desc[0] for desc in result.description]

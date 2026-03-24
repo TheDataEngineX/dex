@@ -1,8 +1,8 @@
-site_name: DataEngineX (DEX)
-site_description: DataEngineX documentation
-site_url: https://docs.dataenginex.org
-repo_url: https://github.com/TheDataEngineX/dataenginex
-repo_name: TheDataEngineX/dataenginex
+site_name: DEX
+site_description: DEX documentation
+site_url: https://docs.thedataenginex.org
+repo_url: https://github.com/TheDataEngineX/DEX
+repo_name: TheDataEngineX/DEX
 
 theme:
   name: material

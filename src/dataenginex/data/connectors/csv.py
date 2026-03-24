@@ -64,7 +64,8 @@ class CsvConnector(BaseConnector):
             msg = f"CSV file not found: {filepath}"
             raise FileNotFoundError(msg)
 
-        result = self._conn.execute(f"SELECT * FROM read_csv_auto('{filepath}')")
+        safe_path = str(filepath).replace("'", "''")
+        result = self._conn.execute(f"SELECT * FROM read_csv_auto('{safe_path}')")
         columns = [desc[0] for desc in result.description]
         return [dict(zip(columns, row, strict=True)) for row in result.fetchall()]
 

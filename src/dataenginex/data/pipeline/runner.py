@@ -32,6 +32,7 @@ from dataenginex.data.transforms import transform_registry
 from dataenginex.data.transforms.sql import (  # noqa: F401
     CastTransform as _CastTransform,
 )
+from dataenginex.warehouse.lineage import PersistentLineage
 
 logger = structlog.get_logger()
 
@@ -68,10 +69,18 @@ class PipelineRunner:
         data_dir: Root directory for lakehouse layer storage.
     """
 
-    def __init__(self, config: DexConfig, data_dir: Path | None = None) -> None:
+    def __init__(
+        self,
+        config: DexConfig,
+        data_dir: Path | None = None,
+        project_dir: Path | None = None,
+        lineage: PersistentLineage | None = None,
+    ) -> None:
         self._config = config
-        self._data_dir = data_dir or Path(".dex/data")
+        self._data_dir = data_dir or Path(".dex/lakehouse")
         self._data_dir.mkdir(parents=True, exist_ok=True)
+        self._project_dir = project_dir
+        self._lineage = lineage
 
     def run(self, pipeline_name: str, *, dry_run: bool = False) -> PipelineResult:
         """Run a single pipeline by name."""
@@ -141,7 +150,10 @@ class PipelineRunner:
 
         connector_kwargs: dict[str, Any] = dict(source_config.connection)
         if source_config.path and "path" not in connector_kwargs:
-            connector_kwargs["path"] = source_config.path
+            src_path = source_config.path
+            if self._project_dir and not Path(src_path).is_absolute():
+                src_path = str(self._project_dir / src_path)
+            connector_kwargs["path"] = src_path
         if source_config.url and "url" not in connector_kwargs:
             connector_kwargs["url"] = source_config.url
 
@@ -154,6 +166,17 @@ class PipelineRunner:
         bronze_arrow = pa.Table.from_pylist(raw_data)  # noqa: F841 — referenced by DuckDB SQL
         conn.execute("CREATE OR REPLACE TABLE bronze AS SELECT * FROM bronze_arrow")
         log.info("extract complete", source=cfg.source, rows=len(raw_data))
+        if self._lineage is not None:
+            self._lineage.record(
+                operation="ingest",
+                layer="bronze",
+                source=cfg.source,
+                destination=f"bronze/{name}",
+                input_count=len(raw_data),
+                output_count=len(raw_data),
+                pipeline_name=name,
+                step_name="extract",
+            )
         return len(raw_data)
 
     def _transform(
@@ -230,6 +253,17 @@ class PipelineRunner:
         output_path = layer_dir / f"{name}.parquet"
         conn.execute(f"COPY {table} TO '{output_path}' (FORMAT PARQUET)")
         log.info("load complete", layer=target_layer, path=str(output_path), rows=rows)
+        if self._lineage is not None:
+            self._lineage.record(
+                operation="load",
+                layer=target_layer,
+                source=f"bronze/{name}",
+                destination=str(output_path),
+                input_count=rows,
+                output_count=rows,
+                pipeline_name=name,
+                step_name="load",
+            )
         return rows
 
     def run_all(self) -> dict[str, PipelineResult]:

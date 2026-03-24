@@ -146,15 +146,15 @@ ______________________________________________________________________
 
 ### Domain + Org Setup
 
-- [ ] Point `thedataenginex.org` DNS to Netlify (docs/landing page)
+- [ ] Point `thedataenginex.org` DNS to Cloudflare Pages (docs/landing page)
 - [ ] Set up `admin@thedataenginex.org` email via Cloudflare Email Routing (free)
 - [ ] Configure GitHub org profile (`TheDataEngineX/.github/profile/README.md`)
 - [ ] Set up Slack workspace for community (free tier)
 
-### Netlify — Docs & Landing Page
+### Cloudflare Pages — Docs & Landing Page
 
-- [ ] `dex` already has `mkdocs-material` — run `mkdocs build` and deploy to Netlify
-- [ ] Add `netlify.toml` to `dex` repo (build: `uv run mkdocs build`, publish: `site/`)
+- [ ] `dex` already has `mkdocs-material` — run `mkdocs build` and deploy to Cloudflare Pages
+- [ ] Configure Cloudflare Pages build settings (build: `uv run mkdocs build`, publish: `site/`)
 - [ ] Create `TheDataEngineX/.github/profile/README.md` org landing page on GitHub
 - [ ] Link all repos and published content from the org README
 
