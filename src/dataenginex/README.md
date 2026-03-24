@@ -58,6 +58,6 @@ from dataenginex.ml import ModelRegistry
 
 ## Source and Docs
 
-- Repository: https://github.com/TheDataEngineX/dataenginex
-- Documentation: https://docs.dataenginex.org
+- Repository: https://github.com/TheDataEngineX/DEX
+- Documentation: https://docs.thedataenginex.org
 - Release notes: `CHANGELOG.md`

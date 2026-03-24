@@ -121,14 +121,14 @@ DataEngineXError
 
 ```
 TheDataEngineX/
-├── dataenginex    — Core framework (PyPI: dataenginex)
+├── DEX            — Core framework (PyPI: dataenginex)
 ├── dex-studio     — Web UI (NiceGUI) — single pane of glass
 └── infradex       — Terraform + Helm + K3s deployment
 ```
 
-- **Container images:** `ghcr.io/thedataenginex/dataenginex`
-- **Docs:** `docs.dataenginex.org` (Cloudflare Pages)
-- **Domain:** `dataenginex.org`
+- **Container images:** `ghcr.io/thedataenginex/dex`
+- **Docs:** `docs.thedataenginex.org` (Cloudflare Pages)
+- **Domain:** `thedataenginex.org`
 
 ## Key Design Decisions
 

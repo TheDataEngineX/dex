@@ -23,6 +23,44 @@ from dataenginex.ml.llm import get_llm_provider
 logger = structlog.get_logger()
 
 
+def _init_ml_backends(app: FastAPI, config: DexConfig) -> None:
+    """Initialize ML backends with graceful degradation."""
+    import dataenginex.ml.features.builtin  # noqa: F401
+    import dataenginex.ml.serving_engine.builtin  # noqa: F401
+    import dataenginex.ml.tracking.builtin  # noqa: F401
+    from dataenginex.ml.features import feature_store_registry
+    from dataenginex.ml.registry import ModelRegistry
+    from dataenginex.ml.serving_engine import serving_registry
+    from dataenginex.ml.tracking import tracker_registry
+
+    try:
+        tracker_cls = tracker_registry.get(config.ml.tracking.backend)
+        app.state.tracker = tracker_cls()
+    except Exception:
+        app.state.tracker = None
+        logger.warning("tracker init failed, ML tracking degraded")
+
+    try:
+        fs_cls = feature_store_registry.get(config.ml.features.backend)
+        app.state.feature_store = fs_cls(**config.ml.features.options)
+    except Exception:
+        app.state.feature_store = None
+        logger.warning("feature store init failed, ML features degraded")
+
+    model_registry = ModelRegistry(persist_path=".dex/models/registry.json")
+    app.state.model_registry = model_registry
+
+    try:
+        serving_cls_any: Any = cast(Any, serving_registry.get(config.ml.serving.engine))
+        app.state.serving_engine = serving_cls_any(
+            model_registry=model_registry,
+            model_dir=".dex/models",
+        )
+    except Exception:
+        app.state.serving_engine = None
+        logger.warning("serving engine init failed, predictions degraded")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Initialize all backends at startup, tear down on shutdown."""
@@ -32,34 +70,11 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     from dataenginex.data.pipeline.runner import PipelineRunner
     from dataenginex.warehouse.lineage import PersistentLineage
 
-    app.state.pipeline_runner = PipelineRunner(config)
     app.state.lineage = PersistentLineage(".dex/lineage.json")
+    app.state.pipeline_runner = PipelineRunner(config, lineage=app.state.lineage)
 
-    # 2. ML backends — import builtins first to trigger registry decoration
-    import dataenginex.ml.features.builtin  # noqa: F401
-    import dataenginex.ml.serving_engine.builtin  # noqa: F401
-    import dataenginex.ml.tracking.builtin  # noqa: F401
-    from dataenginex.ml.features import feature_store_registry
-    from dataenginex.ml.registry import ModelRegistry
-    from dataenginex.ml.serving_engine import serving_registry
-    from dataenginex.ml.tracking import tracker_registry
-
-    tracker_cls = tracker_registry.get(config.ml.tracking.backend)
-    app.state.tracker = tracker_cls()
-
-    fs_cls = feature_store_registry.get(config.ml.features.backend)
-    app.state.feature_store = fs_cls(**config.ml.features.options)
-
-    model_registry = ModelRegistry(persist_path=".dex/models/registry.json")
-    app.state.model_registry = model_registry
-
-    # Cast to Any: BackendRegistry returns type[BaseServingEngine] but the concrete
-    # builtin class accepts kwargs not on the ABC; mypy can't narrow through registry.get()
-    serving_cls_any: Any = cast(Any, serving_registry.get(config.ml.serving.engine))
-    app.state.serving_engine = serving_cls_any(
-        model_registry=model_registry,
-        model_dir=".dex/models",
-    )
+    # 2. ML backends
+    _init_ml_backends(app, config)
 
     # 3. AI backends (graceful — server starts even if LLM unavailable)
     from dataenginex.ai.tools.builtin import register_builtin_tools
@@ -116,7 +131,12 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     logger.info("shutdown complete")
 
 
-def create_app(config: DexConfig | None = None, **kwargs: Any) -> FastAPI:
+def create_app(
+    config: DexConfig | None = None,
+    *,
+    skip_lifespan: bool = False,
+    **kwargs: Any,
+) -> FastAPI:
     """Build a configured FastAPI application.
 
     Args:
@@ -145,7 +165,7 @@ def create_app(config: DexConfig | None = None, **kwargs: Any) -> FastAPI:
         title=config.project.name,
         version=config.project.version,
         description=config.project.description or "DataEngineX API",
-        lifespan=lifespan,
+        lifespan=None if skip_lifespan else lifespan,
         **kwargs,
     )
 

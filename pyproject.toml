@@ -1,6 +1,6 @@
 [project]
 name = "dataenginex"
-version = "0.9.4"
+version = "0.9.5"
 description = "DataEngineX - Core framework for AI/ML/Data engineering projects"
 authors = [
     {name = "Jay", email = "jayapal.myaka99@gmail.com"}
@@ -108,7 +108,7 @@ conflicts = [
 
 [tool.ruff]
 line-length = 100
-target-version = "py312"
+target-version = "py313"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "SIM", "C90"]
@@ -117,7 +117,7 @@ select = ["E", "F", "I", "B", "UP", "SIM", "C90"]
 max-complexity = 8
 
 [tool.mypy]
-python_version = "3.12"
+python_version = "3.13"
 strict = true
 warn_unused_configs = true
 disallow_any_generics = true

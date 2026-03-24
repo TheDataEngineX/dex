@@ -8,6 +8,7 @@ For production: use MLflow via ``[mlflow]`` extra.
 from __future__ import annotations
 
 import json
+import threading
 import uuid
 from datetime import UTC, datetime
 from pathlib import Path
@@ -34,6 +35,7 @@ class BuiltinTracker(BaseTracker):
         self._dir.mkdir(parents=True, exist_ok=True)
         self._experiments: dict[str, dict[str, Any]] = {}
         self._runs: dict[str, dict[str, Any]] = {}
+        self._lock = threading.Lock()
         self._load()
 
     def _load(self) -> None:
@@ -54,18 +56,19 @@ class BuiltinTracker(BaseTracker):
 
     def create_experiment(self, name: str) -> str:
         """Create an experiment, return its ID."""
-        for exp_id, exp in self._experiments.items():
-            if exp["name"] == name:
-                return exp_id
+        with self._lock:
+            for exp_id, exp in self._experiments.items():
+                if exp["name"] == name:
+                    return exp_id
 
-        exp_id = str(uuid.uuid4())[:8]
-        self._experiments[exp_id] = {
-            "name": name,
-            "created_at": datetime.now(tz=UTC).isoformat(),
-        }
-        self._save()
-        logger.info("experiment created", name=name, experiment_id=exp_id)
-        return exp_id
+            exp_id = str(uuid.uuid4())[:8]
+            self._experiments[exp_id] = {
+                "name": name,
+                "created_at": datetime.now(tz=UTC).isoformat(),
+            }
+            self._save()
+            logger.info("experiment created", name=name, experiment_id=exp_id)
+            return exp_id
 
     def start_run(
         self,
@@ -73,41 +76,44 @@ class BuiltinTracker(BaseTracker):
         run_name: str | None = None,
     ) -> str:
         """Start a run within an experiment, return run ID."""
-        if experiment_id not in self._experiments:
-            msg = f"Experiment '{experiment_id}' not found"
-            raise KeyError(msg)
+        with self._lock:
+            if experiment_id not in self._experiments:
+                msg = f"Experiment '{experiment_id}' not found"
+                raise KeyError(msg)
 
-        run_id = str(uuid.uuid4())[:8]
-        self._runs[run_id] = {
-            "experiment_id": experiment_id,
-            "name": run_name or f"run-{run_id}",
-            "status": "RUNNING",
-            "started_at": datetime.now(tz=UTC).isoformat(),
-            "ended_at": None,
-            "params": {},
-            "metrics": {},
-        }
-        self._save()
-        logger.info("run started", run_id=run_id, experiment_id=experiment_id)
-        return run_id
+            run_id = str(uuid.uuid4())[:8]
+            self._runs[run_id] = {
+                "experiment_id": experiment_id,
+                "name": run_name or f"run-{run_id}",
+                "status": "RUNNING",
+                "started_at": datetime.now(tz=UTC).isoformat(),
+                "ended_at": None,
+                "params": {},
+                "metrics": {},
+            }
+            self._save()
+            logger.info("run started", run_id=run_id, experiment_id=experiment_id)
+            return run_id
 
     def end_run(self, run_id: str, status: str = "FINISHED") -> None:
         """End a run with given status."""
-        if run_id not in self._runs:
-            msg = f"Run '{run_id}' not found"
-            raise KeyError(msg)
-        self._runs[run_id]["status"] = status
-        self._runs[run_id]["ended_at"] = datetime.now(tz=UTC).isoformat()
-        self._save()
-        logger.info("run ended", run_id=run_id, status=status)
+        with self._lock:
+            if run_id not in self._runs:
+                msg = f"Run '{run_id}' not found"
+                raise KeyError(msg)
+            self._runs[run_id]["status"] = status
+            self._runs[run_id]["ended_at"] = datetime.now(tz=UTC).isoformat()
+            self._save()
+            logger.info("run ended", run_id=run_id, status=status)
 
     def log_params(self, run_id: str, params: dict[str, Any]) -> None:
         """Log parameters for a run."""
-        if run_id not in self._runs:
-            msg = f"Run '{run_id}' not found"
-            raise KeyError(msg)
-        self._runs[run_id]["params"].update(params)
-        self._save()
+        with self._lock:
+            if run_id not in self._runs:
+                msg = f"Run '{run_id}' not found"
+                raise KeyError(msg)
+            self._runs[run_id]["params"].update(params)
+            self._save()
 
     def log_metrics(
         self,
@@ -116,15 +122,16 @@ class BuiltinTracker(BaseTracker):
         step: int | None = None,
     ) -> None:
         """Log metrics for a run at optional step."""
-        if run_id not in self._runs:
-            msg = f"Run '{run_id}' not found"
-            raise KeyError(msg)
-        run_metrics = self._runs[run_id]["metrics"]
-        for key, value in metrics.items():
-            if key not in run_metrics:
-                run_metrics[key] = []
-            run_metrics[key].append({"value": value, "step": step})
-        self._save()
+        with self._lock:
+            if run_id not in self._runs:
+                msg = f"Run '{run_id}' not found"
+                raise KeyError(msg)
+            run_metrics = self._runs[run_id]["metrics"]
+            for key, value in metrics.items():
+                if key not in run_metrics:
+                    run_metrics[key] = []
+                run_metrics[key].append({"value": value, "step": step})
+            self._save()
 
     def list_runs(self, experiment_id: str) -> list[dict[str, Any]]:
         """List all runs for an experiment."""

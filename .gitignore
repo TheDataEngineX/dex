@@ -66,6 +66,7 @@ desktop.ini
 *.log
 *.sqlite3
 logs/
+.dex/
 
 # Wheel metadata
 pip-wheel-metadata/
@@ -85,3 +86,4 @@ Notes.txt
 
 # Claude Code — local overrides (personal, never commit)
 .claude/settings.local.json
+.superpowers/
