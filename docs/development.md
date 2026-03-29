@@ -205,8 +205,8 @@ uv run poe clean              # Remove caches and build artifacts
 
 ## Resources & Support
 
-- **Code Style**: See [CONTRIBUTING.md](./CONTRIBUTING.md)
-- **Architecture**: See [ARCHITECTURE.md](./ARCHITECTURE.md)
+- **Code Style**: See [contributing.md](./contributing.md)
+- **Architecture**: See [architecture.md](./architecture.md)
 - **ADRs**: See [ADR-0001](./adr/0001-medallion-architecture.md) for architectural decisions
 - **Deployment**: See Deployment Runbook in the `infradex` repo
 - **Issues**: [GitHub Issues](https://github.com/TheDataEngineX/dataenginex/issues)

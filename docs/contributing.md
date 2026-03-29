@@ -2,7 +2,7 @@ Thank you for contributing to DEX!
 
 ## Getting Started
 
-1. Read [DEVELOPMENT.md](./DEVELOPMENT.md) for setup instructions
+1. Read [development.md](./development.md) for setup instructions
 1. Fork the repository
 1. Create a feature branch from `dev`
 1. Make your changes
@@ -96,8 +96,8 @@ uv run poe check-all   # Run all checks
 
 ## Questions?
 
-- Check [DEVELOPMENT.md](./DEVELOPMENT.md)
-- Review [Architecture docs](./ARCHITECTURE.md)
+- Check [development.md](./development.md)
+- Review [Architecture docs](./architecture.md)
 - Create a GitHub issue
 - Join #dex-dev Slack channel
 
