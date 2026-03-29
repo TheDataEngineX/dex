@@ -784,14 +784,14 @@ ______________________________________________________________________
 
 **Deployment & Operations:**
 
-- **[CI/CD Pipeline](CI_CD.md)** - Automated deployments
+- **[CI/CD Pipeline](ci-cd.md)** - Automated deployments
 - **Deployment Runbook** (in `infradex` repo) - Deploy procedures
 - **Local K8s Setup** (in `infradex` repo) - Kubernetes setup
 
 **Development:**
 
-- **[SDLC](SDLC.md)** - Development workflow
-- **[Contributing](CONTRIBUTING.md)** - Contribution guide
+- **[SDLC](sdlc.md)** - Development workflow
+- **[Contributing](contributing.md)** - Contribution guide
 
 ______________________________________________________________________
 
