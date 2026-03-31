@@ -1,6 +1,6 @@
 [project]
 name = "dataenginex"
-version = "0.9.16"
+version = "0.9.17"
 description = "DataEngineX - Core framework for AI/ML/Data engineering projects"
 authors = [
     {name = "Jay", email = "jayapal.myaka99@gmail.com"}
@@ -61,7 +61,6 @@ dev = [
 data = [
     "pyspark>=4.1.1",
     "databricks-cli>=0.18.0",
-    "apache-airflow>=2.8.0,<4.0.0",
     "requests>=2.32.0",
 ]
 notebook = [
