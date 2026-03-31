@@ -897,7 +897,7 @@ wheels = [
 
 [[package]]
 name = "dataenginex"
-version = "0.9.9"
+version = "0.9.12"
 source = { editable = "." }
 dependencies = [
     { name = "click" },
