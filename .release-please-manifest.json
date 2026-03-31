@@ -1,7 +1,3 @@
 {
-<<<<<<< HEAD
-  ".": "0.9.11"
-=======
-  ".": "0.9.10"
->>>>>>> 0fe89d3 (ci: add docs-notify workflow for cross-repo doc rebuilds)
+  ".": "0.9.12"
 }
