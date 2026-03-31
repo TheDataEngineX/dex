@@ -1,6 +1,6 @@
 [project]
 name = "dataenginex"
-version = "0.9.13"
+version = "0.9.16"
 description = "DataEngineX - Core framework for AI/ML/Data engineering projects"
 authors = [
     {name = "Jay", email = "jayapal.myaka99@gmail.com"}
@@ -141,6 +141,14 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 module = ["sentence_transformers.*"]
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["pyspark.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["dataenginex.data.quality.spark"]
+warn_unused_ignores = false  # pyspark optional: ignore used in CI, unused when installed
 
 [[tool.mypy.overrides]]
 module = ["dataenginex.ml.vectorstore"]

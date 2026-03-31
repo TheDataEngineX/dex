@@ -1,4 +1,4 @@
-"""Data quality gates — completeness, uniqueness, custom SQL checks.
+"""Data quality gates — completeness, uniqueness, schema, custom SQL checks.
 
 Quality gates run after transforms and before loading to the target layer.
 They use DuckDB SQL aggregations for speed (no row-by-row Python).
@@ -14,6 +14,24 @@ import structlog
 
 logger = structlog.get_logger()
 
+_SCHEMA_CHECK_FAILED = "quality check failed: schema"
+
+
+@dataclass(frozen=True)
+class ColumnSpec:
+    """Expected schema for a single column.
+
+    Attributes:
+        name: Column name (case-sensitive).
+        dtype: Expected DuckDB type string e.g. ``"VARCHAR"``, ``"INTEGER"``.
+               ``None`` skips the type check.
+        nullable: If ``False``, the column must contain no NULL values.
+    """
+
+    name: str
+    dtype: str | None = None
+    nullable: bool = True
+
 
 @dataclass
 class QualityResult:
@@ -23,6 +41,7 @@ class QualityResult:
     completeness_score: float = 1.0
     uniqueness_score: float = 1.0
     custom_passed: bool = True
+    schema_violations: list[str] = field(default_factory=list)
     details: dict[str, Any] = field(default_factory=dict)
 
 
@@ -76,12 +95,53 @@ def _check_uniqueness(
         )
 
 
+def _check_schema(
+    conn: duckdb.DuckDBPyConnection,
+    table: str,
+    columns: list[ColumnSpec],
+    result: QualityResult,
+) -> None:
+    """Validate column existence, type, and nullability against a ColumnSpec list."""
+    # DESCRIBE returns (column_name, column_type, null, key, default, extra)
+    actual: dict[str, str] = {
+        row[0]: row[1].upper()
+        for row in conn.execute(f"DESCRIBE {table}").fetchall()
+    }
+    for spec in columns:
+        if spec.name not in actual:
+            msg = f"column '{spec.name}' missing"
+            result.schema_violations.append(msg)
+            result.passed = False
+            logger.warning(_SCHEMA_CHECK_FAILED, table=table, violation=msg)
+            continue
+
+        if spec.dtype is not None and actual[spec.name] != spec.dtype.upper():
+            actual_type = actual[spec.name]
+            expected_type = spec.dtype.upper()
+            msg = f"column '{spec.name}' type {actual_type!r} != expected {expected_type!r}"
+            result.schema_violations.append(msg)
+            result.passed = False
+            logger.warning(_SCHEMA_CHECK_FAILED, table=table, violation=msg)
+
+        if not spec.nullable:
+            null_row = conn.execute(
+                f"SELECT count(*) FROM {table} WHERE {spec.name} IS NULL"
+            ).fetchone()
+            null_count = int(null_row[0]) if null_row else 0
+            if null_count > 0:
+                msg = f"column '{spec.name}' has {null_count} NULL value(s) but nullable=False"
+                result.schema_violations.append(msg)
+                result.passed = False
+                logger.warning(_SCHEMA_CHECK_FAILED, table=table, violation=msg)
+
+
 def check_quality(
     conn: duckdb.DuckDBPyConnection,
     table: str,
     *,
     completeness: float | None = None,
     uniqueness: list[str] | None = None,
+    schema: list[ColumnSpec] | None = None,
     custom_sql: str | None = None,
 ) -> QualityResult:
     """Run quality checks against a DuckDB table.
@@ -91,12 +151,20 @@ def check_quality(
         table: Table name to check.
         completeness: Minimum fraction of non-null values (0.0-1.0).
         uniqueness: Columns that must be unique (no duplicates).
+        schema: Expected column specs (existence, type, nullability).
+               Checked even on empty tables.
         custom_sql: SQL that must return count > 0 to pass.
 
     Returns:
-        QualityResult with pass/fail and scores.
+        QualityResult with pass/fail, scores, and any schema violations.
     """
     result = QualityResult(passed=True)
+
+    # Schema checks run before the empty-table short-circuit — column
+    # existence and type are independent of row count.
+    if schema is not None:
+        _check_schema(conn, table, schema, result)
+
     count_row = conn.execute(f"SELECT count(*) FROM {table}").fetchone()
     total_rows: int = int(count_row[0]) if count_row else 0
 

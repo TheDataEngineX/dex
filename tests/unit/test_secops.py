@@ -298,3 +298,56 @@ class TestSafeSample:
 
 # Ensure AuditOperation imported at module level for isinstance check
 assert AuditOperation.PII_SCAN is not None
+
+
+# ---------------------------------------------------------------------------
+# AuditLogger — persistent (file-backed) DuckDB
+# ---------------------------------------------------------------------------
+
+
+class TestAuditLoggerPersistent:
+    def test_events_survive_reopen(self, tmp_path) -> None:
+        db = str(tmp_path / "audit.db")
+        log = AuditLogger(db_path=db)
+        log.log_scan("ds", ["email"], 10)
+        log.close()
+
+        log2 = AuditLogger(db_path=db)
+        assert len(log2.events) == 1
+        assert log2.events[0].dataset_name == "ds"
+        log2.close()
+
+    def test_seq_continues_after_reopen(self, tmp_path) -> None:
+        db = str(tmp_path / "audit.db")
+        log = AuditLogger(max_history=10, db_path=db)
+        for i in range(3):
+            log.log_scan(f"ds_{i}", [], 1)
+        log.close()
+
+        log2 = AuditLogger(max_history=10, db_path=db)
+        log2.log_scan("ds_3", [], 1)
+        events = log2.events
+        log2.close()
+        assert len(events) == 4
+        assert events[-1].dataset_name == "ds_3"
+
+    def test_max_history_evicts_across_sessions(self, tmp_path) -> None:
+        db = str(tmp_path / "audit.db")
+        log = AuditLogger(max_history=2, db_path=db)
+        log.log_scan("a", [], 1)
+        log.log_scan("b", [], 1)
+        log.close()
+
+        log2 = AuditLogger(max_history=2, db_path=db)
+        log2.log_scan("c", [], 1)
+        events = log2.events
+        log2.close()
+        assert len(events) == 2
+        names = [e.dataset_name for e in events]
+        assert "a" not in names
+
+    def test_close_is_idempotent(self, tmp_path) -> None:
+        log = AuditLogger(db_path=str(tmp_path / "audit.db"))
+        log.close()
+        # second close should not raise
+        log.close()
