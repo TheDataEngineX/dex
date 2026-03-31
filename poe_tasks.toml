@@ -101,19 +101,6 @@ help = "Run full checks: quality gates + coverage tests"
 shell = "status=0; poe uv-sync-all || status=$?; if [ $status -eq 0 ]; then poe check-all-core || status=$?; fi; poe clean; exit $status"
 help = "Sync all deps, run full checks, then clean up (cleanup always runs)"
 
-# ── Documentation ─────────────────────────────────────────────────────────────
-[tool.poe.tasks.docs]
-shell = "zensical build --clean && echo 'Documentation built. Open site/index.html'"
-help = "Build documentation site"
-
-[tool.poe.tasks.docs-check]
-shell = "find . -name '*.md' -not -path './site/*' -not -path './.venv/*' -not -path './.pytest_cache/*' -not -path './.github/*' | xargs uvx mdformat --check"
-help = "Check markdown formatting"
-
-[tool.poe.tasks.docs-fix]
-shell = "find . -name '*.md' -not -path './site/*' -not -path './.venv/*' -not -path './.pytest_cache/*' -not -path './.github/*' | xargs uvx mdformat"
-help = "Auto-fix markdown formatting"
-
 # ── Docker ────────────────────────────────────────────────────────────────────
 [tool.poe.tasks.docker-build]
 cmd = "docker build -t dex:latest ."

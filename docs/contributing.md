@@ -1,8 +1,10 @@
-Thank you for contributing to DEX!
+# Contributing to DEX
+
+Thank you for contributing!
 
 ## Getting Started
 
-1. Read [DEVELOPMENT.md](./DEVELOPMENT.md) for setup instructions
+1. Read [development.md](./development.md) for setup instructions
 1. Fork the repository
 1. Create a feature branch from `dev`
 1. Make your changes
@@ -12,10 +14,10 @@ Thank you for contributing to DEX!
 
 Use semantic commit format:
 
-- `feat(#123): add resume parser`
-- `fix(#124): handle edge case in matching`
-- `docs: update API docs`
-- `test: add parsing tests`
+- `feat(#123): add DuckDB backend`
+- `fix(#124): handle missing config key in registry`
+- `docs: update API reference`
+- `test: add backend integration tests`
 - `chore: update dependencies`
 
 ## Code Style
@@ -96,8 +98,8 @@ uv run poe check-all   # Run all checks
 
 ## Questions?
 
-- Check [DEVELOPMENT.md](./DEVELOPMENT.md)
-- Review [Architecture docs](./ARCHITECTURE.md)
+- Check [development.md](./development.md)
+- Review [Architecture docs](./architecture.md)
 - Create a GitHub issue
 - Join #dex-dev Slack channel
 

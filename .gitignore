@@ -87,3 +87,6 @@ Notes.txt
 # Claude Code — local overrides (personal, never commit)
 .claude/settings.local.json
 .superpowers/
+
+# AI Coding Assistant
+.continue/

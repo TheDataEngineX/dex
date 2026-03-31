@@ -1,6 +1,6 @@
 [project]
 name = "dataenginex"
-version = "0.9.9"
+version = "0.9.13"
 description = "DataEngineX - Core framework for AI/ML/Data engineering projects"
 authors = [
     {name = "Jay", email = "jayapal.myaka99@gmail.com"}
@@ -53,7 +53,6 @@ dev = [
     "types-requests>=2.32.4.20260107",
     "poethepoet>=0.42.1",
     "uv>=0.10.0",
-    "zensical>=0.0.19",
     "mkdocs-material>=9.7.0",
     "mkdocstrings[python]>=0.29.0",
     "pre-commit>=4.5.1",

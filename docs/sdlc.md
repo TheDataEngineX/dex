@@ -95,7 +95,7 @@ ______________________________________________________________________
 
 - CI, security, and quality checks as defined in the CI/CD pipeline.
 
-See [CI/CD Pipeline](CI_CD.md) for the authoritative list of checks.
+See [CI/CD Pipeline](ci-cd.md) for the authoritative list of checks.
 
 **Exit**: All checks pass and at least one reviewer approves.
 
@@ -185,7 +185,7 @@ flowchart TD
 1. After validation in dev, open a release PR from `dev` → `main`.
 1. Merge after all required checks pass.
 
-See [Contributing Guide](CONTRIBUTING.md) for branch naming, local checks, and PR conventions.
+See [Contributing Guide](contributing.md) for branch naming, local checks, and PR conventions.
 
 ______________________________________________________________________
 
@@ -193,8 +193,8 @@ ______________________________________________________________________
 
 **Development:**
 
-- **[Contributing Guide](CONTRIBUTING.md)** - Contribution workflow
-- **[CI/CD Pipeline](CI_CD.md)** - Automated build and deploy
+- **[Contributing Guide](contributing.md)** - Contribution workflow
+- **[CI/CD Pipeline](ci-cd.md)** - Automated build and deploy
 
 **Operations:**
 

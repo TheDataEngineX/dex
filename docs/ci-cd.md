@@ -355,8 +355,8 @@ ______________________________________________________________________
 **Next Steps:**
 
 - **Deployment Runbook** (in `infradex` repo) - Release procedures
-- **[Observability](OBSERVABILITY.md)** - Monitor applications built on DEX
-- **[Contributing Guide](CONTRIBUTING.md)** - Development workflow
+- **[Observability](observability.md)** - Monitor applications built on DEX
+- **[Contributing Guide](contributing.md)** - Development workflow
 
 ______________________________________________________________________
 

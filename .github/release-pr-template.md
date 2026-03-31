@@ -1,11 +1,11 @@
 # Release PR Template
 
-Use this template whenever opening a release PR (`dev → main`). Reference `RELEASE_NOTES.md` and verify QA steps before merging.
+Use this template whenever opening a release PR (`dev → main`). Reference `release-notes.md` and verify QA steps before merging.
 
 ## Summary
 
 - Describe what changed (e.g., alerts, APIs, docs).
-- Link to the release note: [RELEASE_NOTES.md](RELEASE_NOTES.md).
+- Link to the release note: [release-notes.md](release-notes.md).
 - Note any rollout considerations (e.g., Alertmanager rules, Docker image tag).
 
 ## Verification
@@ -13,7 +13,7 @@ Use this template whenever opening a release PR (`dev → main`). Reference `REL
 - `uv run poe lint`
 - `./.venv/bin/pytest -v`
 - `docker compose build`
-- Reload Prometheus/Alertmanager (see `OBSERVABILITY.md` → "Reloading Alert Rules").
+- Reload Prometheus/Alertmanager (see `observability.md` → "Reloading Alert Rules").
 
 ## QA Checklist
 
