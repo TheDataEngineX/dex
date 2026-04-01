@@ -5,6 +5,27 @@ All notable changes to `dataenginex` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.0](https://github.com/TheDataEngineX/dex/compare/v0.9.9...v0.10.0) (2026-04-01)
+
+
+### Features
+
+* docs cleanup ([f4eff14](https://github.com/TheDataEngineX/dex/commit/f4eff14a1aeed657b715b182ac495c920f7b701f))
+* docs notify ([#210](https://github.com/TheDataEngineX/dex/issues/210)) ([c36616d](https://github.com/TheDataEngineX/dex/commit/c36616d9d0ae7a97274bd40ea41f39bc26f68fe0))
+* quality schema spark audit ([#212](https://github.com/TheDataEngineX/dex/issues/212)) ([2965801](https://github.com/TheDataEngineX/dex/commit/2965801257f6949a48f1c59be2f88e92294b4691))
+
+
+### Bug Fixes
+
+* add last-release-sha to anchor release-please at v0.9.9 ([7e78ca2](https://github.com/TheDataEngineX/dex/commit/7e78ca203347ff4c4000ca6ec42c335650da1b86))
+* restructure release-please-config to packages format with last-release-sha ([46f0b69](https://github.com/TheDataEngineX/dex/commit/46f0b69b8372d54d26ba60eedd9095d7fb0f6cd3))
+* sync dev to main ([40d5dff](https://github.com/TheDataEngineX/dex/commit/40d5dff99ae4295599badc848cd530df6eff9ffb))
+
+
+### Documentation
+
+* docs cleanup ([#211](https://github.com/TheDataEngineX/dex/issues/211)) ([0a6b7f7](https://github.com/TheDataEngineX/dex/commit/0a6b7f70287eb7399eb17acea2fb0ad09efd0597))
+
 ## [Unreleased]
 
 ## [0.7.1] - 2026-03-17
