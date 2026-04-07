@@ -112,7 +112,7 @@ ______________________________________________________________________
 
 ## Development
 
-See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for full setup.
+See [docs/development.md](docs/development.md) for full setup.
 
 ```bash
 uv run poe check-all         # lint + typecheck + tests

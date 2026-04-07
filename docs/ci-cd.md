@@ -407,4 +407,4 @@ gh workflow run pypi-publish.yml -f tag=v<version>
 
 ______________________________________________________________________
 
-**[← Back to Documentation Hub](docs-hub.md)**
+**[← Back to Documentation](index.md)**

@@ -112,13 +112,23 @@ class TestOllamaProvider:
         assert provider.is_available() is False
 
     def test_generate_raises_connection_error_without_server(self) -> None:
+        import httpx
+
         provider = OllamaProvider(base_url="http://localhost:99999")
-        with pytest.raises(ConnectionError, match="not reachable"):
+        with (
+            patch("httpx.post", side_effect=httpx.ConnectError("refused")),
+            pytest.raises(ConnectionError, match="not reachable"),
+        ):
             provider.generate("test prompt")
 
     def test_chat_raises_connection_error_without_server(self) -> None:
+        import httpx
+
         provider = OllamaProvider(base_url="http://localhost:99999")
-        with pytest.raises(ConnectionError, match="not reachable"):
+        with (
+            patch("httpx.post", side_effect=httpx.ConnectError("refused")),
+            pytest.raises(ConnectionError, match="not reachable"),
+        ):
             provider.chat([ChatMessage(role="user", content="hi")])
 
     def test_list_models_returns_empty_without_server(self) -> None:
@@ -169,19 +179,29 @@ class TestOpenAICompatibleProvider:
         assert headers["Content-Type"] == "application/json"
 
     def test_chat_raises_connection_error_without_server(self) -> None:
+        import httpx
+
         provider = OpenAICompatibleProvider(
             api_key="test-key",
             base_url="http://localhost:99999",
         )
-        with pytest.raises(ConnectionError, match="not reachable"):
+        with (
+            patch("httpx.post", side_effect=httpx.ConnectError("refused")),
+            pytest.raises(ConnectionError, match="not reachable"),
+        ):
             provider.chat([ChatMessage(role="user", content="hi")])
 
     def test_generate_raises_connection_error_without_server(self) -> None:
+        import httpx
+
         provider = OpenAICompatibleProvider(
             api_key="test-key",
             base_url="http://localhost:99999",
         )
-        with pytest.raises(ConnectionError, match="not reachable"):
+        with (
+            patch("httpx.post", side_effect=httpx.ConnectError("refused")),
+            pytest.raises(ConnectionError, match="not reachable"),
+        ):
             provider.generate("test prompt")
 
     def test_is_available_returns_false_without_server(self) -> None:

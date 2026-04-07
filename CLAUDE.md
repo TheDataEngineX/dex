@@ -11,7 +11,7 @@ Goal is to save Claude code tokens for lower cost without loosing quality.
 
 | Package | Location | Purpose |
 |---------|----------|---------|
-| `dataenginex` | `src/dataenginex/` | Core framework — config system, backend registry, CLI, API, ML, AI agents |
+| `dataenginex` | `src/dataenginex/` | Core framework — config, registry, CLI, API, ML, AI (routing, runtime, memory, observability, workflows) |
 
 **Stack:** Python 3.13+ · FastAPI · DuckDB · structlog · Pydantic · Click · Rich · uv · Ruff · mypy strict · pytest
 
