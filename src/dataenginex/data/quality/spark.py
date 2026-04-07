@@ -71,8 +71,7 @@ def check_quality_spark(
     """
     if not _PYSPARK_AVAILABLE:
         raise ImportError(
-            "PySpark is required for check_quality_spark. "
-            "Install it with: uv sync --group data"
+            "PySpark is required for check_quality_spark. Install it with: uv sync --group data"
         )
 
     arrow_table: Any = df.toArrow()  # type: ignore[union-attr]

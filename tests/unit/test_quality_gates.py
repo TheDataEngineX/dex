@@ -75,27 +75,19 @@ class TestSchemaValidation:
         assert any("id" in v for v in result.schema_violations)
 
     def test_schema_fail_nullable_false_with_nulls(self, duckdb_conn) -> None:
-        duckdb_conn.execute(
-            "CREATE TABLE t AS SELECT 1 AS id UNION ALL SELECT NULL"
-        )
-        result = check_quality(
-            duckdb_conn, "t", schema=[ColumnSpec("id", nullable=False)]
-        )
+        duckdb_conn.execute("CREATE TABLE t AS SELECT 1 AS id UNION ALL SELECT NULL")
+        result = check_quality(duckdb_conn, "t", schema=[ColumnSpec("id", nullable=False)])
         assert result.passed is False
         assert any("nullable=False" in v for v in result.schema_violations)
 
     def test_schema_pass_nullable_false_no_nulls(self, duckdb_conn) -> None:
         duckdb_conn.execute("CREATE TABLE t AS SELECT 1 AS id UNION ALL SELECT 2")
-        result = check_quality(
-            duckdb_conn, "t", schema=[ColumnSpec("id", nullable=False)]
-        )
+        result = check_quality(duckdb_conn, "t", schema=[ColumnSpec("id", nullable=False)])
         assert result.passed is True
 
     def test_schema_checked_on_empty_table(self, duckdb_conn) -> None:
         duckdb_conn.execute("CREATE TABLE t (id INTEGER)")
-        result = check_quality(
-            duckdb_conn, "t", schema=[ColumnSpec("missing_col")]
-        )
+        result = check_quality(duckdb_conn, "t", schema=[ColumnSpec("missing_col")])
         assert result.passed is False
         assert any("missing" in v for v in result.schema_violations)
 

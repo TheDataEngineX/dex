@@ -104,8 +104,7 @@ def _check_schema(
     """Validate column existence, type, and nullability against a ColumnSpec list."""
     # DESCRIBE returns (column_name, column_type, null, key, default, extra)
     actual: dict[str, str] = {
-        row[0]: row[1].upper()
-        for row in conn.execute(f"DESCRIBE {table}").fetchall()
+        row[0]: row[1].upper() for row in conn.execute(f"DESCRIBE {table}").fetchall()
     }
     for spec in columns:
         if spec.name not in actual:

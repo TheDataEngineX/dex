@@ -28,6 +28,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-04-07
+
+### Highlights
+
+- **Complete Data + ML + AI Framework**: All phases from the v1.0 master plan implemented — config-driven pipeline via `dex.yaml`, BackendRegistry pattern for swappable backends, unified CLI.
+- **Data Layer**: DuckDB connector (default), CSV connector, PipelineRunner with DAG resolution, transforms (filter, derive, cast, deduplicate), quality gates (completeness, uniqueness), column-level lineage tracking, built-in cron scheduler.
+- **ML Layer**: SQLite-backed experiment tracker, DuckDB feature store, sklearn/xgboost training integration, model registry with versioning (dev → staging → production), built-in model serving via FastAPI, PSI drift detection.
+- **AI Layer**: Built-in ReAct agent runtime, Ollama LLM provider (default), tool registry (sql_query, predict, search), BM25 sparse retrieval (DuckDB FTS), dense vector retrieval (DuckDB VSS HNSW), hybrid retrieval with RRF fusion, agent memory (short-term + episodic).
+- **CLI Commands**: `dex init`, `dex validate`, `dex version`, `dex serve`, `dex run`, `dex train`, `dex agent`, `dex query`.
+- **API**: FastAPI app factory, JWT auth, rate limiting, health endpoints, project CRUD, pipeline run/status, data explorer, ML experiments/models, agent chat/manage, WebSocket for live logs and streaming.
+- **Backend Registry Pattern**: Every subsystem follows ABC + BackendRegistry[T] pattern with built-in implementations and optional extras (Dagster, MLflow, Qdrant, LanceDB, sentence-transformers, PySpark).
+
+### Breaking Changes
+
+- **FastAPI now optional**: Core install (`pip install dataenginex`) includes only lightweight deps. Install `[api]` extra for FastAPI/uvicorn: `pip install dataenginex[api]`
+- **Cloud SDKs now optional**: Core install no longer requires boto3/google-cloud-storage/google-cloud-bigquery. Install `[cloud]` extra: `pip install dataenginex[cloud]`
+- **Routers moved**: API routers moved to application packages. Use `from dataenginex.api import ...` directly (requires `[api]` extra)
+- **Root `__init__.py` slimmed**: Re-exports removed. Import from submodules directly: `from dataenginex.api import HealthChecker` etc.
+
+### Added
+
+- **Full project templates**: `dex init --template [minimal|data-pipeline|ml-project|ai-agent|full-stack|career-intelligence]`
+- **Docker support**: Multi-stage Dockerfile (`ghcr.io/thedataenginex/dex`), docker-compose.yml for full stack
+- **SecOps**: PII scanning in pipelines, masking, audit trail
+- **Quality schema**: Spark audit integration for data quality validation
+- **Examples**: 5 runnable examples in `examples/` directory
+
+### Verification checklist
+
+1. `uv run poe lint` — Ruff checks clean
+2. `uv run poe typecheck` — mypy strict (all modules)
+3. `uv run poe test` — 663 passed, 36 skipped
+4. `pip install dataenginex` — installs successfully
+5. `dex validate dex.yaml` — validates config
+6. `dex version` — shows version
+
+[Unreleased]: https://github.com/TheDataEngineX/DEX/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/TheDataEngineX/DEX/releases/tag/v1.0.0
+
 ## [0.7.1] - 2026-03-17
 
 ### Fixed
