@@ -28,7 +28,7 @@ jobs:
 
     steps:
       - name: Notify Release Start
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         if: always()
         with:
           script: |
@@ -89,7 +89,7 @@ jobs:
 
       - name: Notify Release Success
         if: success()
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             if (!process.env.SLACK_WEBHOOK) return;
@@ -116,7 +116,7 @@ jobs:
 
       - name: Notify Release Failure
         if: failure()
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             if (!process.env.SLACK_WEBHOOK) return;
