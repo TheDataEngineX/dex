@@ -17,6 +17,17 @@ Requires the ``[api]`` extra::
 from __future__ import annotations
 
 try:
+    from .domain_metrics import (
+        ai_agent_iterations,
+        ai_tokens_total,
+        ai_tool_calls_total,
+        ml_drift_score,
+        ml_model_predictions_total,
+        pipeline_run_duration_seconds,
+        pipeline_runs_total,
+        quality_gate_evaluations_total,
+        tenant_operations_total,
+    )
     from .logging_config import APP_VERSION, configure_logging, get_logger
     from .metrics import get_metrics
     from .metrics_middleware import PrometheusMetricsMiddleware
@@ -37,6 +48,16 @@ __all__ = [
     # Metrics
     "PrometheusMetricsMiddleware",
     "get_metrics",
+    # Domain metrics
+    "ai_agent_iterations",
+    "ai_tokens_total",
+    "ai_tool_calls_total",
+    "ml_drift_score",
+    "ml_model_predictions_total",
+    "pipeline_run_duration_seconds",
+    "pipeline_runs_total",
+    "quality_gate_evaluations_total",
+    "tenant_operations_total",
     # Request logging
     "RequestLoggingMiddleware",
     # Tracing

@@ -1,9 +1,12 @@
-"""LLM Integration — Ollama, OpenAI-Compatible & Provider Abstraction (Issue #95).
+"""LLM Integration — Ollama, OpenAI-Compatible, LiteLLM, vLLM & Provider Abstraction.
 
 Provides a pluggable LLM abstraction with concrete adapters:
 
 - **OllamaProvider** — local Ollama server (Llama 3, Mistral, etc.)
 - **OpenAICompatibleProvider** — any OpenAI-compatible API (OpenAI, Groq, Together, etc.)
+- **LiteLLMProvider** — universal router; 100+ providers via model-prefix
+  (e.g. ``anthropic/claude-3-sonnet``)
+- **VLLMProvider** — vLLM high-throughput serving (PagedAttention, multi-LoRA)
 - **MockProvider** — deterministic stub for testing
 - **get_llm_provider()** — factory function to instantiate providers by name
 
@@ -29,6 +32,8 @@ from typing import Any
 import structlog
 from prometheus_client import Counter, Histogram
 
+from dataenginex.middleware.domain_metrics import ai_tokens_total
+
 logger = structlog.get_logger()
 
 __all__ = [
@@ -36,9 +41,11 @@ __all__ = [
     "LLMConfig",
     "LLMProvider",
     "LLMResponse",
+    "LiteLLMProvider",
     "MockProvider",
     "OllamaProvider",
     "OpenAICompatibleProvider",
+    "VLLMProvider",
     "get_llm_provider",
 ]
 
@@ -227,6 +234,8 @@ class OllamaProvider(LLMProvider):
             llm_request_latency_seconds.labels(method="generate", **labels).observe(elapsed)
             llm_tokens_total.labels(direction="input", **labels).inc(result.prompt_tokens)
             llm_tokens_total.labels(direction="output", **labels).inc(result.completion_tokens)
+            ai_tokens_total.labels(direction="input", **labels).inc(result.prompt_tokens)
+            ai_tokens_total.labels(direction="output", **labels).inc(result.completion_tokens)
 
             return result
         except httpx.ConnectError as exc:
@@ -282,6 +291,8 @@ class OllamaProvider(LLMProvider):
             llm_request_latency_seconds.labels(method="chat", **labels).observe(elapsed)
             llm_tokens_total.labels(direction="input", **labels).inc(result.prompt_tokens)
             llm_tokens_total.labels(direction="output", **labels).inc(result.completion_tokens)
+            ai_tokens_total.labels(direction="input", **labels).inc(result.prompt_tokens)
+            ai_tokens_total.labels(direction="output", **labels).inc(result.completion_tokens)
 
             return result
         except httpx.ConnectError as exc:
@@ -459,6 +470,8 @@ class OpenAICompatibleProvider(LLMProvider):
             llm_request_latency_seconds.labels(method="chat", **labels).observe(elapsed)
             llm_tokens_total.labels(direction="input", **labels).inc(result.prompt_tokens)
             llm_tokens_total.labels(direction="output", **labels).inc(result.completion_tokens)
+            ai_tokens_total.labels(direction="input", **labels).inc(result.prompt_tokens)
+            ai_tokens_total.labels(direction="output", **labels).inc(result.completion_tokens)
 
             return result
         except httpx.ConnectError as exc:
@@ -486,6 +499,145 @@ class OpenAICompatibleProvider(LLMProvider):
 
 
 # ======================================================================
+# LiteLLM universal provider
+# ======================================================================
+
+
+class LiteLLMProvider(LLMProvider):
+    """Universal LLM provider via LiteLLM — 100+ providers via prefixed model names.
+
+    Model name format: ``<provider>/<model>`` (e.g. ``anthropic/claude-3-sonnet``,
+    ``openai/gpt-4o``, ``ollama/llama3.1:8b``, ``bedrock/anthropic.claude-v2``).
+    See https://docs.litellm.ai/docs/providers for the full list.
+
+    API keys are read from standard env vars (``OPENAI_API_KEY``,
+    ``ANTHROPIC_API_KEY``, ``AWS_*``, etc.) unless ``api_key`` is supplied.
+
+    Args:
+        model: Prefixed model name (default ``openai/gpt-4o-mini``).
+        api_base: Override base URL (e.g. for self-hosted proxies).
+        api_key: Override API key for providers that need explicit creds.
+        config: LLM configuration overrides.
+    """
+
+    def __init__(
+        self,
+        model: str = "openai/gpt-4o-mini",
+        api_base: str | None = None,
+        api_key: str | None = None,
+        config: LLMConfig | None = None,
+    ) -> None:
+        cfg = config or LLMConfig(model=model)
+        super().__init__(cfg)
+        self._api_base = api_base
+        self._api_key = api_key
+        logger.info("litellm provider initialised", model=cfg.model)
+
+    def _call(self, messages: list[dict[str, str]], method: str) -> LLMResponse:
+        try:
+            import litellm
+        except ImportError as exc:
+            msg = "litellm is required for LiteLLMProvider — install with: uv add litellm"
+            raise ImportError(msg) from exc
+
+        kwargs: dict[str, Any] = {
+            "model": self.config.model,
+            "messages": messages,
+            "temperature": self.config.temperature,
+            "max_tokens": self.config.max_tokens,
+            "top_p": self.config.top_p,
+            "timeout": self.config.timeout_seconds,
+        }
+        if self._api_base:
+            kwargs["api_base"] = self._api_base
+        if self._api_key:
+            kwargs["api_key"] = self._api_key
+
+        start = time.monotonic()
+        try:
+            resp = litellm.completion(**kwargs)
+        except Exception as exc:
+            logger.error("litellm call failed", model=self.config.model, error=str(exc))
+            msg = f"LiteLLM call failed: {exc}"
+            raise ConnectionError(msg) from exc
+
+        choices = getattr(resp, "choices", []) or []
+        choice = choices[0] if choices else None
+        message = getattr(choice, "message", None) if choice else None
+        usage = getattr(resp, "usage", None)
+
+        result = LLMResponse(
+            text=(getattr(message, "content", None) or "") if message else "",
+            model=str(getattr(resp, "model", self.config.model)),
+            finish_reason=getattr(choice, "finish_reason", "stop") if choice else "stop",
+            prompt_tokens=int(getattr(usage, "prompt_tokens", 0) or 0),
+            completion_tokens=int(getattr(usage, "completion_tokens", 0) or 0),
+            total_tokens=int(getattr(usage, "total_tokens", 0) or 0),
+        )
+
+        elapsed = time.monotonic() - start
+        labels = {"provider": "litellm", "model": self.config.model}
+        llm_request_latency_seconds.labels(method=method, **labels).observe(elapsed)
+        llm_tokens_total.labels(direction="input", **labels).inc(result.prompt_tokens)
+        llm_tokens_total.labels(direction="output", **labels).inc(result.completion_tokens)
+        ai_tokens_total.labels(direction="input", **labels).inc(result.prompt_tokens)
+        ai_tokens_total.labels(direction="output", **labels).inc(result.completion_tokens)
+        return result
+
+    def generate(self, prompt: str) -> LLMResponse:
+        messages = [
+            {"role": "system", "content": self.config.system_prompt},
+            {"role": "user", "content": prompt},
+        ]
+        return self._call(messages, method="generate")
+
+    def chat(self, messages: list[ChatMessage]) -> LLMResponse:
+        return self._call(
+            [{"role": m.role, "content": m.content} for m in messages],
+            method="chat",
+        )
+
+    def is_available(self) -> bool:
+        try:
+            import litellm  # noqa: F401
+        except ImportError:
+            return False
+        return True
+
+
+# ======================================================================
+# vLLM provider (OpenAI-compatible wrapper)
+# ======================================================================
+
+
+class VLLMProvider(OpenAICompatibleProvider):
+    """vLLM high-throughput serving provider.
+
+    vLLM exposes an OpenAI-compatible server at ``/v1/chat/completions`` with
+    PagedAttention, continuous batching, and multi-LoRA serving support.
+
+    Run the server with::
+
+        vllm serve meta-llama/Llama-3.1-8B-Instruct --port 8000
+
+    Args:
+        model: Served model identifier (as registered with vLLM).
+        base_url: vLLM server URL (default ``http://localhost:8000``).
+        api_key: Token if ``--api-key`` was supplied to vLLM; "EMPTY" otherwise.
+        config: LLM configuration overrides.
+    """
+
+    def __init__(
+        self,
+        model: str = "meta-llama/Llama-3.1-8B-Instruct",
+        base_url: str = "http://localhost:8000",
+        api_key: str = "EMPTY",
+        config: LLMConfig | None = None,
+    ) -> None:
+        super().__init__(api_key=api_key, base_url=base_url, model=model, config=config)
+
+
+# ======================================================================
 # Factory function
 # ======================================================================
 
@@ -494,7 +646,7 @@ def get_llm_provider(provider: str, **kwargs: Any) -> LLMProvider:
     """Create an LLM provider by name.
 
     Args:
-        provider: One of ``"ollama"``, ``"openai"``, ``"mock"``.
+        provider: One of ``"ollama"``, ``"openai"``, ``"litellm"``, ``"vllm"``, ``"mock"``.
         **kwargs: Passed directly to the provider constructor.
 
     Returns:
@@ -507,11 +659,15 @@ def get_llm_provider(provider: str, **kwargs: Any) -> LLMProvider:
 
         llm = get_llm_provider("ollama", model="llama3.1:8b")
         llm = get_llm_provider("openai", api_key="sk-...", model="gpt-4o")
+        llm = get_llm_provider("litellm", model="anthropic/claude-3-sonnet")
+        llm = get_llm_provider("vllm", model="meta-llama/Llama-3.1-8B-Instruct")
         llm = get_llm_provider("mock")
     """
     providers: dict[str, type[LLMProvider]] = {
         "ollama": OllamaProvider,
         "openai": OpenAICompatibleProvider,
+        "litellm": LiteLLMProvider,
+        "vllm": VLLMProvider,
         "mock": MockProvider,
     }
     cls = providers.get(provider.lower())
