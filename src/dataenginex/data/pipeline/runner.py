@@ -32,6 +32,7 @@ from dataenginex.data.transforms import transform_registry
 from dataenginex.data.transforms.sql import (  # noqa: F401
     CastTransform as _CastTransform,
 )
+from dataenginex.middleware.domain_metrics import quality_gate_evaluations_total
 from dataenginex.warehouse.lineage import PersistentLineage
 
 logger = structlog.get_logger()
@@ -225,6 +226,16 @@ class PipelineRunner:
             uniqueness=q.uniqueness,
             custom_sql=q.custom_sql,
         )
+        outcome = "pass" if result.passed else "fail"
+        for gate, configured in (
+            ("completeness", q.completeness is not None),
+            ("uniqueness", q.uniqueness is not None),
+            ("custom_sql", q.custom_sql is not None),
+        ):
+            if configured:
+                quality_gate_evaluations_total.labels(
+                    pipeline=name, gate=gate, result=outcome
+                ).inc()
         if not result.passed:
             msg = (
                 f"Quality gate failed: completeness={result.completeness_score:.2f}, "

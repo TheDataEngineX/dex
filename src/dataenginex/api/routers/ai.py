@@ -5,8 +5,9 @@ from __future__ import annotations
 from typing import Any
 
 import structlog
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 
+from dataenginex.api.rbac import Role, require_role
 from dataenginex.api.schemas import (
     AgentChatRequest,
     AgentChatResponse,
@@ -18,6 +19,8 @@ from dataenginex.api.schemas import (
 logger = structlog.get_logger()
 
 router = APIRouter(prefix="/ai", tags=["ai"])
+
+_RequireEditor = Depends(require_role(Role.EDITOR))
 
 
 # --- Agents ---
@@ -55,7 +58,12 @@ def get_agent(name: str, request: Request) -> AgentDetailResponse:
 
 
 @router.post("/agents/{name}/chat", response_model=AgentChatResponse)
-async def agent_chat(name: str, body: AgentChatRequest, request: Request) -> AgentChatResponse:
+async def agent_chat(
+    name: str,
+    body: AgentChatRequest,
+    request: Request,
+    _: Any = _RequireEditor,
+) -> AgentChatResponse:
     agents = request.app.state.agents
     if name not in agents:
         if name in request.app.state.config.ai.agents:

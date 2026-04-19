@@ -5,8 +5,9 @@ from __future__ import annotations
 from typing import Any
 
 import structlog
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 
+from dataenginex.api.rbac import Role, require_role
 from dataenginex.api.schemas import (
     ExperimentListResponse,
     FeatureGetResponse,
@@ -16,7 +17,10 @@ from dataenginex.api.schemas import (
     PredictionResponse,
     PromoteRequest,
 )
+from dataenginex.middleware.domain_metrics import ml_model_predictions_total
 from dataenginex.ml.registry import ModelStage
+
+_RequireEditor = Depends(require_role(Role.EDITOR))
 
 logger = structlog.get_logger()
 
@@ -34,7 +38,7 @@ def list_experiments(request: Request) -> ExperimentListResponse:
 
 
 @router.post("/experiments/{name}")
-def create_experiment(name: str, request: Request) -> dict[str, Any]:
+def create_experiment(name: str, request: Request, _: Any = _RequireEditor) -> dict[str, Any]:
     tracker = request.app.state.tracker
     exp_id = tracker.create_experiment(name)
     return {"id": exp_id, "name": name}
@@ -81,7 +85,12 @@ def get_model(name: str, request: Request) -> dict[str, Any]:
 
 
 @router.post("/models/{name}/promote")
-def promote_model(name: str, body: PromoteRequest, request: Request) -> dict[str, Any]:
+def promote_model(
+    name: str,
+    body: PromoteRequest,
+    request: Request,
+    _: Any = _RequireEditor,
+) -> dict[str, Any]:
     registry = request.app.state.model_registry
     model = registry.get_latest(name)
     if model is None:
@@ -100,10 +109,17 @@ def promote_model(name: str, body: PromoteRequest, request: Request) -> dict[str
 @router.post("/predictions", response_model=PredictionResponse)
 def predict(body: PredictionRequest, request: Request) -> PredictionResponse:
     engine = request.app.state.serving_engine
+    registry = request.app.state.model_registry
+    model = registry.get_latest(body.model_name)
+    version = model.version if model else "unknown"
     try:
         result = engine.predict(body.model_name, body.features)
     except Exception as exc:
+        ml_model_predictions_total.labels(
+            model=body.model_name, version=version, status="error"
+        ).inc()
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    ml_model_predictions_total.labels(model=body.model_name, version=version, status="ok").inc()
     return PredictionResponse(model_name=body.model_name, prediction=result)
 
 
@@ -127,7 +143,12 @@ def get_features(group: str, request: Request, entity_ids: str = "") -> FeatureG
 
 
 @router.post("/features/{group}")
-def save_features(group: str, body: FeatureSaveRequest, request: Request) -> dict[str, Any]:
+def save_features(
+    group: str,
+    body: FeatureSaveRequest,
+    request: Request,
+    _: Any = _RequireEditor,
+) -> dict[str, Any]:
     fs = request.app.state.feature_store
     fs.save_features(group, body.data, body.entity_key)
     return {"feature_group": group, "saved": len(body.data)}
