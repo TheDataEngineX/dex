@@ -29,9 +29,7 @@ class TestAgentRuntimeMetrics:
         agent = BuiltinAgentRuntime(llm=None, name="wiring-test")
         asyncio.run(agent.run("hello"))
         # Histogram bucket count: _count sample must exist for this agent
-        observed = _sample_value(
-            "dex_ai_agent_iterations_count", {"agent": "wiring-test"}
-        )
+        observed = _sample_value("dex_ai_agent_iterations_count", {"agent": "wiring-test"})
         assert observed >= 1
 
     def test_tool_call_ok_counter_increments(self) -> None:
@@ -59,16 +57,12 @@ class TestAgentRuntimeMetrics:
                     return LLMResponse(text='TOOL: echo ARGS: {"text": "hi"}', model="m")
                 return LLMResponse(text="ANSWER: done", model="m")
 
-        before = _sample_value(
-            "dex_ai_tool_calls_total", {"tool": "echo", "status": "ok"}
-        )
+        before = _sample_value("dex_ai_tool_calls_total", {"tool": "echo", "status": "ok"})
         agent = BuiltinAgentRuntime(
             llm=_ToolOnceLLM(), tools=registry, name="tool-test", max_iterations=3
         )
         asyncio.run(agent.run("go"))
-        after = _sample_value(
-            "dex_ai_tool_calls_total", {"tool": "echo", "status": "ok"}
-        )
+        after = _sample_value("dex_ai_tool_calls_total", {"tool": "echo", "status": "ok"})
         assert after >= before + 1
 
 
@@ -102,9 +96,7 @@ class TestDriftSchedulerEmitsDexGauge:
 
 
 class TestMLRouterRBAC:
-    def test_promote_denied_without_role_in_enforce_mode(
-        self, monkeypatch
-    ) -> None:  # type: ignore[no-untyped-def]
+    def test_promote_denied_without_role_in_enforce_mode(self, monkeypatch) -> None:  # type: ignore[no-untyped-def]
         from fastapi.testclient import TestClient
 
         from dataenginex.api.factory import create_app
@@ -117,9 +109,7 @@ class TestMLRouterRBAC:
         r = client.post("/api/v1/ml/models/foo/promote", json={"stage": "production"})
         assert r.status_code == 403
 
-    def test_save_features_denied_without_role_in_enforce_mode(
-        self, monkeypatch
-    ) -> None:  # type: ignore[no-untyped-def]
+    def test_save_features_denied_without_role_in_enforce_mode(self, monkeypatch) -> None:  # type: ignore[no-untyped-def]
         from fastapi.testclient import TestClient
 
         from dataenginex.api.factory import create_app
@@ -129,16 +119,12 @@ class TestMLRouterRBAC:
         config = DexConfig(project=ProjectConfig(name="t", version="0.1.0"))
         app = create_app(config)
         client = TestClient(app)
-        r = client.post(
-            "/api/v1/ml/features/grp", json={"data": [], "entity_key": "id"}
-        )
+        r = client.post("/api/v1/ml/features/grp", json={"data": [], "entity_key": "id"})
         assert r.status_code == 403
 
 
 class TestAIRouterRBAC:
-    def test_agent_chat_denied_without_role_in_enforce_mode(
-        self, monkeypatch
-    ) -> None:  # type: ignore[no-untyped-def]
+    def test_agent_chat_denied_without_role_in_enforce_mode(self, monkeypatch) -> None:  # type: ignore[no-untyped-def]
         from fastapi.testclient import TestClient
 
         from dataenginex.api.factory import create_app

@@ -94,9 +94,7 @@ class TestDecodeRS256Token:
             format=serialization.PrivateFormat.PKCS8,
             encryption_algorithm=serialization.NoEncryption(),
         )
-        token = jwt.encode(
-            {"sub": "u", "exp": int(time.time()) + 60}, pem, algorithm="RS256"
-        )
+        token = jwt.encode({"sub": "u", "exp": int(time.time()) + 60}, pem, algorithm="RS256")
         client = _StubClient(jwk)
         with pytest.raises(ValueError, match="kid"):
             decode_rs256_token(token, client)
