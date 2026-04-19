@@ -34,6 +34,8 @@ from typing import Any, Protocol
 
 import structlog
 
+from dataenginex.middleware.domain_metrics import ml_drift_score
+
 from .drift import DriftDetector, DriftReport
 from .metrics import model_drift_alerts_total, model_drift_psi
 
@@ -317,6 +319,11 @@ class DriftScheduler:
             model_drift_psi.labels(
                 model=config.model_name,
                 feature=report.feature_name,
+            ).set(report.psi)
+            ml_drift_score.labels(
+                pipeline=config.model_name,
+                feature=report.feature_name,
+                method="psi",
             ).set(report.psi)
 
             if report.drift_detected:

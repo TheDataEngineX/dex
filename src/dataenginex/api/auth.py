@@ -33,6 +33,7 @@ __all__ = [
     "AuthUser",
     "create_token",
     "decode_token",
+    "decode_token_auto",
 ]
 
 # ---------------------------------------------------------------------------
@@ -96,6 +97,54 @@ def decode_token(token: str, secret: str) -> dict[str, Any]:
     return payload
 
 
+def decode_token_auto(
+    token: str,
+    *,
+    hs256_secret: str | None = None,
+    jwks_url: str | None = None,
+    audience: str | None = None,
+    issuer: str | None = None,
+) -> dict[str, Any]:
+    """Decode a JWT, dispatching on the ``alg`` header.
+
+    Supports HS256 (shared secret) and RS256 (JWKS-resolved public key).
+    Raises :class:`ValueError` on any validation failure.
+    """
+    parts = token.split(".")
+    if len(parts) != 3:
+        raise ValueError("Malformed JWT")
+    try:
+        header = json.loads(_b64url_decode(parts[0]))
+    except ValueError as exc:
+        raise ValueError("Malformed JWT header") from exc
+
+    alg = header.get("alg")
+    if alg == "HS256":
+        if not hs256_secret:
+            raise ValueError("HS256 token received but no secret configured")
+        return decode_token(token, hs256_secret)
+    if alg == "RS256":
+        if not jwks_url:
+            raise ValueError("RS256 token received but DEX_JWKS_URL not configured")
+        from dataenginex.api.jwks import decode_rs256_token
+
+        client = _jwks_client_for(jwks_url)
+        return decode_rs256_token(token, client, audience=audience, issuer=issuer)
+    raise ValueError(f"Unsupported JWT algorithm: {alg!r}")
+
+
+_JWKS_CACHE: dict[str, Any] = {}
+
+
+def _jwks_client_for(url: str) -> Any:
+    """Return a cached :class:`~dataenginex.api.jwks.JWKSClient` for ``url``."""
+    if url not in _JWKS_CACHE:
+        from dataenginex.api.jwks import JWKSClient
+
+        _JWKS_CACHE[url] = JWKSClient(url=url)
+    return _JWKS_CACHE[url]
+
+
 # ---------------------------------------------------------------------------
 # Dataclass carrying the authenticated user info
 # ---------------------------------------------------------------------------
@@ -147,11 +196,14 @@ class AuthMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
 
         secret = os.getenv("DEX_JWT_SECRET", "")
-        if not secret:
-            logger.error("DEX_AUTH_ENABLED=true but DEX_JWT_SECRET is not set")
+        jwks_url = os.getenv("DEX_JWKS_URL", "")
+        if not secret and not jwks_url:
+            logger.error(
+                "DEX_AUTH_ENABLED=true but neither DEX_JWT_SECRET nor DEX_JWKS_URL is set",
+            )
             return JSONResponse(
                 status_code=500,
-                content={"error": "auth_config_error", "message": "Auth secret not configured"},
+                content={"error": "auth_config_error", "message": "Auth not configured"},
             )
 
         auth_header = request.headers.get("Authorization", "")
@@ -162,8 +214,16 @@ class AuthMiddleware(BaseHTTPMiddleware):
             )
 
         token = auth_header[7:]
+        audience = os.getenv("DEX_JWT_AUDIENCE") or None
+        issuer = os.getenv("DEX_JWT_ISSUER") or None
         try:
-            claims = decode_token(token, secret)
+            claims = decode_token_auto(
+                token,
+                hs256_secret=secret or None,
+                jwks_url=jwks_url or None,
+                audience=audience,
+                issuer=issuer,
+            )
         except ValueError:
             logger.exception("JWT validation failed")
             return JSONResponse(

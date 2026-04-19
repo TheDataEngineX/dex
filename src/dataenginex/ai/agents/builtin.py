@@ -17,6 +17,10 @@ from dataenginex.ai.agents import agent_registry
 from dataenginex.ai.tools import ToolRegistry, tool_registry
 from dataenginex.ai.tools.builtin import register_builtin_tools
 from dataenginex.core.interfaces import BaseAgentRuntime
+from dataenginex.middleware.domain_metrics import (
+    ai_agent_iterations,
+    ai_tool_calls_total,
+)
 
 logger = structlog.get_logger()
 
@@ -38,12 +42,14 @@ class BuiltinAgentRuntime(BaseAgentRuntime):
         system_prompt: str = "You are a helpful data engineering assistant.",
         tools: ToolRegistry | None = None,
         max_iterations: int = 10,
+        name: str = "builtin",
         **kwargs: Any,
     ) -> None:
         self._llm = llm
         self._system_prompt = system_prompt
         self._tools = tools or tool_registry
         self._max_iterations = max_iterations
+        self._name = name
         self._history: list[dict[str, str]] = []
         register_builtin_tools()
 
@@ -64,6 +70,7 @@ class BuiltinAgentRuntime(BaseAgentRuntime):
             if step_result.get("done", False):
                 response = str(step_result.get("response", ""))
                 self._history.append({"role": "assistant", "content": response})
+                ai_agent_iterations.labels(agent=self._name).observe(iterations)
                 return {"response": response, "iterations": iterations, "tool_calls": tool_calls}
 
             # If tool was called, continue the loop
@@ -73,6 +80,7 @@ class BuiltinAgentRuntime(BaseAgentRuntime):
         # Hit max iterations
         final = "I've reached my reasoning limit. Here's what I have so far."
         self._history.append({"role": "assistant", "content": final})
+        ai_agent_iterations.labels(agent=self._name).observe(self._max_iterations)
         return {"response": final, "iterations": self._max_iterations, "tool_calls": tool_calls}
 
     async def step(self, message: str, **kwargs: Any) -> dict[str, Any]:
@@ -134,8 +142,10 @@ class BuiltinAgentRuntime(BaseAgentRuntime):
         try:
             result = self._tools.call(tool_name, **args)
             observation = f"Tool '{tool_name}' returned: {result}"
+            ai_tool_calls_total.labels(tool=tool_name, status="ok").inc()
         except Exception as e:
             observation = f"Tool '{tool_name}' failed: {e}"
+            ai_tool_calls_total.labels(tool=tool_name, status="error").inc()
 
         self._history.append(
             {"role": "assistant", "content": f"[tool: {tool_name}] {observation}"},

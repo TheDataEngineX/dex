@@ -118,6 +118,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
             system_prompt=agent_cfg.system_prompt,
             tools=tool_registry,
             max_iterations=agent_cfg.max_iterations,
+            name=name,
         )
         logger.info("agent initialized", agent=name, runtime=agent_cfg.runtime)
 
@@ -218,6 +219,13 @@ def create_app(
     app.include_router(ml_router, prefix="/api/v1")
     app.include_router(ai_router, prefix="/api/v1")
     app.include_router(system_router, prefix="/api/v1")
+
+    from dataenginex.api.scim import router as scim_router
+    from dataenginex.api.scim import scim_enabled
+
+    if scim_enabled():
+        app.include_router(scim_router)
+        logger.info("scim endpoints enabled")
 
     logger.info(
         "app created",

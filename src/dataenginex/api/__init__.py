@@ -20,7 +20,13 @@ Requires the ``[api]`` extra::
 from __future__ import annotations
 
 try:
-    from .auth import AuthMiddleware, AuthUser, create_token, decode_token
+    from .auth import (
+        AuthMiddleware,
+        AuthUser,
+        create_token,
+        decode_token,
+        decode_token_auto,
+    )
     from .errors import (
         APIHTTPException,
         BadRequestError,
@@ -30,6 +36,7 @@ try:
     from .health import ComponentHealth, HealthChecker, HealthStatus
     from .pagination import PaginatedResponse, PaginationMeta, paginate
     from .rate_limit import RateLimiter, RateLimitMiddleware
+    from .rbac import Role, has_role, require_role
 except ImportError as _exc:
     _MISSING_MSG = (
         "dataenginex.api requires the [api] extra. Install it with: pip install dataenginex[api]"
@@ -42,6 +49,7 @@ __all__ = [
     "AuthUser",
     "create_token",
     "decode_token",
+    "decode_token_auto",
     # Errors
     "APIHTTPException",
     "BadRequestError",
@@ -58,4 +66,8 @@ __all__ = [
     # Rate limiting
     "RateLimiter",
     "RateLimitMiddleware",
+    # RBAC
+    "Role",
+    "has_role",
+    "require_role",
 ]

@@ -6,9 +6,14 @@ import time
 from typing import Any
 
 import structlog
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 
+from dataenginex.api.rbac import Role, require_role
 from dataenginex.api.schemas import PipelineResultResponse
+from dataenginex.middleware.domain_metrics import (
+    pipeline_run_duration_seconds,
+    pipeline_runs_total,
+)
 
 logger = structlog.get_logger()
 
@@ -41,8 +46,15 @@ def get_pipeline(pipeline_name: str, request: Request) -> dict[str, Any]:
     }
 
 
+_RequireEditor = Depends(require_role(Role.EDITOR))
+
+
 @router.post("/{pipeline_name}/run", response_model=PipelineResultResponse)
-def run_pipeline(pipeline_name: str, request: Request) -> PipelineResultResponse:
+def run_pipeline(
+    pipeline_name: str,
+    request: Request,
+    _: Any = _RequireEditor,
+) -> PipelineResultResponse:
     """Execute a pipeline run."""
     config = request.app.state.config
     if pipeline_name not in config.data.pipelines:
@@ -51,7 +63,11 @@ def run_pipeline(pipeline_name: str, request: Request) -> PipelineResultResponse
     runner = request.app.state.pipeline_runner
     start = time.monotonic()
     result = runner.run(pipeline_name)
-    duration_ms = (time.monotonic() - start) * 1000
+    duration_seconds = time.monotonic() - start
+    status = "success" if result.success else "failure"
+
+    pipeline_runs_total.labels(pipeline=pipeline_name, status=status).inc()
+    pipeline_run_duration_seconds.labels(pipeline=pipeline_name).observe(duration_seconds)
 
     return PipelineResultResponse(
         pipeline=pipeline_name,
@@ -59,6 +75,6 @@ def run_pipeline(pipeline_name: str, request: Request) -> PipelineResultResponse
         rows_input=result.rows_input,
         rows_output=result.rows_output,
         steps_completed=result.steps_completed,
-        duration_ms=round(duration_ms, 2),
+        duration_ms=round(duration_seconds * 1000, 2),
         error=result.error,
     )
