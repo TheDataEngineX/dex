@@ -13,6 +13,7 @@ import uuid
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import cast
 from typing import Any
 
 import structlog
@@ -376,10 +377,13 @@ class PostgresLineage:
     def get_children(self, parent_id: str) -> list[LineageEvent]:
         if not self._pg_ok:
             return self._fallback.get_children(parent_id)
-        return self._run(
-            self._afetch(  # type: ignore[no-any-return]
-                "SELECT * FROM lineage_events WHERE parent_id=$1 ORDER BY timestamp", parent_id
-            )
+        return cast(
+            list[LineageEvent],
+            self._run(
+                self._afetch(  # type: ignore[arg-type]
+                    "SELECT * FROM lineage_events WHERE parent_id=$1 ORDER BY timestamp", parent_id
+                )
+            ),
         )
 
     def get_chain(self, event_id: str) -> list[LineageEvent]:
@@ -396,20 +400,26 @@ class PostgresLineage:
     def get_by_layer(self, layer: str) -> list[LineageEvent]:
         if not self._pg_ok:
             return self._fallback.get_by_layer(layer)
-        return self._run(
-            self._afetch(  # type: ignore[no-any-return]
-                "SELECT * FROM lineage_events WHERE layer=$1 ORDER BY timestamp DESC", layer
-            )
+        return cast(
+            list[LineageEvent],
+            self._run(
+                self._afetch(  # type: ignore[arg-type]
+                    "SELECT * FROM lineage_events WHERE layer=$1 ORDER BY timestamp DESC", layer
+                )
+            ),
         )
 
     def get_by_pipeline(self, pipeline_name: str) -> list[LineageEvent]:
         if not self._pg_ok:
             return self._fallback.get_by_pipeline(pipeline_name)
-        return self._run(
-            self._afetch(  # type: ignore[no-any-return]
-                "SELECT * FROM lineage_events WHERE pipeline_name=$1 ORDER BY timestamp DESC",
-                pipeline_name,
-            )
+        return cast(
+            list[LineageEvent],
+            self._run(
+                self._afetch(  # type: ignore[arg-type]
+                    "SELECT * FROM lineage_events WHERE pipeline_name=$1 ORDER BY timestamp DESC",
+                    pipeline_name,
+                )
+            ),
         )
 
     @property
