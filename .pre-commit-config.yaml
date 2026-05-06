@@ -4,12 +4,12 @@
 
 repos:
   - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.24.0
+    rev: v8.30.1
     hooks:
       - id: gitleaks
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
@@ -28,23 +28,18 @@ repos:
         exclude: '^(site/|\.github/)'
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.0
+    rev: v0.15.12
     hooks:
       - id: ruff
         args: ["--fix"]
       - id: ruff-format
 
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.16.1
+  - repo: local
     hooks:
       - id: mypy
-        additional_dependencies:
-          - fastapi>=0.128.4
-          - httpx>=0.28.0
-          - google-cloud-storage>=2.18.0
-          - types-pyyaml
-          - types-requests
+        name: mypy
+        entry: uv run mypy
+        language: system
         args: ["--config-file=pyproject.toml", "--no-incremental", "src/dataenginex"]
-        language_version: python3.13
         pass_filenames: false
         files: ^src/dataenginex/

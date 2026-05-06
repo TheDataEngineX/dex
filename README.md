@@ -21,7 +21,7 @@ dex serve
 ```bash
 # Development
 git clone https://github.com/TheDataEngineX/DEX && cd DEX
-uv sync
+uv run poe setup
 uv run poe check-all          # lint + typecheck + tests
 uv run poe dev                 # dev server on http://localhost:17000
 uv run dex serve --config examples/dex.yaml

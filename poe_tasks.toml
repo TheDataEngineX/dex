@@ -2,12 +2,8 @@
 executor.type = "uv"
 
 # ── Setup ─────────────────────────────────────────────────────────────────────
-[tool.poe.tasks.install]
-shell = "uv sync && uvx pre-commit install"
-help = "Install dependencies and pre-commit hooks"
-
 [tool.poe.tasks.setup]
-shell = "uv sync --all-groups && uvx pre-commit install"
+shell = "uv sync --all-extras --all-groups && uvx pre-commit install"
 help = "One-step setup: install all dependency groups and pre-commit hooks"
 
 # ── Development ───────────────────────────────────────────────────────────────

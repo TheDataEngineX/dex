@@ -3,7 +3,7 @@ name: Notify Docs
 on:
   push:
     branches: [main]
-    paths: ['docs/**', 'src/**/**.py']
+    paths: ['docs/**', 'src/**/*.py']
 
 jobs:
   notify:
