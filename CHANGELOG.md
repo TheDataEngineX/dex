@@ -5,6 +5,19 @@ All notable changes to `dataenginex` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.0](https://github.com/TheDataEngineX/dex/compare/v0.10.0...v0.11.0) (2026-05-06)
+
+
+### Features
+
+* enterprise auth, RBAC, SCIM, LiteLLM/vLLM, Langfuse, domain met… ([#223](https://github.com/TheDataEngineX/dex/issues/223)) ([abeb1cc](https://github.com/TheDataEngineX/dex/commit/abeb1cc28a14745b8a9c6d6f040c0cd525ead23a))
+
+
+### Bug Fixes
+
+* rich pin reflex compatibility ([#225](https://github.com/TheDataEngineX/dex/issues/225)) ([7d2673d](https://github.com/TheDataEngineX/dex/commit/7d2673daa12f73fe08e3b0c650bb17a7a2c46c26))
+* rich pin reflex compatibility ([#225](https://github.com/TheDataEngineX/dex/issues/225)) ([9026174](https://github.com/TheDataEngineX/dex/commit/9026174fd41675cef105d45bec9af35194182d4f))
+
 ## [0.10.0](https://github.com/TheDataEngineX/dex/compare/v0.9.9...v0.10.0) (2026-04-01)
 
 
