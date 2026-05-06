@@ -19,11 +19,10 @@ Then visit:
 
 from __future__ import annotations
 
+import structlog
 import uvicorn
 from fastapi import FastAPI
 from fastapi.responses import Response
-
-import structlog
 from pydantic import BaseModel
 
 from dataenginex.api import HealthChecker

@@ -12,7 +12,7 @@ Public API::
         model_prediction_total, model_prediction_latency_seconds,
         model_drift_psi, model_drift_alerts_total,
         # Vector store (Issue #94)
-        VectorStoreBackend, InMemoryBackend, ChromaDBBackend,
+        VectorStoreBackend, InMemoryBackend, QdrantBackend,
         Document, SearchResult, RAGPipeline,
         # LLM (Issue #95)
         LLMProvider, OllamaProvider, OpenAICompatibleProvider, MockProvider,
@@ -49,9 +49,9 @@ from .scheduler import DriftCheckResult, DriftMonitorConfig, DriftScheduler
 from .serving import ModelServer, PredictionRequest, PredictionResponse
 from .training import BaseTrainer, SklearnTrainer, TrainingResult
 from .vectorstore import (
-    ChromaDBBackend,
     Document,
     InMemoryBackend,
+    QdrantBackend,
     RAGPipeline,
     SearchResult,
     VectorStoreBackend,
@@ -85,7 +85,7 @@ __all__ = [
     "model_prediction_latency_seconds",
     "model_prediction_total",
     # Vector store (Issue #94)
-    "ChromaDBBackend",
+    "QdrantBackend",
     "Document",
     "InMemoryBackend",
     "RAGPipeline",

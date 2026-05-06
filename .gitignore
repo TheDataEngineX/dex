@@ -91,3 +91,6 @@ Notes.txt
 # AI Coding Assistant
 .continue/
 .playwright-mcp/
+
+# Local task notes (tracked separately)
+tasks/todo.md

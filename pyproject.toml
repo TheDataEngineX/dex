@@ -13,7 +13,7 @@ dependencies = [
     "python-dotenv>=1.2.2",
     "pyyaml>=6.0.3",
     "click>=8.3.2",
-    "rich>=15.0.0",
+    "rich>=13.0.0",
     "duckdb>=1.5.2",
     "croniter>=6.2.2",
     "httpx>=0.28.1",
@@ -30,6 +30,13 @@ dependencies = [
     "email-validator>=2.3.0",
     # Data formats
     "pyarrow>=23.0.1",
+    # Async job queue (ARQ — Redis-backed, single dep)
+    "arq>=0.26.3",
+    "redis>=5.0.0",
+    # Async PostgreSQL (SCIM persistence, lineage, model registry)
+    "asyncpg>=0.30.0",
+    # Qdrant vector DB client
+    "qdrant-client>=1.13.0",
 ]
 
 [project.scripts]
@@ -93,10 +100,6 @@ ml = [
 tracking = [
     "mlflow>=3.0",
 ]
-dashboard = [
-    "streamlit>=1.55.0",
-]
-
 [build-system]
 requires = ["hatchling>=1.29.0"]
 build-backend = "hatchling.build"
@@ -108,10 +111,6 @@ packages = ["src/dataenginex"]
 python-preference = "only-managed"
 default-groups = ["dev"]
 conflicts = [
-    [
-        { group = "dashboard" },
-        { group = "notebook" },
-    ],
     # mlflow requires pandas<3; notebook requires pandas>=3.0
     [
         { group = "tracking" },
@@ -140,7 +139,7 @@ warn_unreachable = true
 no_implicit_optional = true
 
 [[tool.mypy.overrides]]
-module = ["structlog.*", "prometheus_client.*", "opentelemetry.*", "streamlit.*"]
+module = ["structlog.*", "prometheus_client.*", "opentelemetry.*", "arq.*", "asyncpg.*", "qdrant_client.*"]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
@@ -189,13 +188,13 @@ filterwarnings = [
     "ignore::DeprecationWarning:uvicorn\\.protocols",  # uvicorn imports deprecated WebSocketServerProtocol
     "ignore:unclosed.*socket:ResourceWarning",         # Starlette TestClient GC timing
     "ignore:unclosed event loop:ResourceWarning",      # Starlette TestClient GC timing
+    "ignore::pytest.PytestUnhandledThreadExceptionWarning",  # Qdrant compatibility check thread
 ]
 
 [tool.coverage.run]
 branch = true
 source = ["dataenginex"]
 omit = [
-    "*/src/dataenginex/dashboard/*",
     # Requires a live MLflow server — not available in CI (same as S3/GCS integration tests)
     "*/src/dataenginex/ml/mlflow_registry.py",
 ]

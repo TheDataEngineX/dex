@@ -32,6 +32,7 @@ router = APIRouter(prefix="/ml", tags=["ml"])
 
 @router.get("/experiments", response_model=ExperimentListResponse)
 def list_experiments(request: Request) -> ExperimentListResponse:
+    """List all ML tracking experiments."""
     tracker = request.app.state.tracker
     experiments = tracker.list_experiments()
     return ExperimentListResponse(experiments=experiments, count=len(experiments))
@@ -39,6 +40,7 @@ def list_experiments(request: Request) -> ExperimentListResponse:
 
 @router.post("/experiments/{name}")
 def create_experiment(name: str, request: Request, _: Any = _RequireEditor) -> dict[str, Any]:
+    """Create a new tracking experiment by name."""
     tracker = request.app.state.tracker
     exp_id = tracker.create_experiment(name)
     return {"id": exp_id, "name": name}
@@ -46,6 +48,7 @@ def create_experiment(name: str, request: Request, _: Any = _RequireEditor) -> d
 
 @router.get("/experiments/{name}/runs")
 def list_runs(name: str, request: Request) -> dict[str, Any]:
+    """List all runs for a named experiment."""
     tracker = request.app.state.tracker
     experiments = tracker.list_experiments()
     exp = next((e for e in experiments if e["name"] == name), None)
@@ -60,8 +63,8 @@ def list_runs(name: str, request: Request) -> dict[str, Any]:
 
 @router.get("/models", response_model=ModelListResponse)
 def list_models(request: Request) -> ModelListResponse:
+    """List all registered models with their available versions."""
     registry = request.app.state.model_registry
-    # ModelRegistry.list_models() returns list[str] (model names)
     names: list[str] = registry.list_models()
     models: list[dict[str, Any]] = [
         {"name": n, "versions": registry.list_versions(n)} for n in names
@@ -71,6 +74,7 @@ def list_models(request: Request) -> ModelListResponse:
 
 @router.get("/models/{name}")
 def get_model(name: str, request: Request) -> dict[str, Any]:
+    """Get the latest version of a registered model."""
     registry = request.app.state.model_registry
     model = registry.get_latest(name)
     if model is None:
@@ -91,6 +95,7 @@ def promote_model(
     request: Request,
     _: Any = _RequireEditor,
 ) -> dict[str, Any]:
+    """Promote a model to a target stage (staging, production, archived)."""
     registry = request.app.state.model_registry
     model = registry.get_latest(name)
     if model is None:
@@ -108,6 +113,7 @@ def promote_model(
 
 @router.post("/predictions", response_model=PredictionResponse)
 def predict(body: PredictionRequest, request: Request) -> PredictionResponse:
+    """Run inference on a deployed model."""
     engine = request.app.state.serving_engine
     registry = request.app.state.model_registry
     model = registry.get_latest(body.model_name)
@@ -128,13 +134,17 @@ def predict(body: PredictionRequest, request: Request) -> PredictionResponse:
 
 @router.get("/features")
 def list_feature_groups(request: Request) -> dict[str, Any]:
+    """List all registered feature groups."""
     fs = request.app.state.feature_store
+    if fs is None:
+        return {"groups": [], "count": 0}
     groups = fs.list_feature_groups()
     return {"groups": groups, "count": len(groups)}
 
 
 @router.get("/features/{group}", response_model=FeatureGetResponse)
 def get_features(group: str, request: Request, entity_ids: str = "") -> FeatureGetResponse:
+    """Retrieve features for a group, optionally filtered by comma-separated entity IDs."""
     fs = request.app.state.feature_store
     ids = [eid.strip() for eid in entity_ids.split(",") if eid.strip()] if entity_ids else []
     features = fs.get_features(group, ids) if ids else []
@@ -149,6 +159,7 @@ def save_features(
     request: Request,
     _: Any = _RequireEditor,
 ) -> dict[str, Any]:
+    """Save a batch of feature rows to a feature group."""
     fs = request.app.state.feature_store
     fs.save_features(group, body.data, body.entity_key)
     return {"feature_group": group, "saved": len(body.data)}
@@ -159,6 +170,7 @@ def save_features(
 
 @router.get("/drift/{pipeline_name}")
 def check_drift(pipeline_name: str, request: Request) -> dict[str, Any]:
+    """Return drift detection status for a pipeline (requires at least one prior run)."""
     config = request.app.state.config
     if pipeline_name not in config.data.pipelines:
         raise HTTPException(status_code=404, detail=f"Pipeline '{pipeline_name}' not found")

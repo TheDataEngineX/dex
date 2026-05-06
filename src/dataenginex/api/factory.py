@@ -67,10 +67,18 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     config: DexConfig = app.state.config
 
     # 1. Data backends
-    from dataenginex.data.pipeline.runner import PipelineRunner
-    from dataenginex.warehouse.lineage import PersistentLineage
+    import os
 
-    app.state.lineage = PersistentLineage(".dex/lineage.json")
+    from dataenginex.data.pipeline.runner import PipelineRunner
+    from dataenginex.warehouse.lineage import PersistentLineage, PostgresLineage
+
+    db_url = os.getenv("DEX_DATABASE_URL", "")
+    if db_url:
+        app.state.lineage = PostgresLineage(db_url, fallback_path=".dex/lineage.json")
+        logger.info("lineage.backend.postgres")
+    else:
+        app.state.lineage = PersistentLineage(".dex/lineage.json")
+        logger.info("lineage.backend.json")
     app.state.pipeline_runner = PipelineRunner(config, lineage=app.state.lineage)
 
     # 2. ML backends
@@ -212,13 +220,14 @@ def create_app(
     app.state.config = config
 
     # Include routers
+    _API_V1 = "/api/v1"
     app.include_router(root_router)
-    app.include_router(health_router, prefix="/api/v1")
-    app.include_router(pipelines_router, prefix="/api/v1")
-    app.include_router(data_router, prefix="/api/v1")
-    app.include_router(ml_router, prefix="/api/v1")
-    app.include_router(ai_router, prefix="/api/v1")
-    app.include_router(system_router, prefix="/api/v1")
+    app.include_router(health_router, prefix=_API_V1)
+    app.include_router(pipelines_router, prefix=_API_V1)
+    app.include_router(data_router, prefix=_API_V1)
+    app.include_router(ml_router, prefix=_API_V1)
+    app.include_router(ai_router, prefix=_API_V1)
+    app.include_router(system_router, prefix=_API_V1)
 
     from dataenginex.api.scim import router as scim_router
     from dataenginex.api.scim import scim_enabled

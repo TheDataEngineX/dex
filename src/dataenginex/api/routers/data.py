@@ -4,12 +4,36 @@ from __future__ import annotations
 
 from typing import Any
 
+import duckdb
 import structlog
 from fastapi import APIRouter, HTTPException, Request
+from pydantic import BaseModel
 
 logger = structlog.get_logger()
 
 router = APIRouter(prefix="/data", tags=["data"])
+
+
+class SQLQueryRequest(BaseModel):
+    sql: str
+    limit: int = 1000
+
+
+# --- SQL Console ---
+
+
+@router.post("/query")
+def execute_query(body: SQLQueryRequest, request: Request) -> dict[str, Any]:
+    """Execute a DuckDB SQL query and return results."""
+    try:
+        conn = duckdb.connect(":memory:")
+        rel = conn.execute(body.sql)
+        columns = [desc[0] for desc in (rel.description or [])]
+        rows = [dict(zip(columns, row, strict=True)) for row in rel.fetchmany(body.limit)]
+        conn.close()
+        return {"columns": columns, "rows": rows, "count": len(rows)}
+    except duckdb.Error as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 # --- Sources ---

@@ -52,12 +52,18 @@ class CsvConnector(BaseConnector):
             msg = "Not connected — call connect() first"
             raise RuntimeError(msg)
 
-        filename = table or self._default_file
-        if filename is None:
-            msg = "No table/file specified"
-            raise ValueError(msg)
+        # If path itself is a file, use it directly; otherwise treat as directory
+        if self._path.is_file():
+            filepath = self._path
+        else:
+            filename = table or self._default_file
+            if filename is None:
+                msg = "No table/file specified"
+                raise ValueError(msg)
+            filepath = self._path / filename
+            if not filepath.exists():
+                filepath = self._path / f"{filename}.csv"
 
-        filepath = self._path / filename
         if not filepath.exists():
             if default is not None:
                 return list(default)

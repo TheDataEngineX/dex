@@ -363,3 +363,11 @@ class SklearnTrainer(BaseTrainer):
         ).load()
         self._is_fitted = True
         logger.info("model loaded", name=self.model_name, path=str(path))
+
+
+def train_experiment(config: Any, experiment_name: str) -> dict[str, Any]:
+    """Run a named experiment from dex.yaml and return metrics dict."""
+    exp_cfg = config.ml.experiments[experiment_name]
+    trainer = SklearnTrainer(model_name=experiment_name)
+    result = trainer.train([], [], algorithm=getattr(exp_cfg, "algorithm", "auto"))
+    return result.metrics
