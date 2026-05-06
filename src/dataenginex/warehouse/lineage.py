@@ -379,7 +379,7 @@ class PostgresLineage:
         return cast(
             list[LineageEvent],
             self._run(
-                self._afetch(  # type: ignore[arg-type]
+                self._afetch(
                     "SELECT * FROM lineage_events WHERE parent_id=$1 ORDER BY timestamp", parent_id
                 )
             ),
@@ -402,7 +402,7 @@ class PostgresLineage:
         return cast(
             list[LineageEvent],
             self._run(
-                self._afetch(  # type: ignore[arg-type]
+                self._afetch(
                     "SELECT * FROM lineage_events WHERE layer=$1 ORDER BY timestamp DESC", layer
                 )
             ),
@@ -414,7 +414,7 @@ class PostgresLineage:
         return cast(
             list[LineageEvent],
             self._run(
-                self._afetch(  # type: ignore[arg-type]
+                self._afetch(
                     "SELECT * FROM lineage_events WHERE pipeline_name=$1 ORDER BY timestamp DESC",
                     pipeline_name,
                 )
