@@ -76,41 +76,34 @@ class HealthChecker:
 
     async def check_database(self) -> ComponentHealth:
         """Check database connectivity via TCP probe."""
-        host = os.getenv("DEX_DB_HOST")
-        port = os.getenv("DEX_DB_PORT")
-        if not host or not port:
-            return ComponentHealth(
-                name="database",
-                status=HealthStatus.SKIPPED,
-                message="database not configured",
-            )
-
-        start = time.perf_counter()
-        ok, message = await self._tcp_check(host, int(port))
-        duration_ms = (time.perf_counter() - start) * 1000
-        return ComponentHealth(
-            name="database",
-            status=HealthStatus.HEALTHY if ok else HealthStatus.UNHEALTHY,
-            message=message,
-            duration_ms=round(duration_ms, 2),
+        return await self._check_tcp_component(
+            "database", "DEX_DB_HOST", "DEX_DB_PORT", "database not configured"
         )
 
     async def check_cache(self) -> ComponentHealth:
         """Check cache connectivity via TCP probe."""
-        host = os.getenv("DEX_CACHE_HOST")
-        port = os.getenv("DEX_CACHE_PORT")
+        return await self._check_tcp_component(
+            "cache", "DEX_CACHE_HOST", "DEX_CACHE_PORT", "cache not configured"
+        )
+
+    async def _check_tcp_component(
+        self,
+        name: str,
+        host_env: str,
+        port_env: str,
+        not_configured_msg: str,
+    ) -> ComponentHealth:
+        host = os.getenv(host_env)
+        port = os.getenv(port_env)
         if not host or not port:
             return ComponentHealth(
-                name="cache",
-                status=HealthStatus.SKIPPED,
-                message="cache not configured",
+                name=name, status=HealthStatus.SKIPPED, message=not_configured_msg
             )
-
         start = time.perf_counter()
         ok, message = await self._tcp_check(host, int(port))
         duration_ms = (time.perf_counter() - start) * 1000
         return ComponentHealth(
-            name="cache",
+            name=name,
             status=HealthStatus.HEALTHY if ok else HealthStatus.UNHEALTHY,
             message=message,
             duration_ms=round(duration_ms, 2),

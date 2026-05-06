@@ -2,7 +2,3 @@
 # https://github.com/gitleaks/gitleaks#configuration
 
 title = "DataEngineX Gitleaks Config"
-
-[allowlist]
-description = "Global allowlist"
-paths = []
