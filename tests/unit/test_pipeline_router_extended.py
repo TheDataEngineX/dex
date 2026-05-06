@@ -178,12 +178,13 @@ class TestRunPipeline:
         resp = client.post("/api/v1/pipelines/ingest/run")
         data = resp.json()
         assert data["pipeline"] == "ingest"
-        assert data["success"] is True
-        assert data["rows_input"] == 100
-        assert data["rows_output"] == 95
-        assert data["steps_completed"] == 3
-        assert data["error"] is None
-        assert "duration_ms" in data
+        result = data.get("result") or data  # async: result nested; sync: top-level
+        assert result["success"] is True
+        assert result["rows_input"] == 100
+        assert result["rows_output"] == 95
+        assert result["steps_completed"] == 3
+        assert result["error"] is None
+        assert "duration_ms" in result
 
     def test_run_failure_returns_200_with_error(self) -> None:
         failed = MagicMock()
@@ -200,8 +201,9 @@ class TestRunPipeline:
         resp = client.post("/api/v1/pipelines/broken/run")
         assert resp.status_code == 200
         data = resp.json()
-        assert data["success"] is False
-        assert data["error"] == "Source file not found"
+        result = data.get("result") or data
+        assert result["success"] is False
+        assert result["error"] == "Source file not found"
 
     def test_run_nonexistent_returns_404(self, app_with_pipelines: FastAPI) -> None:
         client = TestClient(app_with_pipelines)
@@ -213,8 +215,9 @@ class TestRunPipeline:
         client = TestClient(app_with_pipelines)
         resp = client.post("/api/v1/pipelines/ingest/run")
         data = resp.json()
-        assert isinstance(data["duration_ms"], float)
-        assert data["duration_ms"] >= 0.0
+        result = data.get("result") or data
+        assert isinstance(result["duration_ms"], float)
+        assert result["duration_ms"] >= 0.0
 
     def test_run_with_zero_rows(self) -> None:
         empty_result = MagicMock()
@@ -231,14 +234,16 @@ class TestRunPipeline:
         resp = client.post("/api/v1/pipelines/empty-src/run")
         assert resp.status_code == 200
         data = resp.json()
-        assert data["rows_input"] == 0
+        result = data.get("result") or data
+        assert result["rows_input"] == 0
 
     def test_run_response_matches_schema(self, app_with_pipelines: FastAPI) -> None:
-        """Validate the response against PipelineResultResponse schema."""
+        """Validate sync fallback response result against PipelineResultResponse schema."""
         client = TestClient(app_with_pipelines)
         resp = client.post("/api/v1/pipelines/ingest/run")
-        # Should not raise — schema validation
-        PipelineResultResponse(**resp.json())
+        data = resp.json()
+        result = data.get("result") or data
+        PipelineResultResponse(**result)
 
     def test_run_calls_runner_with_pipeline_name(self, app_with_pipelines: FastAPI) -> None:
         client = TestClient(app_with_pipelines)

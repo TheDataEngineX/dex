@@ -144,3 +144,28 @@ class DeduplicateTransform(BaseTransform):
         if not self._key:
             return ["deduplicate requires at least one key column"]
         return []
+
+
+@transform_registry.decorator("sql")
+class SQLTransform(BaseTransform):
+    """Arbitrary SQL transform — use ``_data`` to reference the current table.
+
+    Config: {type: sql, sql: "SELECT * FROM _data WHERE x > 0"}
+    """
+
+    def __init__(self, sql: str, **kwargs: Any) -> None:
+        self._sql = sql
+
+    def apply(self, conn: duckdb.DuckDBPyConnection, input_table: str) -> str:
+        output = f"{input_table}_sql"
+        resolved = self._sql.replace("_data", input_table)
+        conn.execute(f"CREATE OR REPLACE TABLE {output} AS ({resolved})")
+        row = conn.execute(f"SELECT count(*) FROM {output}").fetchone()
+        count = int(row[0]) if row else 0
+        logger.info("sql transform applied", rows=count)
+        return output
+
+    def validate(self) -> list[str]:
+        if not self._sql.strip():
+            return ["sql transform requires a non-empty sql query"]
+        return []

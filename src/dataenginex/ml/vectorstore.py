@@ -1,9 +1,9 @@
-"""RAG-ready Vector Database Adapter (Issue #94).
+"""RAG-ready Vector Database Adapter.
 
 Provides a pluggable vector-store abstraction with concrete backends:
 
 - **InMemoryBackend** — brute-force cosine similarity (testing / small datasets)
-- **ChromaDBBackend** — ChromaDB persistent store (medium workloads)
+- **QdrantBackend** — Qdrant persistent vector store (production, already deployed in K8s)
 
 All backends implement :class:`VectorStoreBackend` so they can be
 swapped transparently.  A :class:`RAGPipeline` orchestrator combines
@@ -12,9 +12,9 @@ LLM to build a full retrieve-augment-generate pipeline.
 
 Example::
 
-    from dataenginex.ml.vectorstore import InMemoryBackend, RAGPipeline
+    from dataenginex.ml.vectorstore import QdrantBackend, RAGPipeline
 
-    backend = InMemoryBackend(dimension=384)
+    backend = QdrantBackend(url="http://localhost:6333", collection="dex_docs")
     rag = RAGPipeline(store=backend)
     rag.ingest(["doc1 text", "doc2 text"])
     results = rag.query("How do I deploy to K8s?", top_k=3)
@@ -36,9 +36,9 @@ if TYPE_CHECKING:
 logger = structlog.get_logger()
 
 __all__ = [
-    "ChromaDBBackend",
     "Document",
     "InMemoryBackend",
+    "QdrantBackend",
     "RAGPipeline",
     "SearchResult",
     "SentenceTransformerEmbedder",
@@ -203,75 +203,87 @@ class InMemoryBackend(VectorStoreBackend):
 
 
 # ======================================================================
-# ChromaDB backend
+# Qdrant backend (production — replaces ChromaDB)
 # ======================================================================
 
 
-class ChromaDBBackend(VectorStoreBackend):
-    """ChromaDB-backed vector store (optional dependency).
+class QdrantBackend(VectorStoreBackend):
+    """Qdrant-backed vector store for production workloads.
 
-    Falls back to :class:`InMemoryBackend` if ``chromadb`` is not
-    installed.
+    Qdrant is already deployed in K8s (``qdrant:6333``).  Falls back to
+    :class:`InMemoryBackend` when ``qdrant-client`` is not installed so
+    the package remains importable without the optional dependency.
 
     Args:
-        collection_name: ChromaDB collection name.
-        persist_directory: Path for local persistence (``None`` = in-memory).
-        dimension: Embedding dimension hint.
+        url: Qdrant server URL (default ``http://localhost:6333``).
+        collection: Collection name (default ``dex_documents``).
+        dimension: Embedding dimension (default 384 for all-MiniLM-L6-v2).
+        api_key: Optional Qdrant API key for cloud deployments.
     """
 
     def __init__(
         self,
-        collection_name: str = "dex_documents",
-        persist_directory: str | None = None,
+        url: str = "http://localhost:6333",
+        collection: str = "dex_documents",
         dimension: int = 384,
+        api_key: str | None = None,
     ) -> None:
-        self.collection_name = collection_name
+        self.url = url
+        self.collection = collection
         self.dimension = dimension
         self._client: Any = None
-        self._collection: Any = None
         self._fallback: InMemoryBackend | None = None
 
         try:
-            import chromadb  # type: ignore[import-not-found]
-
-            if persist_directory:
-                self._client = chromadb.PersistentClient(path=persist_directory)
-            else:
-                self._client = chromadb.Client()
-            self._collection = self._client.get_or_create_collection(collection_name)
-            logger.info(
-                "ChromaDB backend ready collection={} persist={}",
-                collection_name,
-                persist_directory,
+            from qdrant_client import QdrantClient
+            from qdrant_client.models import (
+                Distance,
+                VectorParams,
             )
+
+            self._client = QdrantClient(url=url, api_key=api_key)
+            existing = [c.name for c in self._client.get_collections().collections]
+            if collection not in existing:
+                self._client.create_collection(
+                    collection_name=collection,
+                    vectors_config=VectorParams(size=dimension, distance=Distance.COSINE),
+                )
+            logger.info("qdrant backend ready", url=url, collection=collection)
         except ImportError:
-            logger.warning("chromadb not installed — falling back to InMemoryBackend")
+            logger.warning("qdrant-client not installed — falling back to InMemoryBackend")
+            self._fallback = InMemoryBackend(dimension=dimension)
+        except Exception as exc:
+            logger.warning("qdrant connection failed — falling back", error=str(exc))
             self._fallback = InMemoryBackend(dimension=dimension)
 
     def upsert(self, documents: list[Document]) -> int:
         if self._fallback:
             return self._fallback.upsert(documents)
 
-        ids = [d.id for d in documents]
-        embeddings = [d.embedding for d in documents if d.embedding]
-        texts = [d.text for d in documents]
-        metadatas = [d.metadata for d in documents]
+        from qdrant_client.models import PointStruct
 
-        if embeddings and len(embeddings) == len(ids):
-            self._collection.upsert(
-                ids=ids,
-                embeddings=embeddings,
-                documents=texts,
-                metadatas=metadatas,
+        points = [
+            PointStruct(
+                id=doc.id,
+                vector=doc.embedding or [0.0] * self.dimension,
+                payload={"text": doc.text, **doc.metadata},
             )
-        else:
-            self._collection.upsert(
-                ids=ids,
-                documents=texts,
-                metadatas=metadatas,
-            )
-        logger.info("chromadb upserted", count=len(ids))
-        return len(ids)
+            for doc in documents
+            if doc.embedding
+        ]
+        if not points:
+            return 0
+        self._client.upsert(collection_name=self.collection, points=points)
+        logger.info("qdrant upserted", count=len(points))
+        return len(points)
+
+    def _hit_to_result(self, hit: Any) -> SearchResult:
+        payload: dict[str, Any] = dict(hit.payload or {})
+        text = str(payload.pop("text", ""))
+        return SearchResult(
+            document=Document(id=str(hit.id), text=text, metadata=payload),
+            score=float(hit.score),
+        )
 
     def query(
         self,
@@ -282,56 +294,69 @@ class ChromaDBBackend(VectorStoreBackend):
         if self._fallback:
             return self._fallback.query(embedding, top_k, filter_metadata)
 
-        kwargs: dict[str, Any] = {
-            "query_embeddings": [embedding],
-            "n_results": min(top_k, self._collection.count() or 1),
-        }
+        qdrant_filter: Any = None
         if filter_metadata:
-            kwargs["where"] = filter_metadata
+            from qdrant_client.models import (
+                FieldCondition,
+                Filter,
+                MatchValue,
+            )
 
-        results = self._collection.query(**kwargs)
-        hits: list[SearchResult] = []
-        if results and results.get("ids"):
-            for i, doc_id in enumerate(results["ids"][0]):
-                dist = results.get("distances", [[]])[0][i] if results.get("distances") else 0.0
-                text = results.get("documents", [[]])[0][i] if results.get("documents") else ""
-                meta = results.get("metadatas", [[]])[0][i] if results.get("metadatas") else {}
-                hits.append(
-                    SearchResult(
-                        document=Document(id=doc_id, text=text, metadata=meta),
-                        score=1.0 - dist,  # ChromaDB returns distance, convert to similarity
-                    )
-                )
-        return hits
+            qdrant_filter = Filter(
+                must=[
+                    FieldCondition(key=k, match=MatchValue(value=v))
+                    for k, v in filter_metadata.items()
+                ]
+            )
+
+        hits = self._client.search(
+            collection_name=self.collection,
+            query_vector=embedding,
+            limit=top_k,
+            query_filter=qdrant_filter,
+        )
+        return [self._hit_to_result(h) for h in hits]
 
     def delete(self, ids: list[str]) -> int:
         if self._fallback:
             return self._fallback.delete(ids)
-        self._collection.delete(ids=ids)
+        from qdrant_client.models import PointIdsList
+
+        self._client.delete(
+            collection_name=self.collection,
+            points_selector=PointIdsList(points=ids),  # type: ignore[arg-type]
+        )
         return len(ids)
 
     def count(self) -> int:
         if self._fallback:
             return self._fallback.count()
-        return int(self._collection.count())
+        return int(self._client.count(collection_name=self.collection).count)
 
     def clear(self) -> None:
         if self._fallback:
             self._fallback.clear()
             return
-        # Re-create collection
-        self._client.delete_collection(self.collection_name)
-        self._collection = self._client.get_or_create_collection(self.collection_name)
+        from qdrant_client.models import Distance, VectorParams
+
+        self._client.delete_collection(self.collection)
+        self._client.create_collection(
+            collection_name=self.collection,
+            vectors_config=VectorParams(size=self.dimension, distance=Distance.COSINE),
+        )
 
     def get(self, doc_id: str) -> Document | None:
         if self._fallback:
             return self._fallback.get(doc_id)
-        result = self._collection.get(ids=[doc_id])
-        if result and result.get("ids") and result["ids"]:
-            text = result.get("documents", [""])[0] if result.get("documents") else ""
-            meta = result.get("metadatas", [{}])[0] if result.get("metadatas") else {}
-            return Document(id=doc_id, text=text, metadata=meta)
-        return None
+        results = self._client.retrieve(
+            collection_name=self.collection, ids=[doc_id], with_payload=True
+        )
+        if not results:
+            return None
+        hit = results[0]
+        payload: dict[str, Any] = dict(hit.payload or {})
+        text = str(payload.pop("text", ""))
+        return Document(id=str(hit.id), text=text, metadata=payload)
 
 
 # ======================================================================
@@ -360,7 +385,7 @@ class SentenceTransformerEmbedder:
 
     def __init__(self, model_name: str = "all-MiniLM-L6-v2") -> None:
         try:
-            from sentence_transformers import SentenceTransformer  # type: ignore[import-not-found]
+            from sentence_transformers import SentenceTransformer
 
             self._model = SentenceTransformer(model_name)
             logger.info("sentence transformer embedder initialised", model=model_name)

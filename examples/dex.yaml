@@ -8,10 +8,10 @@ data:
   sources:
     raw_users:
       type: csv
-      path: data/users.csv
+      path: examples/data/users.csv
     raw_events:
       type: csv
-      path: data/events.csv
+      path: examples/data/events.csv
 
   pipelines:
     clean_users:
@@ -20,7 +20,7 @@ data:
         - type: filter
           condition: "age > 0"
         - type: deduplicate
-          columns: [email]
+          key: [email]
       quality:
         completeness: 0.95
         uniqueness: [email]
@@ -31,7 +31,7 @@ data:
       depends_on: [clean_users]
       transforms:
         - type: sql
-          sql: "SELECT user_id, COUNT(*) as event_count FROM events GROUP BY user_id"
+          sql: "SELECT user_id, COUNT(*) as event_count FROM _data GROUP BY user_id"
       destination: gold_user_events
 
 ml:
