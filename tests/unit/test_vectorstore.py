@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import pytest
+
 from dataenginex.ml.vectorstore import (
-    ChromaDBBackend,
     Document,
     InMemoryBackend,
+    QdrantBackend,
     RAGPipeline,
 )
 
@@ -81,7 +83,7 @@ class TestInMemoryBackend:
 
     def test_dimension_mismatch_skipped(self) -> None:
         backend = InMemoryBackend(dimension=3)
-        docs = [Document(id="bad", text="x", embedding=[1.0, 0.0])]  # dim=2 != 3
+        docs = [Document(id="bad", text="x", embedding=[1.0, 0.0])]
         count = backend.upsert(docs)
         assert count == 0
 
@@ -94,22 +96,25 @@ class TestInMemoryBackend:
 
 
 # ============================================================================
-# ChromaDBBackend (fallback mode)
+# QdrantBackend (fallback mode — no Qdrant server in unit tests)
 # ============================================================================
 
 
-class TestChromaDBBackendFallback:
-    """ChromaDB backend falls back to InMemoryBackend when chromadb is missing."""
+@pytest.mark.filterwarnings("ignore::pytest.PytestUnhandledThreadExceptionWarning")
+class TestQdrantBackendFallback:
+    """QdrantBackend falls back to InMemoryBackend when Qdrant is unreachable."""
 
     def test_fallback_works(self) -> None:
-        # This test runs regardless of whether chromadb is installed
-        backend = ChromaDBBackend(collection_name="test_fallback", dimension=3)
+        backend = QdrantBackend(
+            url="http://localhost:16333", collection="test_fallback", dimension=3
+        )
         docs = [Document(id="a", text="hello", embedding=[1.0, 0.0, 0.0])]
         backend.upsert(docs)
         assert backend.count() >= 1
 
     def test_fallback_query(self) -> None:
-        backend = ChromaDBBackend(dimension=3)
+        backend = QdrantBackend(url="http://localhost:16333", dimension=3)
+        assert backend._fallback is not None  # must be in fallback mode
         backend.upsert(
             [
                 Document(id="a", text="python", embedding=[1.0, 0.0, 0.0]),

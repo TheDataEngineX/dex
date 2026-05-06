@@ -93,3 +93,25 @@ class TestQualityEndpoints:
         assert resp.status_code == 200
         data = resp.json()
         assert "pipelines" in data
+
+
+class TestSQLQueryEndpoint:
+    def test_simple_select(self, client: TestClient) -> None:
+        resp = client.post("/api/v1/data/query", json={"sql": "SELECT 1 AS n"})
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["columns"] == ["n"]
+        assert data["rows"] == [{"n": 1}]
+        assert data["count"] == 1
+
+    def test_invalid_sql_returns_400(self, client: TestClient) -> None:
+        resp = client.post("/api/v1/data/query", json={"sql": "SELECT * FROM no_such_table"})
+        assert resp.status_code == 400
+
+    def test_limit_respected(self, client: TestClient) -> None:
+        resp = client.post(
+            "/api/v1/data/query",
+            json={"sql": "SELECT unnest([1,2,3,4,5]) AS n", "limit": 3},
+        )
+        assert resp.status_code == 200
+        assert resp.json()["count"] == 3

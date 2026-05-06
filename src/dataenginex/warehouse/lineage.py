@@ -13,7 +13,7 @@ import uuid
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import structlog
 
@@ -21,6 +21,7 @@ logger = structlog.get_logger()
 __all__ = [
     "LineageEvent",
     "PersistentLineage",
+    "PostgresLineage",
 ]
 
 
@@ -202,3 +203,253 @@ class PersistentLineage:
                 error=str(exc),
             )
             self._events = []
+
+
+class PostgresLineage:
+    """PostgreSQL-backed lineage store for production deployments.
+
+    Stores lineage events in a ``lineage_events`` table.  Requires
+    ``asyncpg`` and ``DEX_DATABASE_URL``.  Falls back to
+    :class:`PersistentLineage` (JSON file) when the database is
+    unavailable so the API starts even without PostgreSQL.
+
+    Table schema (auto-created)::
+
+        CREATE TABLE IF NOT EXISTS lineage_events (
+            event_id      TEXT PRIMARY KEY,
+            parent_id     TEXT,
+            operation     TEXT,
+            layer         TEXT,
+            source        TEXT,
+            destination   TEXT,
+            input_count   INTEGER,
+            output_count  INTEGER,
+            error_count   INTEGER,
+            quality_score DOUBLE PRECISION,
+            pipeline_name TEXT,
+            step_name     TEXT,
+            metadata      JSONB,
+            timestamp     TIMESTAMPTZ NOT NULL DEFAULT now()
+        );
+    """
+
+    _CREATE_TABLE = """
+        CREATE TABLE IF NOT EXISTS lineage_events (
+            event_id      TEXT PRIMARY KEY,
+            parent_id     TEXT,
+            operation     TEXT NOT NULL DEFAULT '',
+            layer         TEXT NOT NULL DEFAULT '',
+            source        TEXT NOT NULL DEFAULT '',
+            destination   TEXT NOT NULL DEFAULT '',
+            input_count   INTEGER NOT NULL DEFAULT 0,
+            output_count  INTEGER NOT NULL DEFAULT 0,
+            error_count   INTEGER NOT NULL DEFAULT 0,
+            quality_score DOUBLE PRECISION,
+            pipeline_name TEXT NOT NULL DEFAULT '',
+            step_name     TEXT NOT NULL DEFAULT '',
+            metadata      JSONB NOT NULL DEFAULT '{}'::jsonb,
+            timestamp     TIMESTAMPTZ NOT NULL DEFAULT now()
+        );
+        CREATE INDEX IF NOT EXISTS idx_lineage_pipeline ON lineage_events(pipeline_name);
+        CREATE INDEX IF NOT EXISTS idx_lineage_layer    ON lineage_events(layer);
+        CREATE INDEX IF NOT EXISTS idx_lineage_parent   ON lineage_events(parent_id);
+    """
+
+    def __init__(self, dsn: str, fallback_path: str | Path | None = None) -> None:
+        self._dsn = dsn
+        self._fallback = PersistentLineage(fallback_path)
+        self._pg_ok = False
+        try:
+            self._run(self._ensure_table())
+            self._pg_ok = True
+        except Exception as exc:
+            logger.warning("postgres lineage unavailable, using JSON fallback", error=str(exc))
+
+    async def _ensure_table(self) -> None:
+        import asyncpg
+
+        conn = await asyncpg.connect(self._dsn)
+        try:
+            await conn.execute(self._CREATE_TABLE)
+        finally:
+            await conn.close()
+
+    def _run(self, coro: Any) -> Any:
+        import asyncio
+
+        try:
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                import concurrent.futures
+
+                with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+                    return pool.submit(asyncio.run, coro).result()
+            return loop.run_until_complete(coro)
+        except RuntimeError:
+            return asyncio.run(coro)
+
+    def record(self, **kwargs: Any) -> LineageEvent:
+        """Persist a new lineage event to PostgreSQL (or JSON fallback)."""
+        event = LineageEvent(**kwargs)
+        if not self._pg_ok:
+            return self._fallback.record(**kwargs)
+        self._run(self._ainsert(event))
+        logger.info(
+            "lineage.record",
+            event_id=event.event_id,
+            operation=event.operation,
+            source=event.source,
+            destination=event.destination,
+        )
+        return event
+
+    async def _ainsert(self, ev: LineageEvent) -> None:
+        import asyncpg
+
+        conn = await asyncpg.connect(self._dsn)
+        try:
+            await conn.execute(
+                """INSERT INTO lineage_events
+                   (event_id, parent_id, operation, layer, source, destination,
+                    input_count, output_count, error_count, quality_score,
+                    pipeline_name, step_name, metadata, timestamp)
+                   VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13::jsonb,$14)
+                   ON CONFLICT (event_id) DO NOTHING""",
+                ev.event_id,
+                ev.parent_id,
+                ev.operation,
+                ev.layer,
+                ev.source,
+                ev.destination,
+                ev.input_count,
+                ev.output_count,
+                ev.error_count,
+                ev.quality_score,
+                ev.pipeline_name,
+                ev.step_name,
+                json.dumps(ev.metadata),
+                ev.timestamp,
+            )
+        finally:
+            await conn.close()
+
+    def _row_to_event(self, row: Any) -> LineageEvent:
+        raw_meta = row["metadata"]
+        meta: dict[str, Any] = (
+            json.loads(raw_meta) if isinstance(raw_meta, str) else dict(raw_meta or {})
+        )
+        return LineageEvent(
+            event_id=row["event_id"],
+            parent_id=row["parent_id"],
+            operation=row["operation"],
+            layer=row["layer"],
+            source=row["source"],
+            destination=row["destination"],
+            input_count=row["input_count"],
+            output_count=row["output_count"],
+            error_count=row["error_count"],
+            quality_score=row["quality_score"],
+            pipeline_name=row["pipeline_name"],
+            step_name=row["step_name"],
+            metadata=meta,
+            timestamp=row["timestamp"],
+        )
+
+    async def _afetch(self, sql: str, *args: Any) -> list[LineageEvent]:
+        import asyncpg
+
+        conn = await asyncpg.connect(self._dsn)
+        try:
+            rows = await conn.fetch(sql, *args)
+            return [self._row_to_event(r) for r in rows]
+        finally:
+            await conn.close()
+
+    def get_event(self, event_id: str) -> LineageEvent | None:
+        if not self._pg_ok:
+            return self._fallback.get_event(event_id)
+        results = self._run(
+            self._afetch("SELECT * FROM lineage_events WHERE event_id=$1", event_id)
+        )
+        return results[0] if results else None
+
+    def get_children(self, parent_id: str) -> list[LineageEvent]:
+        if not self._pg_ok:
+            return self._fallback.get_children(parent_id)
+        return cast(
+            list[LineageEvent],
+            self._run(
+                self._afetch(
+                    "SELECT * FROM lineage_events WHERE parent_id=$1 ORDER BY timestamp", parent_id
+                )
+            ),
+        )
+
+    def get_chain(self, event_id: str) -> list[LineageEvent]:
+        if not self._pg_ok:
+            return self._fallback.get_chain(event_id)
+        chain: list[LineageEvent] = []
+        current = self.get_event(event_id)
+        while current:
+            chain.append(current)
+            current = self.get_event(current.parent_id) if current.parent_id else None
+        chain.reverse()
+        return chain
+
+    def get_by_layer(self, layer: str) -> list[LineageEvent]:
+        if not self._pg_ok:
+            return self._fallback.get_by_layer(layer)
+        return cast(
+            list[LineageEvent],
+            self._run(
+                self._afetch(
+                    "SELECT * FROM lineage_events WHERE layer=$1 ORDER BY timestamp DESC", layer
+                )
+            ),
+        )
+
+    def get_by_pipeline(self, pipeline_name: str) -> list[LineageEvent]:
+        if not self._pg_ok:
+            return self._fallback.get_by_pipeline(pipeline_name)
+        return cast(
+            list[LineageEvent],
+            self._run(
+                self._afetch(
+                    "SELECT * FROM lineage_events WHERE pipeline_name=$1 ORDER BY timestamp DESC",
+                    pipeline_name,
+                )
+            ),
+        )
+
+    @property
+    def all_events(self) -> list[LineageEvent]:
+        if not self._pg_ok:
+            return self._fallback.all_events
+        return self._run(  # type: ignore[no-any-return]
+            self._afetch("SELECT * FROM lineage_events ORDER BY timestamp DESC LIMIT 1000")
+        )
+
+    def summary(self) -> dict[str, Any]:
+        if not self._pg_ok:
+            return self._fallback.summary()
+        return self._run(self._asummary())  # type: ignore[no-any-return]
+
+    async def _asummary(self) -> dict[str, Any]:
+        import asyncpg
+
+        conn = await asyncpg.connect(self._dsn)
+        try:
+            total = await conn.fetchval("SELECT COUNT(*) FROM lineage_events")
+            layer_rows = await conn.fetch(
+                "SELECT layer, COUNT(*) as n FROM lineage_events GROUP BY layer"
+            )
+            op_rows = await conn.fetch(
+                "SELECT operation, COUNT(*) as n FROM lineage_events GROUP BY operation"
+            )
+        finally:
+            await conn.close()
+        return {
+            "total_events": total,
+            "by_layer": {r["layer"]: r["n"] for r in layer_rows},
+            "by_operation": {r["operation"]: r["n"] for r in op_rows},
+        }
