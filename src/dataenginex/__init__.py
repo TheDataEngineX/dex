@@ -36,7 +36,7 @@ from importlib.metadata import PackageNotFoundError, version
 try:
     __version__ = version("dataenginex")
 except PackageNotFoundError:
-    __version__ = "0.10.0"
+    __version__ = "1.1.0"
 
 # Re-export core symbols that don't require optional dependencies
 from dataenginex.core import DataLayer, MedallionArchitecture, QualityGate
