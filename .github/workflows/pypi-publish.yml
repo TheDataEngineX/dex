@@ -50,7 +50,7 @@ jobs:
 
           git fetch --tags --force
 
-          PACKAGE_VERSION=$(grep -m 1 '^version = ' pyproject.toml | sed 's/version = "//;s/".*//')
+          PACKAGE_VERSION=$(python3 -c "import tomllib; t=tomllib.load(open('pyproject.toml','rb')); print(t['project']['version'])")
           echo "package_version=${PACKAGE_VERSION}" >> "$GITHUB_OUTPUT"
 
           CURRENT_TAG="${RELEASE_TAG:-${DISPATCH_TAG:-}}"
