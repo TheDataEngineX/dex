@@ -1,5 +1,30 @@
 # Release Notes
 
+## v1.1.0 — 2026-05-06
+
+### Highlights
+
+- **Enterprise auth & RBAC** — SCIM provisioning, role-based access, enterprise SSO integration
+- **LiteLLM / vLLM routing** — unified LLM gateway with cost tracking and load balancing
+- **Langfuse observability** — LLM trace logging, evals, and prompt management
+- **LightRAG integration** — graph-based retrieval for hybrid RAG pipelines
+- **AI agent memory** — persistent agent memory subsystem with configurable backends
+- **Domain metadata layer** — structured domain extraction and plugin system
+- **rich removed** — CLI output now uses `click.echo`; rich is no longer a framework dependency
+
+### Breaking changes
+
+None. All new features are additive.
+
+### Verification checklist
+
+1. `uv run poe lint` — Ruff checks clean
+1. `uv run poe typecheck` — mypy strict (125 source files, 0 errors)
+1. `uv run poe test` — 790 passed, 20 skipped
+1. `curl http://localhost:17000/health` — returns `{"status":"healthy"}`
+
+______________________________________________________________________
+
 ## v0.5.0 — 2026-03-01
 
 ### Highlights

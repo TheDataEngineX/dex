@@ -13,14 +13,20 @@ from pathlib import Path
 
 import click
 import structlog
-from rich.console import Console
-from rich.table import Table
 
 from dataenginex.config.loader import load_config, validate_config
 from dataenginex.core.exceptions import ConfigError
 
 logger = structlog.get_logger()
-console = Console()
+
+
+def _print_table(title: str, rows: list[tuple[str, str]]) -> None:
+    col_w = max(len(r[0]) for r in rows) + 2
+    click.echo(f"\n{title}")
+    click.echo("-" * (col_w + 20))
+    for key, val in rows:
+        click.echo(f"  {key:<{col_w}}{val}")
+    click.echo()
 
 
 @click.group()
@@ -42,7 +48,7 @@ def validate(config_path: Path, overlay: Path | None) -> None:
     try:
         cfg = load_config(config_path, overlay=overlay)
     except ConfigError as exc:
-        console.print(f"[red]Error:[/red] {exc}")
+        click.echo(f"Error: {exc}", err=True)
         raise SystemExit(1) from exc
 
     issues = validate_config(cfg)
@@ -50,30 +56,28 @@ def validate(config_path: Path, overlay: Path | None) -> None:
     hard_errors = [i for i in issues if not i.startswith("Warning:")]
 
     if warnings:
-        console.print(f"[yellow]{len(warnings)} warning(s):[/yellow]")
+        click.echo(f"  {len(warnings)} warning(s):")
         for w in warnings:
-            console.print(f"  [yellow]![/yellow] {w}")
+            click.echo(f"  ! {w}")
 
     if hard_errors:
-        console.print(f"[red]{len(hard_errors)} error(s):[/red]")
+        click.echo(f"  {len(hard_errors)} error(s):", err=True)
         for err in hard_errors:
-            console.print(f"  [red]✗[/red] {err}")
+            click.echo(f"  x {err}", err=True)
         raise SystemExit(1)
 
-    # Summary table
-    table = Table(title=f"Config: {cfg.project.name} v{cfg.project.version}")
-    table.add_column("Section", style="cyan")
-    table.add_column("Summary", style="green")
-
-    table.add_row("Data Sources", str(len(cfg.data.sources)))
-    table.add_row("Data Pipelines", str(len(cfg.data.pipelines)))
-    table.add_row("ML Experiments", str(len(cfg.ml.experiments)))
-    table.add_row("AI Agents", str(len(cfg.ai.agents)))
-    table.add_row("AI Collections", str(len(cfg.ai.collections)))
-    table.add_row("Server", f"{cfg.server.host}:{cfg.server.port}")
-
-    console.print(table)
-    console.print("[green]Config is valid.[/green]")
+    _print_table(
+        f"Config: {cfg.project.name} v{cfg.project.version}",
+        [
+            ("Data Sources", str(len(cfg.data.sources))),
+            ("Data Pipelines", str(len(cfg.data.pipelines))),
+            ("ML Experiments", str(len(cfg.ml.experiments))),
+            ("AI Agents", str(len(cfg.ai.agents))),
+            ("AI Collections", str(len(cfg.ai.collections))),
+            ("Server", f"{cfg.server.host}:{cfg.server.port}"),
+        ],
+    )
+    click.echo("Config is valid.")
 
 
 @dex.command()
@@ -84,9 +88,9 @@ def version() -> None:
     import sys
 
     ver = importlib.metadata.version("dataenginex")
-    console.print(f"[bold]DataEngineX[/bold] {ver}")
-    console.print(f"Python {sys.version}")
-    console.print(f"Platform {platform.platform()}")
+    click.echo(f"DataEngineX {ver}")
+    click.echo(f"Python {sys.version}")
+    click.echo(f"Platform {platform.platform()}")
 
 
 from dataenginex.cli.run import run  # noqa: E402
