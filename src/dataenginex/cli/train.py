@@ -41,27 +41,27 @@ def train(
     model_dir: str,
 ) -> None:
     """Train ML models defined in dex.yaml."""
-    from rich.console import Console
-
     from dataenginex.config.loader import load_config
 
-    console = Console()
     config = load_config(Path(config_path))
 
     if not config.ml.experiments:
-        console.print("[yellow]No experiments defined in config.[/yellow]")
+        click.echo("No experiments defined in config.")
         return
 
     if not experiment and not run_all:
-        console.print("[yellow]Specify an experiment name or use --all.[/yellow]")
-        available = list(config.ml.experiments.keys())
-        console.print(f"Available: {available}")
+        click.echo("Specify an experiment name or use --all.")
+        click.echo(f"Available: {list(config.ml.experiments.keys())}")
         return
 
     experiments_to_run = _resolve_experiments(experiment, run_all, config)
 
-    results_table = _run_experiments(experiments_to_run, config, model_dir)
-    console.print(results_table)
+    rows = _run_experiments(experiments_to_run, config, model_dir)
+    click.echo("\nTraining Results")
+    click.echo(f"  {'Experiment':<30}{'Status':<20}{'Score':<12}Version")
+    click.echo("-" * 72)
+    for row in rows:
+        click.echo(f"  {row['name']:<30}{row['status']:<20}{row['score']:<12}{row['version']}")
 
 
 def _resolve_experiments(
@@ -85,10 +85,8 @@ def _run_experiments(
     experiments: dict[str, Any],
     config: Any,
     model_dir: str,
-) -> Any:
-    """Run all experiments and return a Rich table with results."""
-    from rich.table import Table
-
+) -> list[dict[str, str]]:
+    """Run all experiments and return rows for tabular display."""
     from dataenginex.ml.registry import ModelRegistry
     from dataenginex.ml.tracking import tracker_registry
 
@@ -102,12 +100,7 @@ def _run_experiments(
     tracker = tracker_cls(**tracker_kwargs)
 
     model_registry = ModelRegistry(persist_path=f"{model_dir}/registry.json")
-
-    results_table = Table(title="Training Results")
-    results_table.add_column("Experiment")
-    results_table.add_column("Status")
-    results_table.add_column("Score")
-    results_table.add_column("Version")
+    rows: list[dict[str, str]] = []
 
     for exp_name, exp_config in experiments.items():
         log = logger.bind(experiment=exp_name)
@@ -122,22 +115,19 @@ def _run_experiments(
                 model_dir,
                 log,
             )
-            results_table.add_row(
-                exp_name,
-                "[green]OK[/green]",
-                f"{result.get('score', 'N/A')}",
-                result.get("version", "?"),
+            rows.append(
+                {
+                    "name": exp_name,
+                    "status": "OK",
+                    "score": str(result.get("score", "N/A")),
+                    "version": result.get("version", "?"),
+                }
             )
         except Exception as e:
             log.error("training failed", error=str(e))
-            results_table.add_row(
-                exp_name,
-                f"[red]FAIL: {e}[/red]",
-                "-",
-                "-",
-            )
+            rows.append({"name": exp_name, "status": f"FAIL: {e}", "score": "-", "version": "-"})
 
-    return results_table
+    return rows
 
 
 def _train_experiment(
