@@ -1,5 +1,23 @@
 # Release Notes
 
+## v1.1.1 — 2026-05-07
+
+### Highlights
+
+- **Reflex compatibility** — `rich` fully removed from CLI layer (`cli/main.py`, `cli/run.py`, `cli/train.py`). Output now uses plain `click.echo`. Fixes `ImportError` when running alongside Reflex (which pins `rich<14`).
+
+### Breaking changes
+
+None. CLI output is functionally identical.
+
+### Verification checklist
+
+1. `uv run poe lint` — Ruff checks clean
+1. `uv run poe typecheck` — mypy strict, 0 errors
+1. `uv run poe test` — 790 passed, 20 skipped
+
+______________________________________________________________________
+
 ## v1.1.0 — 2026-05-06
 
 ### Highlights

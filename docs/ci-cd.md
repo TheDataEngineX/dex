@@ -2,7 +2,7 @@
 
 **Complete guide to DataEngineX continuous integration and release automation.**
 
-> **Quick Links:** [CI Workflow](#continuous-integration-ci) · [Release Automation](#release-automation) · [PyPI Publishing](#pypi-publishing) · [Troubleshooting](#troubleshooting) · [Quick Reference](#quick-reference)
+> **Quick Links:** [CI Workflow](#continuous-integration-ci) · [Release Automation](#release-automation) · [Troubleshooting](#troubleshooting) · [Quick Reference](#quick-reference)
 
 ______________________________________________________________________
 
@@ -12,7 +12,6 @@ ______________________________________________________________________
 - [Project Structure](#project-structure)
 - [Continuous Integration (CI)](#continuous-integration-ci)
 - [Release Automation](#release-automation)
-- [PyPI Publishing](#pypi-publishing)
 - [Rollback Procedures](#rollback-procedures)
 - [Pipeline Metrics](#pipeline-metrics)
 - [CI/CD Evolution](#cicd-evolution)
@@ -28,23 +27,24 @@ ______________________________________________________________________
 DEX is a pure Python library published to PyPI. The pipeline is:
 
 - **CI**: Automated testing, linting, and security scanning on every PR
-- **Release**: Automated tagging and GitHub release creation on version bumps
-- **PyPI Publish**: Automated publishing triggered by GitHub releases
+- **Release**: Push a `v{X.Y.Z}` tag to `main` → `release.yml` builds, publishes, and creates a GitHub Release with CycloneDX SBOM
 
 ```mermaid
 graph LR
-    Dev[Developer] --> PR[Create PR]
+    Dev[Developer] --> PR[Create PR to main]
     PR --> CI[CI: Lint/Test/Security]
     CI --> Review[Code Review]
     Review --> MergeMain[Merge to main]
-
-    MergeMain --> VersionBump{Version bump?}
-    VersionBump -->|Yes| Release[release-dataenginex.yml<br/>Create tag + release]
-    Release --> PyPI[pypi-publish.yml<br/>Publish to PyPI]
+    MergeMain --> Tag[Push tag vX.Y.Z]
+    Tag --> Release[release.yml]
+    Release --> Build[Build wheel + sdist]
+    Build --> PyPI[Publish to PyPI<br/>Trusted Publishing OIDC]
+    Build --> GHRelease[GitHub Release<br/>+ CycloneDX SBOM]
 
     style CI fill:#e1f5ff
     style Release fill:#f8f5ff
     style PyPI fill:#d4edda
+    style GHRelease fill:#d4edda
 ```
 
 ______________________________________________________________________
@@ -63,19 +63,16 @@ The **root `pyproject.toml`** defines the package and test config:
 
 - `name = "dataenginex"`, `version = "<current>"` (see `pyproject.toml`)
 - `[tool.hatch.build.targets.wheel] packages = ["src/dataenginex"]`
-- Dependency groups: `dev` (required), `data` (PySpark/Airflow), `notebook` (pandas), `ml` (sentence-transformers), `dashboard` (streamlit)
+- Dependency groups: `dev` (required), `data` (PySpark), `notebook` (pandas), `ml` (sentence-transformers)
 
 **CI workflow** (`ci.yml`) runs in a single job (`poe lint` → `poe typecheck` → `pytest`):
 
 - Single `ci` job: `uv sync --all-extras` + `poe lint` + `poe typecheck` + `pytest --cov`
 - `concurrency: cancel-in-progress: true` — stale runs cancelled on new push
-- `paths-ignore` — skips CI on doc-only changes
 
 ### Release Automation
 
-- **Release automation**: `release-please.yml` reads conventional commits → creates Release PR (bumps `pyproject.toml` + `CHANGELOG.md` + `uv.lock`) → on merge creates `v{version}` tag + GitHub Release
-- **Post-release**: `release-dataenginex.yml` generates CycloneDX SBOM and attaches it to the release
-- **PyPI publishing** (`pypi-publish.yml`): Triggered by GitHub release published → detects changes in `src/dataenginex/` since last `v*` tag → publishes to TestPyPI then PyPI
+- **Release**: Push tag `v{X.Y.Z}` to `main` → `release.yml` triggers three parallel jobs: build wheel+sdist, publish to PyPI via OIDC trusted publishing, and create GitHub Release with CycloneDX SBOM attached
 
 ______________________________________________________________________
 
@@ -138,65 +135,34 @@ ______________________________________________________________________
 
 ## Release Automation
 
-### DataEngineX Releases
+**Workflow**: [`.github/workflows/release.yml`](https://github.com/TheDataEngineX/dex/blob/main/.github/workflows/release.yml)
 
-**Workflow**: [`.github/workflows/release-dataenginex.yml`](https://github.com/TheDataEngineX/dataenginex/blob/main/.github/workflows/release-dataenginex.yml)
+**Trigger**: Push a tag matching `v[0-9]+.[0-9]+.[0-9]+` to `main`
 
-**Trigger**: `release: types: [published]` — fires when release-please creates a GitHub Release
+**Jobs**:
 
-**What it does**:
+1. **build** — `uv build` → upload wheel + sdist as artifact
+1. **publish-pypi** — download artifact → `pypa/gh-action-pypi-publish` (OIDC trusted publishing, no API token needed)
+1. **github-release** — generate CycloneDX SBOM → `gh release create` with SBOM attached
 
-1. Generates CycloneDX SBOM for the release
-1. Attaches `sbom-dataenginex-{version}.json` to the GitHub Release
-
-**How to release DataEngineX**:
-
-Releases are fully automated via release-please. Push conventional commits to `main`; release-please creates the Release PR and tag.
+**How to release**:
 
 ```bash
-# Monitor release-please PR
-gh pr list --label "autorelease: pending"
+# After merging to main, create and push the tag
+git tag v1.2.3
+git push origin v1.2.3
 
-# After merging the Release PR, monitor post-release workflows
-gh run list --workflow=pypi-publish.yml --limit 5
-gh run list --workflow=release-dataenginex.yml --limit 5
+# Monitor the release workflow
+gh run list --workflow=release.yml --limit 5
+gh run watch
 ```
 
-______________________________________________________________________
+**PyPI trusted publishing**: Configured at `pypi.org/manage/project/dataenginex/settings/publishing/`. Environment name: `pypi`. No API tokens — uses GitHub OIDC.
 
-## PyPI Publishing
-
-**Workflow**: [`.github/workflows/pypi-publish.yml`](https://github.com/TheDataEngineX/dataenginex/blob/main/.github/workflows/pypi-publish.yml)
-
-**Trigger**: GitHub release published (from `release-dataenginex.yml`)
-
-**What it does**:
-
-1. Receives GitHub release event from DataEngineX release
-1. Detects if files under `src/dataenginex/` actually changed since previous `v{version}` tag
-1. If changes found:
-   - Builds wheel distributions
-   - Publishes to TestPyPI (dry-run)
-   - Promotes to PyPI (stable semver tags only, not pre-release)
-1. If no changes: skips publishing with informational message
-
-**Publish gates**:
-
-- Only publishes if code actually changed (not just version bump in other files)
-- TestPyPI first for dry-run verification
-- PyPI promotion requires stable semver tag: `vMAJOR.MINOR.PATCH` (not `v1.2.3-rc1`)
-- Pre-release tags: publish to TestPyPI only
-
-**Automatic flow**:
+**Flow**:
 
 ```text
-conventional commits → main → release-please Release PR → merge → v{version} tag + GitHub Release → pypi-publish.yml → PyPI
-```
-
-**Manual trigger** (if needed):
-
-```bash
-gh workflow run pypi-publish.yml -f tag=v<version>
+feature → PR to dev → PR to main → merge → git tag vX.Y.Z → push tag → release.yml → PyPI + GitHub Release
 ```
 
 ______________________________________________________________________
@@ -255,10 +221,10 @@ ______________________________________________________________________
 gh run list --workflow ci.yml --limit 10
 
 # Recent releases
-gh run list --workflow release-dataenginex.yml --limit 10
+gh run list --workflow release.yml --limit 10
 
 # Failed builds
-gh run list --workflow pypi-publish.yml --status failure
+gh run list --workflow release.yml --status failure
 ```
 
 ______________________________________________________________________
@@ -297,10 +263,9 @@ uv run poe lint-fix
 
 ### PyPI Publish Not Triggering
 
-- Verify version bump is in root `pyproject.toml` (not elsewhere)
-- Confirm push was to `main` branch (not `dev`)
-- Check `release-dataenginex.yml` ran and created a GitHub release
-- View workflow logs: `gh run list --workflow pypi-publish.yml`
+- Confirm tag `v{X.Y.Z}` was pushed to `main` (not `dev`)
+- Verify PyPI trusted publisher matches: workflow `release.yml`, environment `pypi`
+- View workflow logs: `gh run list --workflow release.yml`
 
 ### Package Build Fails
 
@@ -368,9 +333,7 @@ ______________________________________________________________________
 | --- | --- | --- | --- |
 | **CI** | `push main/dev`, PRs to main/dev | Lint, test, type-check | [ci.yml](.github/workflows/ci.yml) |
 | **Security** | `push main/dev`, PRs to main/dev | CodeQL + Semgrep scans | [security.yml](.github/workflows/security.yml) |
-| **Release Please** | `push main` | Create/update Release PR with version bump + CHANGELOG | [release-please.yml](.github/workflows/release-please.yml) |
-| **Release DataEngineX** | GitHub release published | Generate + attach CycloneDX SBOM | [release-dataenginex.yml](.github/workflows/release-dataenginex.yml) |
-| **PyPI Publish** | GitHub release published | Detect changes + publish to TestPyPI/PyPI | [pypi-publish.yml](.github/workflows/pypi-publish.yml) |
+| **Release** | Push tag `v*.*.*` to main | Build → PyPI (trusted publishing) + GitHub Release + CycloneDX SBOM | [release.yml](.github/workflows/release.yml) |
 
 ### Local Commands
 
@@ -398,11 +361,9 @@ gh pr checks <pr-number>
 gh run list --workflow ci.yml
 gh run view <run-id> --log
 
-# Manual PyPI publish
-gh workflow run pypi-publish.yml -f tag=v<version>
-
-# Promote to production (dev → main PR)
-./scripts/promote.sh
+# Release: push tag to trigger release.yml
+git tag v<version> && git push origin v<version>
+gh run list --workflow release.yml
 ```
 
 ______________________________________________________________________
