@@ -112,7 +112,7 @@ jobs:
 
     steps:
       - name: Notify Package Build Start
-        uses: actions/github-script@v9
+        uses: actions/github-script@v7
         with:
           script: |
             if (!process.env.SLACK_WEBHOOK) return;
@@ -156,7 +156,7 @@ jobs:
           uvx twine check dist/*
 
       - name: Upload distributions
-        uses: actions/upload-artifact@v8
+        uses: actions/upload-artifact@v4
         with:
           name: python-distributions
           path: dist/
@@ -172,7 +172,7 @@ jobs:
 
     steps:
       - name: Download distributions
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@v4
         with:
           name: python-distributions
           path: dist/
@@ -193,7 +193,7 @@ jobs:
 
     steps:
       - name: Download distributions
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@v4
         with:
           name: python-distributions
           path: dist/
@@ -203,7 +203,7 @@ jobs:
 
       - name: Notify PyPI Publish Success
         if: success()
-        uses: actions/github-script@v9
+        uses: actions/github-script@v7
         with:
           script: |
             if (!process.env.SLACK_WEBHOOK) return;
@@ -236,7 +236,7 @@ jobs:
 
     steps:
       - name: Notify Publish Skipped
-        uses: actions/github-script@v9
+        uses: actions/github-script@v7
         with:
           script: |
             if (!process.env.SLACK_WEBHOOK) return;
