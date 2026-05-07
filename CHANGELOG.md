@@ -5,6 +5,13 @@ All notable changes to `dataenginex` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1](https://github.com/TheDataEngineX/dex/compare/v1.1.0...v1.1.1) (2026-05-07)
+
+
+### Bug Fixes
+
+* rich reflex compat ([#232](https://github.com/TheDataEngineX/dex/issues/232)) ([#233](https://github.com/TheDataEngineX/dex/issues/233)) ([7d33c05](https://github.com/TheDataEngineX/dex/commit/7d33c05d9d3b041567a5539930dabc30294a0d8d))
+
 ## [1.1.0](https://github.com/TheDataEngineX/dex/compare/v1.0.3...v1.1.0) (2026-05-06)
 
 
