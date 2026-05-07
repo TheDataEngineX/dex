@@ -6,14 +6,14 @@ from pathlib import Path
 
 import click
 import structlog
-from rich.console import Console
-from rich.table import Table
 
 from dataenginex.config import load_config
 from dataenginex.data.pipeline.runner import PipelineRunner
 
 logger = structlog.get_logger()
-console = Console()
+
+_COLS = (24, 10, 10, 10, 8)
+_HDR = ("Pipeline", "Status", "Rows In", "Rows Out", "Steps")
 
 
 @click.command()
@@ -43,30 +43,27 @@ def run(
     else:
         raise click.UsageError("Specify a pipeline name or use --all")
 
-    # Display results
-    table = Table(title="Pipeline Results")
-    table.add_column("Pipeline", style="cyan")
-    table.add_column("Status")
-    table.add_column("Rows In")
-    table.add_column("Rows Out")
-    table.add_column("Steps")
+    click.echo("\nPipeline Results")
+    click.echo("  ".join(h.ljust(w) for h, w in zip(_HDR, _COLS, strict=True)))
+    click.echo("-" * (sum(_COLS) + 2 * len(_COLS)))
 
     all_ok = True
     for name, result in results.items():
-        status = "[green]OK[/green]" if result.success else "[red]FAIL[/red]"
         if result.dry_run:
-            status = "[yellow]DRY RUN[/yellow]"
-        if not result.success:
+            status = "DRY RUN"
+        elif result.success:
+            status = "OK"
+        else:
+            status = "FAIL"
             all_ok = False
-        table.add_row(
+        row_vals = [
             name,
             status,
             str(result.rows_input),
             str(result.rows_output),
             str(result.steps_completed),
-        )
-
-    console.print(table)
+        ]
+        click.echo("  ".join(v.ljust(w) for v, w in zip(row_vals, _COLS, strict=True)))
 
     if not all_ok:
         raise SystemExit(1)
