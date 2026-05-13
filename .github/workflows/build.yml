@@ -65,7 +65,7 @@ jobs:
     permissions:
       security-events: write
     steps:
-      - uses: aquasecurity/trivy-action@0.35.0
+      - uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-${{ needs.build.outputs.short_sha }}
           format: sarif
