@@ -30,7 +30,7 @@ This installs all Python dependencies and configures pre-commit hooks.
 
 ### Cloud Credentials (Optional)
 
-- AWS / GCP credentials only needed for cloud storage adapters (staging/prod)
+- AWS / GCP credentials only needed for cloud storage adapters (stage/prod)
 - Local development runs entirely on path-based storage
 
 ## Quick Start
