@@ -1,0 +1,65 @@
+name: Promote Image
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Image tag to promote (e.g. sha-abc12345)'
+        required: true
+        type: string
+      environment:
+        description: 'Target environment'
+        required: true
+        type: choice
+        options: [stage, prod]
+      strategy:
+        description: 'Deployment strategy'
+        required: true
+        type: choice
+        options: [rolling, canary]
+        default: rolling
+      canary_weight:
+        description: 'Canary traffic % (canary strategy only, 1-50)'
+        required: false
+        type: number
+        default: 20
+
+jobs:
+  promote:
+    name: Promote ${{ inputs.image_tag }} → ${{ inputs.environment }} (${{ inputs.strategy }})
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          repository: TheDataEngineX/infradex
+          ref: ${{ inputs.environment == 'prod' && 'main' || inputs.environment }}
+          token: ${{ secrets.INFRA_DEPLOY_TOKEN }}
+
+      - uses: imranismail/setup-kustomize@v2
+
+      - name: Pin image tag in ${{ inputs.environment }} overlay
+        run: |
+          cd argocd/overlays/${{ inputs.environment }}
+          kustomize edit set image \
+            ghcr.io/thedataenginex/dataenginex=ghcr.io/thedataenginex/dataenginex:${{ inputs.image_tag }}
+
+      - name: Render canary ingress
+        if: inputs.strategy == 'canary' && inputs.environment == 'prod'
+        run: |
+          sed "s/__WEIGHT__/${{ inputs.canary_weight }}/g" \
+            argocd/overlays/prod/canary-ingress.yaml.tmpl \
+            > argocd/overlays/prod/canary-ingress.yaml
+
+      - name: Remove canary ingress (rolling completes canary)
+        if: inputs.strategy == 'rolling' && inputs.environment == 'prod'
+        run: rm -f argocd/overlays/prod/canary-ingress.yaml
+
+      - name: Commit & push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add argocd/overlays/${{ inputs.environment }}/
+          git diff --staged --quiet || \
+            git commit -m "chore(${{ inputs.environment }}): promote ${{ inputs.image_tag }} [${{ inputs.strategy }}]"
+          git push
