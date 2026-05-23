@@ -43,10 +43,6 @@ cloud = [
 #     pip install 'litellm>=1.83.3' --no-deps
 # or manage via a dedicated venv. The provider is lazy-imported; DEX runs fine
 # without it.
-observability = [
-    "langfuse>=4.5.1",
-]
-
 [dependency-groups]
 dev = [
     "pytest>=9.0.3",
@@ -137,7 +133,7 @@ module = ["sentence_transformers.*"]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
-module = ["litellm.*", "langfuse.*"]
+module = ["litellm.*"]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]

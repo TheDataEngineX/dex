@@ -283,7 +283,7 @@ class TestModelRouter:
                 return "ok"
 
         return {
-            "huggingface": DummyProvider(),
+            "ollama": DummyProvider(),
             "openai": DummyProvider(),
             "anthropic": DummyProvider(),
         }
@@ -417,26 +417,6 @@ class TestRoutingAdapters:
             pytest.raises(ConnectionError, match="not reachable"),
         ):
             p.generate("hi")
-
-    def test_huggingface_generate_no_key_raises(self) -> None:
-        from dataenginex.ai.routing.huggingface import HuggingFaceProvider
-
-        p = HuggingFaceProvider(api_key="")
-        with patch.dict("os.environ", {}, clear=True):
-            p.api_key = ""
-            with pytest.raises(ValueError, match="HF_TOKEN"):
-                p.generate("hi")
-
-    def test_huggingface_generate_mocked(self) -> None:
-        from dataenginex.ai.routing.huggingface import HuggingFaceProvider
-
-        p = HuggingFaceProvider(api_key="hf_test")
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = [{"generated_text": "Paris"}]
-        with patch("httpx.post", return_value=mock_response):
-            result = p.generate("What is the capital of France?")
-        assert result == "Paris"
 
 
 # ---------------------------------------------------------------------------
