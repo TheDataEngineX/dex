@@ -1,7 +1,7 @@
 [project]
 name = "dataenginex"
-version = "1.1.2"
-description = "DataEngineX - Core framework for AI/ML/Data engineering projects"
+version = "0.4.0"
+description = "DataEngineX — open-source, self-hosted, local-first Data + ML + AI workbench library"
 authors = [
     {name = "Jay", email = "jayapal.myaka99@gmail.com"}
 ]
@@ -36,9 +36,6 @@ cloud = [
 #     pip install 'litellm>=1.83.3' --no-deps
 # or manage via a dedicated venv. The provider is lazy-imported; DEX runs fine
 # without it.
-observability = [
-    "langfuse>=4.5.1",
-]
 # Optional integrations — install only what you need:
 #   pip install 'dataenginex[postgres]'  — PostgresLineage, asyncpg-backed persistence
 #   pip install 'dataenginex[qdrant]'    — Qdrant vector store backend
@@ -143,7 +140,7 @@ module = ["sentence_transformers.*"]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
-module = ["litellm.*", "langfuse.*"]
+module = ["litellm.*"]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
