@@ -216,10 +216,21 @@ class PiiConfig(BaseModel):
 
 
 class AuditConfig(BaseModel):
-    """Audit logging configuration."""
+    """Audit logging configuration.
+
+    Attributes:
+        enabled: Master switch. When ``True`` a :class:`~dataenginex.secops.AuditLogger`
+            is created and attached to the :class:`~dataenginex.secops.PrivacyGuard`
+            so every PII detection/masking event is persisted.
+        db_path: DuckDB database path for the audit log.  Leave empty (default)
+            for in-memory-only logging (data lost on restart). Set to a relative
+            path (e.g. ``"secops_audit.db"``) and it is resolved under the
+            project's ``.dex/`` directory; use an absolute path for a custom
+            location.
+    """
 
     enabled: bool = False
-    destination: str = "file"  # file, database
+    db_path: str = ""  # empty → :memory: (no persistence)
 
 
 class GuardConfig(BaseModel):

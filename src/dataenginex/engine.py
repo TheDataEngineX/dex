@@ -58,6 +58,8 @@ class DexBackend(Protocol):
     ai_memory: Any
     ai_episodic: Any
     ai_audit: Any
+    secops_audit: Any
+    privacy_guard: Any
     plugins: Any
     catalog: Any
     project_dir: Any
@@ -176,6 +178,8 @@ class DexEngine:
         self.checkpoint_mgr: Any = None
         self.sandbox: Any = None
         self.model_router: Any = None
+        # SecOps AuditLogger (secops.audit config) — separate from ai_audit
+        self.secops_audit: Any = None
         # PrivacyGuard must initialise even if the AI layer fails — it's a
         # security primitive consumed independently (e.g. by dex-studio's
         # /privacy/* UI). Initialise before _init_ai_layer so the guard is
@@ -779,9 +783,14 @@ class DexEngine:
     def _init_privacy_guard(self) -> None:
         """Build a ``PrivacyGuard`` from ``dex.yaml secops.guard``.
 
+        Also constructs a :class:`~dataenginex.secops.AuditLogger` when
+        ``secops.audit.enabled`` is ``True``, stored on ``self.secops_audit``.
+        An empty ``db_path`` uses in-memory DuckDB; a relative path is
+        resolved under ``<project>/.dex/``; absolute paths are used as-is.
+
         Stored on ``self.privacy_guard``. Used by ``_init_model_router`` to
         wrap every LLM provider, and exposed for downstream consumers
-        (dex-studio's ``/privacy/*`` UI, custom integrations).
+        (dex-studio's ``/secops/*`` UI, custom integrations).
         """
         from dataenginex.secops import (
             AuditLogger,
@@ -792,9 +801,22 @@ class DexEngine:
         guard_dict = self.config.secops.guard.model_dump()
         guard_cfg = PrivacyGuardConfig.from_dict(guard_dict)
 
-        audit_logger = getattr(self, "audit", None)
-        if not isinstance(audit_logger, AuditLogger):
-            audit_logger = None
+        audit_logger: AuditLogger | None = None
+        if self.config.secops.audit.enabled:
+            raw_path = self.config.secops.audit.db_path.strip()
+            if not raw_path:
+                db_path = ":memory:"
+            else:
+                from pathlib import Path as _Path
+
+                p = _Path(raw_path)
+                db_path = str(p if p.is_absolute() else self._dex_dir / p)
+            audit_logger = AuditLogger(db_path=db_path)
+            self.secops_audit = audit_logger
+            logger.info(
+                "secops_audit.initialized",
+                db_path=db_path,
+            )
 
         self.privacy_guard = PrivacyGuard(
             config=guard_cfg,

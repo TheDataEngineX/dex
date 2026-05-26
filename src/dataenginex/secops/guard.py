@@ -123,7 +123,9 @@ class PrivacyGuardConfig:
         if raw_targets is None:
             local_targets = _DEFAULT_LOCAL_TARGETS
         else:
-            local_targets = frozenset(str(t) for t in raw_targets)  # type: ignore[arg-type]
+            if not hasattr(raw_targets, "__iter__"):
+                raise TypeError(f"local_targets must be iterable, got {type(raw_targets)!r}")
+            local_targets = frozenset(str(t) for t in raw_targets)
 
         return cls(
             enabled=bool(data.get("enabled", True)),
