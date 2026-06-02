@@ -82,9 +82,7 @@ def scan(text: str, config_path: str, target: str) -> None:
     result = guard.process(text, target=target)
 
     if result.bypassed_local:
-        click.echo(
-            click.style(f"⊘  Bypassed — '{target}' is a local provider", fg="yellow")
-        )
+        click.echo(click.style(f"⊘  Bypassed — '{target}' is a local provider", fg="yellow"))
         return
 
     if result.detections:

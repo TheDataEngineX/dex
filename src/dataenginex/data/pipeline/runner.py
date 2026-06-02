@@ -92,6 +92,9 @@ class PipelineRunner:
         data_dir: Root directory for lakehouse layer storage.
         project_dir: Project root — used to resolve relative source paths.
         lineage: Optional lineage backend.
+        feature_store: Optional feature store — gold tables are saved as feature groups.
+        vector_store: Optional vector store — gold/silver rows are embedded on completion.
+        embed_fn: Embedding callable for vector store ingest.
     """
 
     def __init__(
@@ -100,12 +103,18 @@ class PipelineRunner:
         data_dir: Path | None = None,
         project_dir: Path | None = None,
         lineage: LineageBackend | None = None,
+        feature_store: Any = None,
+        vector_store: Any = None,
+        embed_fn: Any = None,
     ) -> None:
         self._config = config
         self._data_dir = data_dir or Path(".dex/lakehouse")
         self._data_dir.mkdir(parents=True, exist_ok=True)
         self._project_dir = project_dir
         self._lineage = lineage
+        self._feature_store = feature_store
+        self._vector_store = vector_store
+        self._embed_fn = embed_fn
 
     # -------------------------------------------------------------------------
     # Public API
@@ -181,6 +190,7 @@ class PipelineRunner:
         current_table, steps = self._transform(conn, name, cfg, log)
         self._check_quality(conn, name, cfg, current_table, log)
         rows_output = self._load(conn, name, cfg, current_table, log)
+        self._post_load_hooks(conn, name, cfg, current_table, log)
 
         return PipelineResult(
             pipeline=name,
@@ -209,8 +219,7 @@ class PipelineRunner:
                 safe = str(pf).replace("'", "''")
                 with contextlib.suppress(Exception):
                     conn.execute(
-                        f"CREATE OR REPLACE VIEW {pf.stem} AS"
-                        f" SELECT * FROM read_parquet('{safe}')"
+                        f"CREATE OR REPLACE VIEW {pf.stem} AS SELECT * FROM read_parquet('{safe}')"
                     )
         log.debug("lakehouse views registered")
 
@@ -454,3 +463,70 @@ class PipelineRunner:
                 step_name="load",
             )
         return rows
+
+    def _post_load_hooks(
+        self,
+        conn: duckdb.DuckDBPyConnection,
+        name: str,
+        cfg: PipelineConfig,
+        table: str,
+        log: Any,
+    ) -> None:
+        """Run optional post-load integrations: feature store save + vector ingest."""
+        target_layer = (
+            (cfg.target or {}).get("layer", _infer_layer(name))
+            if cfg.target
+            else _infer_layer(name)
+        )
+
+        # ── Feature store ──────────────────────────────────────────────────────
+        if self._feature_store is not None and target_layer == "gold":
+            with contextlib.suppress(Exception):
+                rows_data = conn.execute(f"SELECT * FROM {table} LIMIT 50000").fetchall()  # noqa: S608
+                desc = conn.execute(f"DESCRIBE {table}").fetchall()
+                cols = [d[0] for d in desc]
+                records = [dict(zip(cols, r, strict=True)) for r in rows_data]
+                _entity_keys = {"movie_id", "tconst", "nconst", "director_id", "person_id"}
+                entity_key = next(
+                    (c for c in cols if c in _entity_keys),
+                    cols[0],
+                )
+                self._feature_store.save_features(
+                    feature_group=name,
+                    data=records,
+                    entity_key=entity_key,
+                )
+                log.info("feature store updated", feature_group=name, rows=len(records))
+
+        # ── Vector store ingest ────────────────────────────────────────────────
+        if self._vector_store is not None and target_layer in ("silver", "gold"):
+            with contextlib.suppress(Exception):
+                from dataenginex.ai.vectorstore import Document, RAGPipeline
+
+                rows_data = conn.execute(f"SELECT * FROM {table} LIMIT 5000").fetchall()  # noqa: S608
+                desc = conn.execute(f"DESCRIBE {table}").fetchall()
+                cols = [d[0] for d in desc]
+                skip = {"movie_id", "tconst", "nconst", "director_id", "person_id", "series_id"}
+                text_cols = {"title", "director_name", "genre", "person_name", "original_title"}
+                docs: list[Document] = []
+                for row in rows_data:
+                    record = dict(zip(cols, row, strict=True))
+                    text = " | ".join(
+                        f"{k}: {v}" for k, v in record.items() if v is not None and k not in skip
+                    )[:512]
+                    meta = {
+                        "table": name,
+                        "layer": target_layer,
+                        **{
+                            k: str(v) for k, v in record.items() if k in text_cols and v is not None
+                        },
+                    }
+                    docs.append(Document(text=text, metadata=meta))
+
+                rag = RAGPipeline(
+                    store=self._vector_store,
+                    embed_fn=self._embed_fn,
+                    dimension=384,
+                )
+                rag.store.upsert(docs)
+                log.info("vector store updated", table=name, documents=len(docs))

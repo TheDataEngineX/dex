@@ -22,7 +22,6 @@ from __future__ import annotations
 from dataenginex.data.connectors import connector_registry
 from dataenginex.data.connectors.csv import CsvConnector
 from dataenginex.data.connectors.duckdb import DuckDBConnector
-from dataenginex.data.connectors.parquet import ParquetConnector
 
 # Legacy API (backward-compatible)
 from dataenginex.data.connectors.legacy import (
@@ -32,6 +31,7 @@ from dataenginex.data.connectors.legacy import (
     FileConnector,
     RestConnector,
 )
+from dataenginex.data.connectors.parquet import ParquetConnector
 from dataenginex.data.pipeline.runner import PipelineResult, PipelineRunner
 from dataenginex.data.profiler import ColumnProfile, DataProfiler, ProfileReport
 from dataenginex.data.quality.gates import QualityResult, check_quality

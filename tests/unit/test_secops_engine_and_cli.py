@@ -26,9 +26,7 @@ class TestValidateSecops:
     def test_valid_strategies_produce_no_errors(self) -> None:
         cfg = DexConfig(
             project=ProjectConfig(name="t"),
-            secops=SecopsConfig(
-                guard=GuardConfig(strategies={"email": "hash", "ssn": "redact"})
-            ),
+            secops=SecopsConfig(guard=GuardConfig(strategies={"email": "hash", "ssn": "redact"})),
         )
         hard = [e for e in validate_config(cfg) if not e.startswith("Warning:")]
         assert hard == []
@@ -256,9 +254,13 @@ class TestSecopsScanCommand:
         result = runner.invoke(
             dex,
             [
-                "secops", "scan", "alice@example.com",
-                "--config", str(_minimal_yaml),
-                "--target", "ollama",
+                "secops",
+                "scan",
+                "alice@example.com",
+                "--config",
+                str(_minimal_yaml),
+                "--target",
+                "ollama",
             ],
         )
         assert result.exit_code == 0, result.output
