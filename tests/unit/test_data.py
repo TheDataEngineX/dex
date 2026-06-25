@@ -1,118 +1,14 @@
-"""Tests for dataenginex.data — connectors, profiler, schema registry."""
+"""Tests for dataenginex.data — profiler, schema registry."""
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from typing import Any
 
 import pytest
 
-from dataenginex.data.connectors import (
-    ConnectorStatus,
-    FetchResult,
-    FileConnector,
-    RestConnector,
-)
 from dataenginex.data.profiler import DataProfiler
 from dataenginex.data.registry import SchemaRegistry, SchemaVersion
-
-# ============================================================================
-# Connectors
-# ============================================================================
-
-
-class TestFetchResult:
-    def test_success_property(self) -> None:
-        r = FetchResult(records=[{"a": 1}], record_count=1, source="test")
-        assert r.success is True
-
-    def test_failure_property(self) -> None:
-        r = FetchResult(records=[], record_count=0, source="test", errors=["boom"])
-        assert r.success is False
-
-
-class TestFileConnector:
-    @pytest.fixture()
-    def json_file(self, tmp_path: Path) -> Path:
-        p = tmp_path / "data.json"
-        p.write_text(json.dumps([{"id": 1, "name": "a"}, {"id": 2, "name": "b"}]))
-        return p
-
-    @pytest.fixture()
-    def jsonl_file(self, tmp_path: Path) -> Path:
-        p = tmp_path / "data.jsonl"
-        p.write_text('{"id":1}\n{"id":2}\n')
-        return p
-
-    @pytest.fixture()
-    def csv_file(self, tmp_path: Path) -> Path:
-        p = tmp_path / "data.csv"
-        p.write_text("id,name\n1,alice\n2,bob\n")
-        return p
-
-    async def test_json_fetch(self, json_file: Path) -> None:
-        async with FileConnector("test", json_file, "json") as conn:
-            result = await conn.fetch()
-            assert result.success
-            assert result.record_count == 2
-            assert result.records[0]["id"] == 1
-
-    async def test_jsonl_fetch(self, jsonl_file: Path) -> None:
-        async with FileConnector("test", jsonl_file, "jsonl") as conn:
-            result = await conn.fetch()
-            assert result.record_count == 2
-
-    async def test_csv_fetch(self, csv_file: Path) -> None:
-        async with FileConnector("test", csv_file, "csv") as conn:
-            result = await conn.fetch()
-            assert result.record_count == 2
-            assert result.records[0]["name"] == "alice"
-
-    async def test_limit_offset(self, json_file: Path) -> None:
-        async with FileConnector("test", json_file, "json") as conn:
-            result = await conn.fetch(limit=1, offset=1)
-            assert result.record_count == 1
-            assert result.records[0]["id"] == 2
-
-    async def test_filters(self, json_file: Path) -> None:
-        async with FileConnector("test", json_file, "json") as conn:
-            result = await conn.fetch(filters={"name": "a"})
-            assert result.record_count == 1
-
-    async def test_missing_file(self, tmp_path: Path) -> None:
-        conn = FileConnector("test", tmp_path / "nope.json", "json")
-        ok = await conn.connect()
-        assert ok is False
-        assert conn.status == ConnectorStatus.ERROR
-
-    def test_unsupported_format(self) -> None:
-        with pytest.raises(ValueError, match="Unsupported"):
-            FileConnector("test", "x.xml", "xml")
-
-    async def test_close_clears(self, json_file: Path) -> None:
-        conn = FileConnector("test", json_file, "json")
-        await conn.connect()
-        await conn.fetch()
-        await conn.close()
-        assert conn.status == ConnectorStatus.CLOSED
-
-
-class TestRestConnector:
-    async def test_connect_creates_client(self) -> None:
-        conn = RestConnector("test", "https://example.com")
-        ok = await conn.connect()
-        assert ok
-        assert conn.status == ConnectorStatus.CONNECTED
-        await conn.close()
-        assert conn.status == ConnectorStatus.CLOSED
-
-    async def test_fetch_not_connected(self) -> None:
-        conn = RestConnector("test", "https://example.com")
-        result = await conn.fetch()
-        assert not result.success
-        assert "not connected" in result.errors[0]
-
 
 # ============================================================================
 # Profiler

@@ -7,6 +7,10 @@
 - Example scripts refreshed: `08_spark_ml.py`, `09_feature_engineering.py`, `10_model_analysis.py` — demonstrate PySpark ML, feature transforms, and drift detection
 - Documentation cleanup across all docs
 
+### Removed
+
+- Legacy connector layer (`DataConnector`, `DataSource`, `SourceType`, `RestConnector`, `FileConnector`, `ConnectorStatus`, `FetchResult`) removed from `dataenginex.data.connectors`. Use `RestApiConnector`, `HttpConnector`, or `SseConnector` via the connector registry instead.
+
 ### Changed
 
 - Version bumped to 0.4.2
