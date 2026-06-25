@@ -214,12 +214,63 @@ class AiConfig(BaseModel):
 # --- SecOps ---
 
 
+class PolicyRule(BaseModel):
+    """A data governance policy rule."""
+
+    name: str
+    description: str = ""
+    rule: str  # SQL assertion — must return a single truthy row to pass
+    severity: Literal["error", "warn", "info"] = "warn"
+    tables: list[str] = Field(default_factory=list)
+
+
+class AlertRule(BaseModel):
+    """An operational alert definition."""
+
+    name: str
+    condition: str
+    severity: Literal["critical", "error", "warn", "info"] = "warn"
+    channels: list[str] = Field(default_factory=list)
+
+
+class CostsConfig(BaseModel):
+    """Cost tracking configuration."""
+
+    track: bool = True
+    breakdown_by: list[str] = Field(default_factory=lambda: ["pipeline", "model", "agent"])
+
+
+class CompactionConfig(BaseModel):
+    """Lakehouse compaction configuration."""
+
+    enabled: bool = True
+    schedule: str = "0 2 * * 0"
+    layers: list[str] = Field(default_factory=lambda: ["bronze", "silver", "gold"])
+    strategy: str = "merge_small_files"
+    target_file_size_mb: int = 128
+
+
+class AlertingChannelConfig(BaseModel):
+    """A single alerting output channel."""
+
+    type: str
+    level: str = "WARNING"
+
+
+class AlertingConfig(BaseModel):
+    """Alerting channels configuration."""
+
+    enabled: bool = True
+    channels: dict[str, AlertingChannelConfig] = Field(default_factory=dict)
+
+
 class PiiConfig(BaseModel):
     """PII detection configuration."""
 
     scan: bool = False
     patterns: list[str] = Field(default_factory=lambda: ["email", "ssn", "phone", "credit_card"])
     action: Literal["warn", "mask", "block"] = "warn"
+    masking: dict[str, Any] | None = None  # per-field masking strategy overrides
 
 
 class AuditConfig(BaseModel):
@@ -275,6 +326,8 @@ class SecopsConfig(BaseModel):
     pii: PiiConfig = Field(default_factory=PiiConfig)
     audit: AuditConfig = Field(default_factory=AuditConfig)
     guard: GuardConfig = Field(default_factory=GuardConfig)
+    policies: list[PolicyRule] | None = None
+    alerts: list[AlertRule] | None = None
 
 
 # --- Observability ---
@@ -286,6 +339,9 @@ class ObservabilityConfig(BaseModel):
     metrics: bool = True
     tracing: bool = False
     log_level: str = DEFAULT_LOG_LEVEL
+    costs: CostsConfig | None = None
+    compaction: CompactionConfig | None = None
+    alerting: AlertingConfig | None = None
 
 
 # --- Root Config ---

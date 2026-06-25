@@ -43,7 +43,7 @@ from dataenginex.ai import (
 from dataenginex.core import DataLayer, MedallionArchitecture, QualityGate
 
 # Data
-from dataenginex.data import DataConnector, DataProfiler, SchemaRegistry
+from dataenginex.data import DataProfiler, SchemaRegistry
 from dataenginex.engine import DexBackend, DexEngine
 
 # Lakehouse
@@ -71,7 +71,6 @@ __all__ = [
     "MedallionArchitecture",
     "QualityGate",
     # Data
-    "DataConnector",
     "DataProfiler",
     "SchemaRegistry",
     # Lakehouse

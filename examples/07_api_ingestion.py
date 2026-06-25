@@ -5,7 +5,7 @@ Demonstrates:
 - Fetching data from an external HTTP API (OpenWeatherMap-style)
 - Transforming raw responses into standardized records (Bronze → Silver)
 - Validating data quality before promotion (Silver → Gold)
-- Using DEX DataConnector and QualityGate
+- Using DEX QualityGate for data validation
 
 Run:
     uv run python examples/07_api_ingestion.py
@@ -21,7 +21,6 @@ import structlog
 
 from dataenginex.core.medallion_architecture import Layer, MedallionConfig
 from dataenginex.core.quality import QualityCheck, QualityGate, Severity
-from dataenginex.data.connectors import DataConnector, DataSource, SourceType
 
 logger = structlog.get_logger()
 
@@ -176,15 +175,6 @@ def demo_with_mock_data() -> None:
         gold=Layer(name="gold", path="/tmp/dex/weather/gold"),
     )
     logger.info("Medallion config: %s", config)
-
-    # --- DataConnector ---
-    source = DataSource(
-        name="openweathermap",
-        source_type=SourceType.API,
-        connection_string="https://api.openweathermap.org/data/2.5",
-    )
-    connector = DataConnector(source=source)
-    logger.info("Connector: %s", connector)
 
     # --- Gold ---
     gold = promote_to_gold(silver)

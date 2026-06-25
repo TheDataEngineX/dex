@@ -2,15 +2,11 @@
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock
-
 import pytest
 
 from dataenginex.core.medallion_architecture import (
-    BigQueryStorage,
     DataLayer,
     DataLineage,
-    DualStorage,
     LayerConfiguration,
     LocalParquetStorage,
     MedallionArchitecture,
@@ -18,6 +14,7 @@ from dataenginex.core.medallion_architecture import (
 )
 
 pa = pytest.importorskip("pyarrow", reason="pyarrow required for storage tests")
+
 
 # ---------------------------------------------------------------------------
 # LayerConfiguration
@@ -131,88 +128,6 @@ class TestLocalParquetStorage:
     def test_delete_nonexistent_returns_false(self, tmp_path: object) -> None:
         storage = LocalParquetStorage(str(tmp_path))
         assert storage.delete("no_such_file.parquet") is False
-
-
-# ---------------------------------------------------------------------------
-# BigQueryStorage
-# ---------------------------------------------------------------------------
-
-
-class TestBigQueryStorage:
-    def test_write_delegates_to_client(self) -> None:
-        mock_client = MagicMock()
-        mock_client.load_table_from_json.return_value = MagicMock()
-        storage = BigQueryStorage("my-project", client=mock_client)
-        result = storage.write({"a": 1}, "ds.table")
-        assert result is True
-        mock_client.load_table_from_json.assert_called_once()
-
-    def test_read_delegates_to_client(self) -> None:
-        mock_client = MagicMock()
-        mock_client.list_rows.return_value = []
-        storage = BigQueryStorage("my-project", client=mock_client)
-        result = storage.read("ds.table")
-        assert result == []
-
-    def test_delete_delegates_to_client(self) -> None:
-        mock_client = MagicMock()
-        storage = BigQueryStorage("my-project", client=mock_client)
-        result = storage.delete("ds.table")
-        assert result is True
-        mock_client.delete_table.assert_called_once()
-
-    def test_list_objects_delegates_to_client(self) -> None:
-        mock_table = MagicMock()
-        mock_table.table_id = "my_table"
-        mock_client = MagicMock()
-        mock_client.list_tables.return_value = [mock_table]
-        storage = BigQueryStorage("my-project", client=mock_client)
-        result = storage.list_objects()
-        assert result == ["my_table"]
-
-    def test_exists_delegates_to_client(self) -> None:
-        mock_client = MagicMock()
-        storage = BigQueryStorage("my-project", client=mock_client)
-        assert storage.exists("ds.table") is True
-
-
-# ---------------------------------------------------------------------------
-# DualStorage
-# ---------------------------------------------------------------------------
-
-
-class TestDualStorage:
-    def test_local_only_write_bronze(self, tmp_path: object) -> None:
-        ds = DualStorage(local_base_path=str(tmp_path))
-        assert ds.write_bronze([{"x": 1}], "linkedin", "2025-01-01") is True
-
-    def test_local_only_write_silver(self, tmp_path: object) -> None:
-        ds = DualStorage(local_base_path=str(tmp_path))
-        assert ds.write_silver([{"x": 1}], "jobs", "2025-01-01") is True
-
-    def test_local_only_write_gold(self, tmp_path: object) -> None:
-        ds = DualStorage(local_base_path=str(tmp_path))
-        assert ds.write_gold([{"x": 1}], "jobs", "2025-01-01") is True
-
-    def test_local_only_read_layers(self, tmp_path: object) -> None:
-        ds = DualStorage(local_base_path=str(tmp_path))
-        assert ds.read_bronze("src", "ts") is None
-        assert ds.read_silver("ent", "ts") is None
-        assert ds.read_gold("ent", "ts") is None
-
-    def test_bigquery_mode_creates_storage(self) -> None:
-        pytest.importorskip("google.cloud.bigquery", reason="google-cloud-bigquery required")
-        with pytest.MonkeyPatch.context() as mp:
-            mp.setattr(
-                "dataenginex.lakehouse.storage.bq_client.Client",
-                MagicMock(),
-            )
-            ds = DualStorage(
-                local_base_path="data",
-                bigquery_project="my-project",
-                enable_bigquery=True,
-            )
-            assert ds.bigquery_storage is not None
 
 
 # ---------------------------------------------------------------------------
