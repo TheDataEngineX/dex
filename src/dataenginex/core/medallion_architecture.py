@@ -11,8 +11,6 @@ Classes:
     MedallionArchitecture: Manages three-layer medallion configs.
     StorageBackend: Abstract storage backend interface.
     LocalParquetStorage: Real local Parquet file storage (pyarrow).
-    BigQueryStorage: BigQuery cloud storage (shim — delegates to lakehouse.storage).
-    DualStorage: Dual local + cloud storage strategy.
     DataLineage: In-memory data lineage tracker.
 """
 
@@ -28,10 +26,8 @@ import structlog
 
 logger = structlog.get_logger()
 __all__ = [
-    "BigQueryStorage",
     "DataLayer",
     "DataLineage",
-    "DualStorage",
     "LayerConfiguration",
     "LocalParquetStorage",
     "MedallionArchitecture",
@@ -314,124 +310,6 @@ class LocalParquetStorage(StorageBackend):
     def exists(self, path: str) -> bool:
         """Return ``True`` if *path* exists on disk."""
         return (Path(self.base_path) / path).exists()
-
-
-class BigQueryStorage(StorageBackend):
-    """BigQuery cloud storage — re-exported from :mod:`dataenginex.lakehouse.storage`.
-
-    This is a backwards-compatibility shim.  The real implementation
-    lives in ``dataenginex.lakehouse.storage.BigQueryStorage``.
-    """
-
-    def __new__(cls, *args: Any, **kwargs: Any) -> BigQueryStorage:  # noqa: ARG003
-        from dataenginex.lakehouse.storage import (
-            BigQueryStorage as _RealBQ,
-        )
-
-        return _RealBQ(*args, **kwargs)  # type: ignore[return-value]
-
-    def __init__(self, project_id: str, location: str = "US") -> None:
-        # __init__ is needed for type checker / IDE hints but never runs
-        # because __new__ returns a different type.
-        pass  # pragma: no cover
-
-    def write(self, data: Any, path: str, format: StorageFormat = StorageFormat.BIGQUERY) -> bool:
-        raise AssertionError  # pragma: no cover
-
-    def read(self, path: str, format: StorageFormat = StorageFormat.BIGQUERY) -> Any:
-        raise AssertionError  # pragma: no cover
-
-    def delete(self, path: str) -> bool:
-        raise AssertionError  # pragma: no cover
-
-    def list_objects(self, prefix: str = "") -> list[str]:
-        raise AssertionError  # pragma: no cover
-
-    def exists(self, path: str) -> bool:
-        raise AssertionError  # pragma: no cover
-
-
-class DualStorage:
-    """
-    Manages dual storage strategy: local Parquet + BigQuery.
-
-    Pattern:
-    - Development/Testing: Write to local Parquet
-    - Production/Cloud: Write to both local (backup) and BigQuery (primary)
-    """
-
-    def __init__(
-        self,
-        local_base_path: str = "data",
-        bigquery_project: str | None = None,
-        enable_bigquery: bool = False,
-    ):
-        self.local_storage = LocalParquetStorage(local_base_path)
-        self.bigquery_storage = None
-
-        if enable_bigquery and bigquery_project:
-            self.bigquery_storage = BigQueryStorage(bigquery_project)
-            logger.info("dual storage enabled: local parquet + bigquery")
-        else:
-            logger.info("storage mode: local parquet only")
-
-    def _write_layer(self, layer: str, data: Any, key: str, timestamp: str) -> bool:
-        """
-        Write data to a medallion layer.
-
-        Args:
-            layer: Layer name (bronze, silver, gold)
-            data: Data to write
-            key: Source or entity type identifier
-            timestamp: Timestamp string for partitioning
-
-        Returns:
-            True if local write succeeded
-        """
-        local_path = f"{layer}/{key}/{timestamp}"
-        success = self.local_storage.write(data, local_path)
-
-        if self.bigquery_storage and success:
-            bq_path = f"{layer}.{key}_{timestamp.replace('-', '_').replace(':', '_')}"
-            self.bigquery_storage.write(data, bq_path)
-
-        return success
-
-    def _read_layer(self, layer: str, key: str, timestamp: str) -> Any:
-        """
-        Read data from a medallion layer.
-
-        Args:
-            layer: Layer name (bronze, silver, gold)
-            key: Source or entity type identifier
-            timestamp: Timestamp string for partitioning
-        """
-        path = f"{layer}/{key}/{timestamp}"
-        return self.local_storage.read(path)
-
-    def write_bronze(self, data: Any, source: str, timestamp: str) -> bool:
-        """Write to Bronze layer — path: bronze/{source}/{timestamp}."""
-        return self._write_layer("bronze", data, source, timestamp)
-
-    def write_silver(self, data: Any, entity_type: str, timestamp: str) -> bool:
-        """Write to Silver layer — path: silver/{entity_type}/{timestamp}."""
-        return self._write_layer("silver", data, entity_type, timestamp)
-
-    def write_gold(self, data: Any, entity_type: str, timestamp: str) -> bool:
-        """Write to Gold layer — path: gold/{entity_type}/{timestamp}."""
-        return self._write_layer("gold", data, entity_type, timestamp)
-
-    def read_bronze(self, source: str, timestamp: str) -> Any:
-        """Read from Bronze layer."""
-        return self._read_layer("bronze", source, timestamp)
-
-    def read_silver(self, entity_type: str, timestamp: str) -> Any:
-        """Read from Silver layer."""
-        return self._read_layer("silver", entity_type, timestamp)
-
-    def read_gold(self, entity_type: str, timestamp: str) -> Any:
-        """Read from Gold layer."""
-        return self._read_layer("gold", entity_type, timestamp)
 
 
 class DataLineage:

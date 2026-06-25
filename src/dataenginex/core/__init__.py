@@ -8,8 +8,7 @@ Public API::
     from dataenginex.core import (
         # Medallion
         MedallionArchitecture, DataLayer, StorageFormat, LayerConfiguration,
-        StorageBackend, LocalParquetStorage, BigQueryStorage, DualStorage,
-        DataLineage,
+        StorageBackend, LocalParquetStorage, DataLineage,
         # Quality
         QualityGate, QualityStore, QualityResult, QualityDimension,
         # Schemas (generic API)
@@ -24,10 +23,8 @@ Public API::
 from __future__ import annotations
 
 from .medallion_architecture import (
-    BigQueryStorage,
     DataLayer,
     DataLineage,
-    DualStorage,
     LayerConfiguration,
     LocalParquetStorage,
     MedallionArchitecture,
@@ -53,10 +50,8 @@ from .validators import (
 
 __all__ = [
     # Medallion architecture
-    "BigQueryStorage",
     "DataLayer",
     "DataLineage",
-    "DualStorage",
     "LayerConfiguration",
     "LocalParquetStorage",
     "MedallionArchitecture",
