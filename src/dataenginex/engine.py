@@ -192,13 +192,10 @@ class DexEngine:
         # AI layer — memory, routing, sandbox
         self.ai_memory: Any = None
         self.ai_episodic: Any = None
-        self.ai_audit: Any = None
-        self.ai_cost: Any = None
         self.ai_metrics: Any = None
-        self.checkpoint_mgr: Any = None
         self.sandbox: Any = None
         self.model_router: Any = None
-        # SecOps AuditLogger (secops.audit config) — separate from ai_audit
+        # SecOps AuditLogger (secops.audit config)
         self.secops_audit: Any = None
         # PrivacyGuard must initialise even if the AI layer fails — it's a
         # security primitive consumed independently (e.g. by dex-studio's
@@ -232,10 +229,6 @@ class DexEngine:
     @property
     def lineage(self) -> Any:
         return self.store
-
-    @property
-    def audit(self) -> Any:
-        return self.ai_audit
 
     @property
     def ai_long_memory(self) -> Any:
@@ -955,17 +948,11 @@ class DexEngine:
     def _init_ai_layer(self) -> None:
         try:
             from dataenginex.ai.memory.base import ShortTermMemory
-            from dataenginex.ai.observability.audit import AuditLog
-            from dataenginex.ai.observability.cost import CostTracker
             from dataenginex.ai.observability.metrics import AgentMetrics
-            from dataenginex.ai.runtime.checkpoint import CheckpointManager
             from dataenginex.ai.runtime.sandbox import Sandbox
 
             self.ai_memory = ShortTermMemory(max_entries=200)
-            self.ai_audit = AuditLog()
-            self.ai_cost = CostTracker()
             self.ai_metrics = AgentMetrics()
-            self.checkpoint_mgr = CheckpointManager()
             self.sandbox = Sandbox()
             self._init_model_router()
             logger.info("AI layer initialized")

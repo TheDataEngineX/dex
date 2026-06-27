@@ -18,10 +18,9 @@ cmd = "uv run pip-audit --progress-spinner off --ignore-vuln CVE-2025-3000"
 shell = """
 if command -v actionlint >/dev/null 2>&1; then
   actionlint .github/workflows/*.yml
-elif command -v docker >/dev/null 2>&1; then
-  docker run --rm -v "$PWD":/repo -w /repo rhysd/actionlint:latest .github/workflows/*.yml
 else
-  echo 'actionlint not found — skipping'
+  echo 'actionlint not found — install: brew install actionlint'
+  exit 1
 fi
 """
 

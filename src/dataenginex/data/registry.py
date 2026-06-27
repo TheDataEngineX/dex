@@ -1,5 +1,5 @@
 """
-Schema registry — versioned schema management for DEX datasets.
+Schema registry — versioned schema management for DataEngineX datasets.
 
 Stores schema definitions (as JSON-serialisable dicts) with
 semantic versioning, allowing pipelines to validate data against

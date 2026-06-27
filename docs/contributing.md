@@ -1,4 +1,4 @@
-# Contributing to DEX
+# Contributing to DataEngineX
 
 Thank you for contributing!
 
@@ -6,7 +6,7 @@ Thank you for contributing!
 
 1. Read [development.md](./development.md) for setup instructions
 1. Fork the repository
-1. Create a feature branch from `dev`
+1. Create a feature branch from `main`
 1. Make your changes
 1. Submit a pull request
 
@@ -68,7 +68,7 @@ Use semantic commit format:
 
 - This project is open source under MIT; keep license and attribution notices in redistributions.
 - Forks are welcome, but should use a distinct public name when redistributed as a separate project.
-- Do not present a fork as the official DataEngineX/DEX project.
+- Do not present a fork as the official DataEngineX project.
 - See the project's license and brand guidelines for brand-usage details.
 
 ## Code Reviews
@@ -94,7 +94,7 @@ uv run poe check-all   # Run all checks
 - `enhancement` - New feature or improvement
 - `good first issue` - Good for newcomers
 - `P1-high` / `P2-medium` - Priority levels
-- `dex-module` - Core DEX infrastructure
+- `dex-module` - Core DataEngineX infrastructure
 
 ## Questions?
 

@@ -1,18 +1,18 @@
-# Contributing to DEX
+# Contributing to DataEngineX
 
 Thank you for your interest in contributing to DataEngineX!
 
-**→ Full contributor guide: [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md)**
+**→ Full contributor guide: [docs/contributing.md](docs/contributing.md)**
 
 Quick essentials:
 
-- Development setup: [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)
-- Governance & legal: See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md)
+- Development setup: [docs/development.md](docs/development.md)
+- Governance & legal: See [docs/contributing.md](docs/contributing.md)
 - Code of Conduct: [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
 
 ## Quick Start
 
-1. Fork and create a feature branch from `dev`
+1. Fork and create a feature branch from `main`
 1. Run local checks: `uv run poe check-all`
 1. Open a PR using `.github/PULL_REQUEST_TEMPLATE.md`
 

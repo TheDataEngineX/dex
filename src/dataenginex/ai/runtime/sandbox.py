@@ -50,7 +50,7 @@ __all__ = [
 
 
 class ExperimentalFeatureWarning(UserWarning):
-    """Raised once per process when an experimental DEX feature is used."""
+    """Raised once per process when an experimental DataEngineX feature is used."""
 
 
 # Module-level flag — emit experimental warning at most once per process.

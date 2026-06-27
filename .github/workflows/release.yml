@@ -80,6 +80,6 @@ jobs:
           RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
         run: |
           gh release create "$RELEASE_TAG" \
-            --title "DEX $RELEASE_TAG" \
+            --title "dataenginex $RELEASE_TAG" \
             --generate-notes \
             "sbom-dex-${{ steps.version.outputs.version }}.json"

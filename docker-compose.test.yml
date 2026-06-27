@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------
-# DEX — Storage Emulators for Integration Tests
+# DataEngineX — Storage Emulators for Integration Tests
 #
 # Spins up LocalStack (S3) and fake-gcs-server (GCS) for local
 # integration testing without real cloud accounts.

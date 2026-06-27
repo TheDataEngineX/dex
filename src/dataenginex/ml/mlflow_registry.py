@@ -7,7 +7,7 @@ and switch to ``ModelRegistry`` (JSON-backed) if needed.
 
 Alias mapping (MLflow 3.x alias-based API)
 --------------------------------------------
-DEX ``ModelStage``  →  MLflow alias
+DataEngineX ``ModelStage``  →  MLflow alias
 DEVELOPMENT         →  (no alias)
 STAGING             →  ``staging``
 PRODUCTION          →  ``production``
@@ -167,7 +167,7 @@ class MLflowModelRegistry:
         """Transition a model version to the target stage via MLflow aliases."""
         try:
             if target_stage == ModelStage.DEVELOPMENT:
-                # Remove any DEX-managed aliases from this version
+                # Remove any DataEngineX-managed aliases from this version
                 mv = self._client.get_model_version(name, version)
                 for alias in list(getattr(mv, "aliases", [])):
                     if alias in _REVERSE_ALIAS_MAP:

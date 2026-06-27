@@ -1,24 +1,10 @@
-"""Unified exception hierarchy for DataEngineX.
-
-All framework exceptions inherit from ``DataEngineXError`` so callers
-can catch broad or narrow as needed::
-
-    try:
-        dex.validate("dex.yaml")
-    except ConfigValidationError:
-        ...  # specific
-    except DataEngineXError:
-        ...  # catch-all
-"""
+"""Exception hierarchy for DataEngineX."""
 
 from __future__ import annotations
 
 
 class DataEngineXError(Exception):
     """Base exception for all DataEngineX errors."""
-
-
-# --- Config ---
 
 
 class ConfigError(DataEngineXError):
@@ -34,9 +20,6 @@ class ConfigValidationError(ConfigError):
         super().__init__(f"Config error at '{field}': {message}")
 
 
-# --- Pipeline ---
-
-
 class PipelineError(DataEngineXError):
     """Error during pipeline execution."""
 
@@ -45,21 +28,13 @@ class PipelineStepError(PipelineError):
     """A specific pipeline step failed."""
 
     def __init__(
-        self,
-        step: str,
-        cause: str = "",
-        *,
-        pipeline: str = "",
-        message: str = "",
+        self, step: str, cause: str = "", *, pipeline: str = "", message: str = ""
     ) -> None:
         self.step = step
         self.pipeline = pipeline
         self.cause = cause or message
         prefix = f"[{pipeline}] " if pipeline else ""
         super().__init__(f"{prefix}Pipeline step '{step}' failed: {self.cause}")
-
-
-# --- Registry ---
 
 
 class RegistryError(DataEngineXError):
@@ -75,25 +50,7 @@ class BackendNotInstalledError(DataEngineXError):
         super().__init__(f"Backend '{backend}' requires: pip install dataenginex[{extra}]")
 
 
-# --- ML ---
-
-
-class TrainingError(DataEngineXError):
-    """Error during model training."""
-
-
-class ServingError(DataEngineXError):
-    """Error during model serving."""
-
-
-# --- Agent ---
-
-
-class AgentError(DataEngineXError):
-    """Error in agent runtime."""
-
-
-class LLMProviderError(AgentError):
+class LLMProviderError(DataEngineXError):
     """Error communicating with LLM provider."""
 
     def __init__(self, provider: str, message: str) -> None:

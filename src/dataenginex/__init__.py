@@ -1,5 +1,5 @@
 """
-DataEngineX (DEX) — unified Data + ML + AI library.
+DataEngineX — unified Data + ML + AI library.
 
 Quick start::
 

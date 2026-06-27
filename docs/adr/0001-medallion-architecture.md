@@ -8,18 +8,18 @@
 
 ## Context
 
-DEX needs a scalable, standardized data architecture that works across all projects (CareerDEX, Weather, etc.). The data pipeline needs to handle:
+DataEngineX needs a scalable, standardized data architecture that works across all projects (CareerDEX, Weather, etc.). The data pipeline needs to handle:
 
 - Raw data ingestion from multiple sources
 - Data transformation and quality validation
 - Feature engineering for ML models
 - Analytics-ready data consumption
 
-Multiple projects will be built on the DEX platform, each with different data sources and transformations. We need a consistent, reusable pattern.
+Multiple projects will be built on the DataEngineX platform, each with different data sources and transformations. We need a consistent, reusable pattern.
 
 ## Decision
 
-Implement the **Medallion Architecture** (Bronze → Silver → Gold layers) as the standard data architecture for all DEX projects.
+Implement the **Medallion Architecture** (Bronze → Silver → Gold layers) as the standard data architecture for all DataEngineX projects.
 
 ### Architecture Layers
 

@@ -53,7 +53,7 @@ class DbtConnector(BaseConnector):
     """dbt connector — runs a model and reads its DuckDB-materialized output.
 
     Requires dbt-core and dbt-duckdb (install with: uv sync --group dbt).
-    DEX shells out to ``dbt run``, then queries the DuckDB target file that
+    DataEngineX shells out to ``dbt run``, then queries the DuckDB target file that
     the dbt-duckdb adapter writes to.
 
     Args:

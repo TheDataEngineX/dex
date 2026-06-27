@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main, dev]
+    branches: [main]
   pull_request:
-    branches: [main, dev]
+    branches: [main]
   workflow_dispatch:
 
   schedule:
@@ -27,7 +27,11 @@ jobs:
       - run: uv sync --group ml
         env:
           UV_PROJECT_ENVIRONMENT: .venv
+      - uses: reviewdog/action-actionlint@v1
+
       - run: uv run poe quality
+
+      - run: uv build
 
   test:
     name: Tests (Python 3.13)

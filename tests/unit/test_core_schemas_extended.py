@@ -5,7 +5,6 @@ from __future__ import annotations
 import pytest
 
 from dataenginex.core.exceptions import (
-    AgentError,
     BackendNotInstalledError,
     ConfigError,
     ConfigValidationError,
@@ -14,8 +13,6 @@ from dataenginex.core.exceptions import (
     PipelineError,
     PipelineStepError,
     RegistryError,
-    ServingError,
-    TrainingError,
 )
 from dataenginex.core.schemas import (
     ComponentStatus,
@@ -174,24 +171,12 @@ class TestExceptionHierarchyExtended:
         assert e.extra == "qdrant"
         assert "pip install" in str(e)
 
-    def test_training_error(self) -> None:
-        e = TrainingError("model failed")
-        assert isinstance(e, DataEngineXError)
-
-    def test_serving_error(self) -> None:
-        e = ServingError("serving failed")
-        assert isinstance(e, DataEngineXError)
-
-    def test_agent_error(self) -> None:
-        e = AgentError("agent crashed")
-        assert isinstance(e, DataEngineXError)
-
     def test_llm_provider_error(self) -> None:
         e = LLMProviderError("openai", "rate limited")
         assert e.provider == "openai"
         assert "openai" in str(e)
         assert "rate limited" in str(e)
-        assert isinstance(e, AgentError)
+        assert isinstance(e, DataEngineXError)
 
     def test_raise_and_catch_base(self) -> None:
         with pytest.raises(DataEngineXError):

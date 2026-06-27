@@ -1,4 +1,4 @@
-"""PySpark connector — reads Spark-supported sources into DEX pipelines.
+"""PySpark connector — reads Spark-supported sources into DataEngineX pipelines.
 
 PySpark is optional (install with: uv sync --group data).  SparkConnector
 converts a Spark DataFrame → Arrow → list[dict] for handoff to the
@@ -43,7 +43,7 @@ _IMPORT_ERROR = "PySpark is required for SparkConnector. Install it with: uv syn
 
 @connector_registry.decorator("spark")
 class SparkConnector(BaseConnector):
-    """PySpark connector — reads any Spark-supported source into DEX.
+    """PySpark connector — reads any Spark-supported source into DataEngineX.
 
     Converts a Spark DataFrame to Arrow then to list[dict] for pipeline use.
     PySpark is optional (install with: uv sync --group data).

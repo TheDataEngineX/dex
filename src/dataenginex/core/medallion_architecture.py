@@ -75,7 +75,7 @@ class LayerConfiguration:
 
 
 class MedallionArchitecture:
-    """Manages the three-layer medallion architecture for DEX."""
+    """Manages the three-layer medallion architecture for DataEngineX."""
 
     # Bronze Layer Configuration
     BRONZE_CONFIG = LayerConfiguration(

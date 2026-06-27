@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""01_hello_pipeline.py — Minimal DEX pipeline walkthrough.
+"""01_hello_pipeline.py — Minimal DataEngineX pipeline walkthrough.
 
 Demonstrates:
 - Data profiling with ``DataProfiler``

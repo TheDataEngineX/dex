@@ -2,9 +2,9 @@ name: Security Scans
 
 on:
   push:
-    branches: [main, dev]
+    branches: [main]
   pull_request:
-    branches: [main, dev]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -13,5 +13,5 @@ permissions:
 
 jobs:
   security:
-    uses: TheDataEngineX/.github/.github/workflows/security.yml@main
+    uses: TheDataEngineX/.github/workflows/reusable-security.yml@main
     secrets: inherit

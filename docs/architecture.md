@@ -5,7 +5,7 @@
 **DataEngineX** is a unified Data + ML + AI **library** that wires industry tools through a
 single config-driven interface. One `dex.yaml` defines the entire project.
 
-**Design principle:** Pure Python library — no HTTP server bundled. Your application (DEX Studio,
+**Design principle:** Pure Python library — no HTTP server bundled. Your application (DataEngineX Studio,
 your own FastAPI/Flask app, a script) imports `dataenginex` and owns the server layer.
 
 ## Architecture
@@ -56,9 +56,9 @@ dex.yaml
 Every subsystem follows the same pattern:
 
 1. **ABC** in `core/interfaces.py` — defines the contract (e.g. `BaseConnector`)
-2. **BackendRegistry[T]** in `core/registry.py` — discovers and registers implementations
-3. **Built-in** implements the ABC with zero external deps
-4. **Extras** implement the same ABC, swapped in via config
+1. **BackendRegistry[T]** in `core/registry.py` — discovers and registers implementations
+1. **Built-in** implements the ABC with zero external deps
+1. **Extras** implement the same ABC, swapped in via config
 
 ```python
 from dataenginex.core.registry import BackendRegistry
@@ -108,10 +108,7 @@ DataEngineXError
 ├── ConfigError → ConfigValidationError
 ├── PipelineError → PipelineStepError
 ├── RegistryError
-├── BackendNotInstalledError
-├── TrainingError
-├── ServingError
-└── AgentError → LLMProviderError
+└── BackendNotInstalledError
 ```
 
 ## Module Map

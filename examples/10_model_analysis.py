@@ -5,7 +5,7 @@ Demonstrates:
 - Loading a trained PySpark ML model
 - Computing prediction error metrics (MAE, RMSE, error %)
 - Grouping performance by city, hour, day-of-week, and weather condition
-- Using the DEX DriftDetector (PSI-based) for feature drift monitoring
+- Using the DataEngineX DriftDetector (PSI-based) for feature drift monitoring
 
 Requirements:
     uv sync --group data  # installs pyspark
@@ -38,7 +38,7 @@ except ImportError:
 def create_spark() -> SparkSession:
     return (
         SparkSession.builder.master("local[2]")
-        .appName("DEX-ModelAnalysis")
+        .appName("DataEngineX-ModelAnalysis")
         .config("spark.ui.enabled", "false")
         .config("spark.driver.bindAddress", "127.0.0.1")
         .config("spark.sql.ansi.enabled", "true")
@@ -104,7 +104,7 @@ def best_and_worst(df: pyspark.sql.DataFrame, n: int = 3) -> None:  # type: igno
 
 
 def drift_check(df: pyspark.sql.DataFrame) -> None:  # type: ignore[name-defined]
-    """Demonstrate DEX DriftDetector with PSI-based detection."""
+    """Demonstrate DataEngineX DriftDetector with PSI-based detection."""
     from dataenginex.ml.drift import DriftDetector
 
     detector = DriftDetector(threshold=0.2)

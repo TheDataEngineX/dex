@@ -1,5 +1,5 @@
 """
-Test configuration and fixtures for DEX test suite.
+Test configuration and fixtures for DataEngineX test suite.
 
 Shared fixtures live here; test files create their own local fixtures
 and ``TestClient`` instances as needed.
@@ -93,7 +93,7 @@ def spark() -> Any:
 
     session: Any = (
         SparkSession.builder.master("local[1]")
-        .appName("DEX-test")
+        .appName("DataEngineX-test")
         .config("spark.ui.enabled", "false")
         .config("spark.driver.bindAddress", "127.0.0.1")
         .config("spark.sql.shuffle.partitions", "2")

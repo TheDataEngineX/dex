@@ -140,9 +140,9 @@ events = engine.secops_audit.events   # list of AuditEvent
 
 ______________________________________________________________________
 
-## DEX Studio
+## DataEngineX Studio
 
-DEX Studio is the optional web UI that loads a `dex.yaml` and provides a single
+DataEngineX Studio is the optional web UI that loads a `dex.yaml` and provides a single
 control plane for Data / ML / AI / System. It uses `dataenginex` directly as a library
 — no separate server process needed.
 

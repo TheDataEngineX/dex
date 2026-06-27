@@ -44,7 +44,7 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title="DataEngineX",
         version="0.8.9",
-        description="Example DEX API instance",
+        description="Example DataEngineX API instance",
     )
 
     @app.get("/")

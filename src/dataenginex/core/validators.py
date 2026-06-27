@@ -1,4 +1,4 @@
-"""Generic data quality validators for DEX framework.
+"""Generic data quality validators for DataEngineX framework.
 
 Domain-specific validators should live in the application package.
 

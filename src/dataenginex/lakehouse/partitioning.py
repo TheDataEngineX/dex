@@ -1,5 +1,5 @@
 """
-Partitioning strategies for the DEX lakehouse.
+Partitioning strategies for the DataEngineX lakehouse.
 
 ``PartitionStrategy`` is an ABC whose subclasses generate path segments
 used by storage backends to organise data into predictable directory trees.

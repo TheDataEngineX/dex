@@ -6,35 +6,13 @@
 
 ______________________________________________________________________
 
-This document defines the software development lifecycle (SDLC) for DEX, including the required stages, artifacts, and quality gates.
+This document defines the software development lifecycle (SDLC) for DataEngineX, including the required stages, artifacts, and quality gates.
 
 ## Goals
 
 - Ship deterministic builds with a single immutable image tag per change.
 - Enforce quality gates (lint, test, type checks, security scan) on every PR.
 - Maintain a complete audit trail for promotion across environments.
-
-## Lifecycle Overview
-
-```mermaid
-graph LR
-    Plan[1. Plan] --> Design[2. Design]
-    Design --> Implement[3. Implement]
-    Implement --> Verify[4. Verify CI]
-    Verify --> Release[5. Release CD]
-    Release --> Operate[6. Operate]
-    Operate -->|Issues| Plan
-    Operate -->|Incidents| Rollback[Rollback]
-    Rollback --> Operate
-
-    style Plan fill:#e1f5ff
-    style Design fill:#e1f5ff
-    style Implement fill:#fff3cd
-    style Verify fill:#fff3cd
-    style Release fill:#d4edda
-    style Operate fill:#d4edda
-    style Rollback fill:#f8d7da
-```
 
 ## Lifecycle Stages
 
@@ -89,7 +67,7 @@ ______________________________________________________________________
 
 ### 4) Verify (CI)
 
-**Entry**: Pull request opened against `dev` (integration) or `main` (release).
+**Entry**: Pull request opened against `main`.
 
 **Required Checks**:
 
@@ -107,8 +85,7 @@ ______________________________________________________________________
 
 **Entry**:
 
-- Dev deployment: PR merged to `dev`.
-- Stage/Prod deployment: PR merged to `main`.
+- PR merged to `main`.
 
 **Actions**:
 
@@ -141,49 +118,29 @@ ______________________________________________________________________
 ```mermaid
 flowchart TD
     Start([New Feature/Fix]) --> Issue[Create GitHub Issue]
-    Issue --> Branch["Create branch: feat/xyz"]
+    Issue --> Branch["Create branch: my-feature"]
     Branch --> Code[Implement + Tests]
     Code --> Local["Local checks: lint, test, types"]
     Local -->|Failed| Code
-    Local -->|Passed| PR["Open PR → dev"]
+    Local -->|Passed| PR["Open PR → main"]
     PR --> CI{CI Checks}
     CI -->|Failed| Fix[Fix Issues]
     Fix --> Code
     CI -->|Passed| Review{Code Review}
     Review -->|Changes Requested| Code
-    Review -->|Approved| MergeDev["Merge to dev"]
-    MergeDev --> DevDeploy[Auto-deploy to dev]
-    DevDeploy --> DevTest{Dev Tests Pass?}
-    DevTest -->|Failed| Hotfix[Hotfix or Rollback]
-    Hotfix --> Code
-    DevTest -->|Passed| ReleasePR["Create PR: dev → main"]
-    ReleasePR --> ReleaseCI{CI Checks}
-    ReleaseCI -->|Failed| Fix
-    ReleaseCI -->|Passed| ReleaseReview{Code Review}
-    ReleaseReview -->|Changes Requested| Code
-    ReleaseReview -->|Approved| MergeMain["Merge to main"]
-    MergeMain --> ProdDeploy[Auto-deploy to stage+prod]
-    ProdDeploy --> Monitor[Monitor Production]
+    Review -->|Approved| MergeMain["Merge to main"]
+    MergeMain --> Prod[Auto-release if tagged]
+    Prod --> Monitor[Monitor]
     Monitor --> End([✓ Complete])
-
-    style Start fill:#e1f5ff
-    style Issue fill:#e1f5ff
-    style Code fill:#fff3cd
-    style CI fill:#fff3cd
-    style Review fill:#fff3cd
-    style DevDeploy fill:#d4edda
-    style ProdDeploy fill:#d4edda
-    style End fill:#d4edda
-    style Hotfix fill:#f8d7da
 ```
 
 **Steps**:
 
-1. Create or update a GitHub Issue and add it to the GitHub Project board.
-1. Create a feature branch and implement changes.
-1. Open a PR to `dev` and request review.
-1. After validation in dev, open a release PR from `dev` → `main`.
+1. Create a feature branch from `main`.
+1. Implement changes, run local checks (`uv run poe check-all`).
+1. Open a PR to `main` and request review.
 1. Merge after all required checks pass.
+1. Push a `vX.Y.Z` tag to trigger a PyPI release.
 
 See [Contributing Guide](contributing.md) for branch naming, local checks, and PR conventions.
 

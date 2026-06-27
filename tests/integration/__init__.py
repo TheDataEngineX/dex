@@ -1,1 +1,1 @@
-"""Integration and end-to-end tests for DEX."""
+"""Integration and end-to-end tests for DataEngineX."""
