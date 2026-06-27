@@ -1,5 +1,5 @@
 """
-Concrete storage backends for the DEX lakehouse.
+Concrete storage backends for the DataEngineX lakehouse.
 
 ``JsonStorage``, ``ParquetStorage``, ``S3Storage``, and ``GCSStorage``
 implement the ``StorageBackend`` ABC from

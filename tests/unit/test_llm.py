@@ -86,8 +86,8 @@ class TestMockProvider:
     def test_generate_with_context(self) -> None:
         mock = MockProvider()
         resp = mock.generate_with_context(
-            question="What is DEX?",
-            context="DEX is a data engineering platform.",
+            question="What is DataEngineX?",
+            context="DataEngineX is a data engineering platform.",
         )
         assert isinstance(resp, LLMResponse)
         assert len(mock.call_history) == 1

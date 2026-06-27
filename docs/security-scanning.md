@@ -11,7 +11,7 @@ DataEngineX uses a multi-layered security scanning pipeline across CI/CD workflo
 | **CodeQL** | Static analysis (Python + GitHub Actions) | `security.yml` |
 | **pip-audit** | Python dependency vulnerability audit | `poe security` |
 | **CycloneDX** | SBOM generation (attached to releases) | `release-*.yml` |
-| **Dependabot** | Automated dependency updates | `.github/dependabot.yml` |
+| **Renovate** | Automated dependency updates | `renovate.json` |
 
 ## How It Works
 
@@ -30,7 +30,7 @@ DataEngineX uses a multi-layered security scanning pipeline across CI/CD workflo
    trivy image dex:local
    ```
 
-### On Release (release-dataenginex.yml)
+### On Release (release.yml)
 
 1. **CycloneDX SBOM** — generates a Software Bill of Materials in CycloneDX JSON format.
 1. **SBOM upload** — attaches the SBOM as a release asset on GitHub Releases.

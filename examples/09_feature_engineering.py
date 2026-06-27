@@ -6,7 +6,7 @@ Demonstrates:
 - Lag features for temporal patterns
 - Rolling window statistics (mean, std)
 - Interaction feature construction
-- Using the DEX DataProfiler to summarise the engineered features
+- Using the DataEngineX DataProfiler to summarise the engineered features
 
 Requirements:
     uv sync --group data  # installs pyspark
@@ -35,7 +35,7 @@ except ImportError:
 def create_spark() -> SparkSession:
     return (
         SparkSession.builder.master("local[2]")
-        .appName("DEX-FeatureEngineering")
+        .appName("DataEngineX-FeatureEngineering")
         .config("spark.ui.enabled", "false")
         .config("spark.driver.bindAddress", "127.0.0.1")
         .config("spark.sql.ansi.enabled", "true")

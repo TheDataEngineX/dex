@@ -1,7 +1,7 @@
 """Pydantic schemas for API requests and responses.
 
 This module contains only **generic framework schemas** used across all
-DEX applications.  Domain-specific schemas should live in the application
+DataEngineX applications.  Domain-specific schemas should live in the application
 package (e.g. ``myapp.core.schemas``).
 """
 

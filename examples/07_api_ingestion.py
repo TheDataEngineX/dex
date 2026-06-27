@@ -5,7 +5,7 @@ Demonstrates:
 - Fetching data from an external HTTP API (OpenWeatherMap-style)
 - Transforming raw responses into standardized records (Bronze → Silver)
 - Validating data quality before promotion (Silver → Gold)
-- Using DEX QualityGate for data validation
+- Using DataEngineX QualityGate for data validation
 
 Run:
     uv run python examples/07_api_ingestion.py

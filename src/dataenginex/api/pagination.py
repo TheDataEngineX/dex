@@ -1,5 +1,5 @@
 """
-Cursor-based pagination utilities for the DEX API.
+Cursor-based pagination utilities for the DataEngineX API.
 
 Usage::
 

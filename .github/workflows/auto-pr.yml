@@ -3,21 +3,14 @@ name: Auto PR
 on:
   push:
     branches:
-      - dev
-      - 'feature/**'
-      - 'fix/**'
+      - '*'
 
 permissions:
   contents: write
   pull-requests: write
 
 jobs:
-  feature-to-dev:
-    if: startsWith(github.ref, 'refs/heads/feature/') || startsWith(github.ref, 'refs/heads/fix/')
-    uses: TheDataEngineX/.github/.github/workflows/auto-pr-to-dev.yml@main
-    secrets: inherit
-
-  dev-to-main:
-    if: github.ref == 'refs/heads/dev'
-    uses: TheDataEngineX/.github/.github/workflows/auto-pr-dev-to-main.yml@main
+  auto-pr:
+    if: github.ref_name != 'main'
+    uses: TheDataEngineX/.github/.github/workflows/reusable-auto-pr-to-main.yml@main
     secrets: inherit

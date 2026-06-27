@@ -1,4 +1,4 @@
-# CLAUDE.md — DEX (dataenginex)
+# CLAUDE.md — DataEngineX (dataenginex)
 
 Brief answers only. No explanations unless asked.
 Goal is to save Claude code tokens for lower cost without losing quality.
@@ -7,7 +7,7 @@ Goal is to save Claude code tokens for lower cost without losing quality.
 
 ## Project Overview
 
-**DEX** — unified Data + ML + AI library. Config-driven, self-hosted, local-first. Pure Python — no bundled HTTP server.
+**DataEngineX** — unified Data + ML + AI library. Config-driven, self-hosted, local-first. Pure Python — no bundled HTTP server.
 
 | Package | Location | Purpose |
 |---------|----------|---------|
@@ -41,7 +41,7 @@ dex validate dex.yaml     # Validate config file
 dex version               # Show version + environment
 
 # Dev
-uv run poe dev            # Dev server (uvicorn reload, port 17000) — for examples/API testing only
+uv run poe dev            # Dev server (uvicorn reload, port 17000) — for examples/API testing only (dataenginex has no built-in HTTP server; see dex-studio for web UI)
 uv run poe docker-up      # Docker compose up
 uv run poe docker-down    # Docker compose down
 
@@ -63,7 +63,7 @@ pip install 'litellm>=1.83.3' --no-deps # LLM routing (separate: pins python-dot
 
 ______________________________________________________________________
 
-## Mandatory Validation
+## Validation
 
-Run `/validate` after ANY code change. Steps 4-5 (config validation + server smoke test) are NON-NEGOTIABLE.
-Tests passing ≠ app working.
+After any code change run: `uv run poe check-all` (lint + typecheck + test).
+Tests passing ≠ app working — run `dex validate dex.yaml` to verify config.

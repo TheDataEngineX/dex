@@ -1,6 +1,6 @@
 # Release PR Template
 
-Use this template whenever opening a release PR (`dev → main`). Reference `release-notes.md` and verify QA steps before merging.
+Use this template whenever opening a release PR to `main`. Reference `release-notes.md` and verify QA steps before merging.
 
 ## Summary
 

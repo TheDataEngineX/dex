@@ -1,4 +1,4 @@
-# New Feature (DEX)
+# New Feature (DataEngineX)
 
 Scaffold a new feature for the `dataenginex` core framework. Ask for the feature name and description if not provided as $ARGUMENTS.
 

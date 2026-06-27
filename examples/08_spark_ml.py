@@ -5,7 +5,7 @@ Demonstrates:
 - Creating a local SparkSession
 - Feature engineering: time features, lag features, rolling windows, interactions
 - Training a RandomForest regression model with PySpark ML Pipeline
-- Registering the model in DEX ModelRegistry
+- Registering the model in DataEngineX ModelRegistry
 
 Requirements:
     uv sync --group data  # installs pyspark
@@ -42,7 +42,7 @@ def create_spark() -> SparkSession:
     """Create a minimal local SparkSession."""
     return (
         SparkSession.builder.master("local[2]")
-        .appName("DEX-SparkML-Example")
+        .appName("DataEngineX-SparkML-Example")
         .config("spark.ui.enabled", "false")
         .config("spark.driver.bindAddress", "127.0.0.1")
         .config("spark.sql.shuffle.partitions", "4")
@@ -161,7 +161,7 @@ def train_model(df: pyspark.sql.DataFrame) -> dict[str, object]:  # type: ignore
 
 
 def register_model(metrics: dict[str, object]) -> None:
-    """Register the trained model in the DEX ModelRegistry."""
+    """Register the trained model in the DataEngineX ModelRegistry."""
     from dataenginex.ml.registry import ModelRegistry
 
     registry = ModelRegistry()

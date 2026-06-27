@@ -39,7 +39,7 @@ This installs all Python dependencies and configures pre-commit hooks.
 # 1. Clone repo and create feature branch
 git clone https://github.com/TheDataEngineX/dataenginex.git
 cd dataenginex
-git checkout -b feat/issue-XXX-description dev
+git checkout -b my-feature-branch main
 
 # 2. Install Python deps & pre-commit hooks
 uv run poe setup
@@ -68,8 +68,8 @@ dataenginex/
 ### Branch & Commit
 
 ```bash
-# 1. Create feature branch from dev
-git checkout -b feat/issue-XXX-description dev
+# 1. Create a feature branch from main
+git checkout -b my-feature-branch main
 
 # 2. Make changes to src/
 # Add tests in tests/
@@ -83,7 +83,7 @@ uv run poe test
 git commit -m "feat(#XXX): description"
 
 # 5. Push & create PR
-git push origin feat/issue-XXX-description
+git push origin my-feature-branch
 ```
 
 **PR Requirements:**
@@ -91,11 +91,11 @@ git push origin feat/issue-XXX-description
 - Link to issue: `Closes #XXX`
 - All checks pass (CI/CD ~3-5 min)
 - 1 approval required
-- Merge to `dev` when ready
+- Merge to `main` when ready
 
 ### Version Management
 
-DEX has a single version source:
+DataEngineX has a single version source:
 
 - **dataenginex version**: root `pyproject.toml` — managed automatically by the `release.yml` workflow
 

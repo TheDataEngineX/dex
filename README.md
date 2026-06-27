@@ -1,11 +1,11 @@
 # dataenginex
 
-[![CI](https://github.com/TheDataEngineX/dataenginex/actions/workflows/ci.yml/badge.svg?branch=dev)](https://github.com/TheDataEngineX/dataenginex/actions/workflows/ci.yml)
+[![CI](https://github.com/TheDataEngineX/dataenginex/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/TheDataEngineX/dataenginex/actions/workflows/ci.yml)
 [![PyPI](https://img.shields.io/pypi/v/dataenginex)](https://pypi.org/project/dataenginex/)
 [![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-The Python library that powers [DEX Studio](https://github.com/TheDataEngineX/dex-studio) — an open-source, self-hosted, local-first Data + ML + AI workbench for individuals and small teams. **Use the library directly when you want code; install DEX Studio when you want a UI.**
+The Python library that powers [DataEngineX Studio](https://github.com/TheDataEngineX/dex-studio) — an open-source, self-hosted, local-first Data + ML + AI workbench for individuals and small teams. **Use the library directly when you want code; install DataEngineX Studio when you want a UI.**
 
 ______________________________________________________________________
 
@@ -116,7 +116,7 @@ git clone https://github.com/TheDataEngineX/dex-studio && cd dex-studio
 docker compose up             # http://localhost:7860
 ```
 
-DEX Studio imports `dataenginex` directly — no separate API server, no HTTP hop.
+DataEngineX Studio imports `dataenginex` directly — no separate API server, no HTTP hop.
 
 ______________________________________________________________________
 

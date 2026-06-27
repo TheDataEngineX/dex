@@ -1,1 +1,1 @@
-"""Unit tests for DEX framework components."""
+"""Unit tests for DataEngineX framework components."""

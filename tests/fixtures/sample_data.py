@@ -1,6 +1,6 @@
-"""Reusable sample data for DEX tests.
+"""Reusable sample data for DataEngineX tests.
 
-Provides factory helpers that return plain-dict records matching the DEX
+Provides factory helpers that return plain-dict records matching the DataEngineX
 schemas.  These are intentionally *not* Pydantic model instances so they
 can feed both schema validation tests and Spark DataFrame construction.
 """

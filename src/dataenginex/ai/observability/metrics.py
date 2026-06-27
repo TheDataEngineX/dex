@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-# Metric name constants
-AGENT_REQUESTS_TOTAL = "agentdex_requests_total"
-AGENT_LATENCY_SECONDS = "agentdex_latency_seconds"
-AGENT_ERRORS_TOTAL = "agentdex_errors_total"
-AGENT_TOOL_CALLS_TOTAL = "agentdex_tool_calls_total"
-AGENT_TOKENS_TOTAL = "agentdex_tokens_total"
+# Metric name constants — keep agent_ prefix generic, project name was consolidated
+AGENT_REQUESTS_TOTAL = "agent_requests_total"
+AGENT_LATENCY_SECONDS = "agent_latency_seconds"
+AGENT_ERRORS_TOTAL = "agent_errors_total"
+AGENT_TOOL_CALLS_TOTAL = "agent_tool_calls_total"
+AGENT_TOKENS_TOTAL = "agent_tokens_total"
 
 
 class AgentMetrics:
