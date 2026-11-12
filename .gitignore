@@ -1,0 +1,18 @@
+# Local toolchain (large, machine-specific)
+.tools/
+.venv/
+
+# Runtime data
+data/
+logs/
+assistant-files/
+.playwright-mcp/
+
+# Secrets
+config/credentials.json
+config/api_key.txt
+.webui_secret_key
+
+# Python
+__pycache__/
+*.pyc
